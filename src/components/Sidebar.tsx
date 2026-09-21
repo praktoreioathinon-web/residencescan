@@ -65,7 +65,7 @@ export default function Sidebar() {
                 <Icon size={16} />
                 <span className="flex-1">{label}</span>
                 {badge && (
-                  <span className="w-4.5 h-4.5 flex items-center justify-center rounded-full bg-[#ED917C] text-[9px] font-bold text-[#2A0E0A] px-1.5 py-0.5">{badge}</span>
+                  <span className="w-4.5 h-4.5 flex items-center justify-center rounded-full bg-[var(--attention-fg)] text-[9px] font-bold text-[#2A0E0A] px-1.5 py-0.5">{badge}</span>
                 )}
               </Link>
             );

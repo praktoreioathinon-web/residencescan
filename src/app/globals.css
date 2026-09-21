@@ -6,17 +6,62 @@
 
 :root {
   color-scheme: dark;
+
+  --bg: #071017;
+  --card: #0C1821;
+  --surface: #101E28;
+  --fg: #F4F8FA;
+  --subtext: #8EA4AE;
+  --line: #FFFFFF1A;
+
+  --primary: #55D6C7;
+  --primary-fg: #04100F;
+  --primary-wash: #55D6C714;
+
+  --warn-fg: #EEB06E;
+  --warn-bg: #EEB06E1F;
+  --ok-fg: #6ED3AA;
+  --ok-bg: #6ED3AA1F;
+  --attention-fg: #ED917C;
+  --attention-wash: #ED917C14;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #F4F6F8;
+  --card: #FFFFFF;
+  --surface: #EEF1F3;
+  --fg: #10202E;
+  --subtext: #64748B;
+  --line: #E2E6EA;
+
+  --primary: #0D9488;
+  --primary-fg: #FFFFFF;
+  --primary-wash: #0D948814;
+
+  --warn-fg: #B45309;
+  --warn-bg: #FDF1E0;
+  --ok-fg: #15803D;
+  --ok-bg: #E3F5EA;
+  --attention-fg: #C2410C;
+  --attention-wash: #C2410C14;
 }
 
 html, body {
   font-family: "Inter", system-ui, sans-serif;
-  background-color: #071017;
-  color: #F4F8FA;
+  background-color: var(--bg);
+  color: var(--fg);
 }
 
 input, select {
-  background-color: #0C1821;
-  color: #F4F8FA;
+  background-color: var(--card);
+  color: var(--fg);
+}
+
+input::placeholder {
+  color: var(--subtext);
+  opacity: 1;
 }
 
 ::-webkit-scrollbar {
@@ -24,6 +69,6 @@ input, select {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background-color: #FFFFFF1A;
+  background-color: var(--line);
   border-radius: 999px;
 }

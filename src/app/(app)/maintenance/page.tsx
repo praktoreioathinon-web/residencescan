@@ -42,8 +42,8 @@ export default function MaintenancePage() {
 
       <div className="grid grid-cols-3 rounded-2xl border border-line divide-x divide-line mb-6">
         <div className="p-4 flex items-center gap-3"><Camera size={16} className="text-primary" /><div><p className="text-xl font-bold text-fg leading-none">3</p><p className="text-[11px] text-subtext mt-1">Upcoming</p></div></div>
-        <div className="p-4 flex items-center gap-3"><Activity size={16} className="text-[#EEB06E]" /><div><p className="text-xl font-bold text-fg leading-none">{property.itemsNeedAttention}</p><p className="text-[11px] text-subtext mt-1">Need attention</p></div></div>
-        <div className="p-4 flex items-center gap-3"><CheckCircle2 size={16} className="text-[#6ED3AA]" /><div><p className="text-xl font-bold text-fg leading-none">47</p><p className="text-[11px] text-subtext mt-1">Completed</p></div></div>
+        <div className="p-4 flex items-center gap-3"><Activity size={16} className="text-[var(--warn-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{property.itemsNeedAttention}</p><p className="text-[11px] text-subtext mt-1">Need attention</p></div></div>
+        <div className="p-4 flex items-center gap-3"><CheckCircle2 size={16} className="text-[var(--ok-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">47</p><p className="text-[11px] text-subtext mt-1">Completed</p></div></div>
       </div>
 
       <div className="flex flex-col">

@@ -16,9 +16,9 @@ const QUICK_ACCESS = [
 ];
 
 const STATUS_STYLE: Record<string, string> = {
-  "Due soon": "bg-[#EEB06E1F] text-[#EEB06E]",
-  Scheduled: "bg-[#EEB06E1F] text-[#EEB06E]",
-  Upcoming: "bg-[#EEB06E1F] text-[#EEB06E]",
+  "Due soon": "bg-[var(--warn-bg)] text-[var(--warn-fg)]",
+  Scheduled: "bg-[var(--warn-bg)] text-[var(--warn-fg)]",
+  Upcoming: "bg-[var(--warn-bg)] text-[var(--warn-fg)]",
 };
 
 function HealthRing({ pct }: { pct: number }) {
@@ -26,9 +26,9 @@ function HealthRing({ pct }: { pct: number }) {
   const c = 2 * Math.PI * r;
   return (
     <svg width={88} height={88} viewBox="0 0 88 88">
-      <circle cx={44} cy={44} r={r} fill="none" stroke="#FFFFFF14" strokeWidth={7} />
+      <circle cx={44} cy={44} r={r} fill="none" stroke="var(--line)" strokeWidth={7} />
       <circle
-        cx={44} cy={44} r={r} fill="none" stroke="#55D6C7" strokeWidth={7} strokeLinecap="round"
+        cx={44} cy={44} r={r} fill="none" stroke="var(--primary)" strokeWidth={7} strokeLinecap="round"
         strokeDasharray={c} strokeDashoffset={c - (pct / 100) * c}
         transform="rotate(-90 44 44)"
       />
@@ -45,7 +45,7 @@ function Bar({ label, value, max, pctLabel }: { label: string; value?: number; m
         <span className="text-subtext">{label}</span>
         <span className="text-fg font-semibold">{pctLabel ?? `${value} / ${max}`}</span>
       </div>
-      <div className="h-1.5 rounded-full bg-[#FFFFFF14] overflow-hidden">
+      <div className="h-1.5 rounded-full bg-[var(--line)] overflow-hidden">
         <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
       </div>
     </div>
@@ -117,15 +117,15 @@ export default function OverviewPage() {
           ? { backgroundImage: `linear-gradient(to top, rgba(7,16,23,0.85), rgba(7,16,23,0.15)), url(${property.photoUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
           : { background: "linear-gradient(135deg, #14242E, #0C1821)" }}>
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-[11px] bg-black/40 backdrop-blur px-2.5 py-1 rounded-full">
+          <span className="flex items-center gap-1.5 text-[11px] text-white bg-black/40 backdrop-blur px-2.5 py-1 rounded-full">
             <ShieldCheck size={12} className="text-primary" /> Professionally recorded
           </span>
-          <span className="text-[11px] bg-black/40 px-2.5 py-1 rounded-full">Updated {property.updated}</span>
+          <span className="text-[11px] text-white bg-black/40 px-2.5 py-1 rounded-full">Updated {property.updated}</span>
         </div>
         <div>
-          <p className="text-[12px] text-subtext">{property.location}</p>
-          <p className="text-xl font-bold text-fg mt-0.5">{property.name}</p>
-          <label className="flex items-center gap-1.5 mt-2 text-[11.5px] bg-white/10 px-3 py-1.5 rounded-full w-fit cursor-pointer">
+          <p className="text-[12px] text-white/60">{property.location}</p>
+          <p className="text-xl font-bold text-white mt-0.5">{property.name}</p>
+          <label className="flex items-center gap-1.5 mt-2 text-[11.5px] text-white bg-white/10 px-3 py-1.5 rounded-full w-fit cursor-pointer">
             <ImageIcon size={13} /> {property.photoUrl ? "Change photo" : "Upload photo"}
             <input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoChange(e, property.id)} />
           </label>
@@ -188,13 +188,13 @@ export default function OverviewPage() {
       </div>
 
       <div className="grid grid-cols-3 gap-3 mt-5 mb-8">
-        <div className="rounded-2xl border border-line p-4" style={{ background: "linear-gradient(160deg, #ED917C14, transparent)" }}>
-          <div className="flex items-center gap-1.5 text-[10px] tracking-widest text-[#ED917C] font-semibold"><AlertTriangle size={11} /> ATTENTION</div>
+        <div className="rounded-2xl border border-line p-4" style={{ background: "linear-gradient(160deg, var(--attention-wash), transparent)" }}>
+          <div className="flex items-center gap-1.5 text-[10px] tracking-widest text-[var(--attention-fg)] font-semibold"><AlertTriangle size={11} /> ATTENTION</div>
           <p className="text-[14px] font-bold text-fg mt-2">{property.itemsNeedAttention} items need review</p>
           <p className="text-[11px] text-subtext mt-1">Water pre-filter replacement and pump-room pressure check.</p>
-          <Link href="/rooms" className="text-[12px] text-[#ED917C] font-semibold flex items-center gap-1 mt-2.5">Review now <ChevronRight size={12} /></Link>
+          <Link href="/rooms" className="text-[12px] text-[var(--attention-fg)] font-semibold flex items-center gap-1 mt-2.5">Review now <ChevronRight size={12} /></Link>
         </div>
-        <div className="rounded-2xl border border-line p-4" style={{ background: "linear-gradient(160deg, #55D6C714, transparent)" }}>
+        <div className="rounded-2xl border border-line p-4" style={{ background: "linear-gradient(160deg, var(--primary-wash), transparent)" }}>
           <div className="w-9 h-9 rounded-lg border border-line flex items-center justify-center mb-2"><Scan size={16} className="text-primary" /></div>
           <p className="text-[10px] tracking-widest text-primary font-semibold">PROPERTY X-RAY</p>
           <p className="text-[14px] font-bold text-fg mt-1">See beyond the surface.</p>
@@ -226,8 +226,8 @@ function AllPropertiesOverview({
       <div className="grid grid-cols-4 rounded-2xl border border-line divide-x divide-line mb-6">
         <div className="p-4 flex items-center gap-3"><Building2 size={16} className="text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{properties.length}</p><p className="text-[11px] text-subtext mt-1">Properties</p></div></div>
         <div className="p-4 flex items-center gap-3"><Users size={16} className="text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{clients.length}</p><p className="text-[11px] text-subtext mt-1">Clients</p></div></div>
-        <div className="p-4 flex items-center gap-3"><AlertTriangle size={16} className="text-[#EEB06E]" /><div><p className="text-xl font-bold text-fg leading-none">{totalAttention}</p><p className="text-[11px] text-subtext mt-1">Need attention</p></div></div>
-        <div className="p-4 flex items-center gap-3"><CheckCircle2 size={16} className="text-[#6ED3AA]" /><div><p className="text-xl font-bold text-fg leading-none">{avgHealth}%</p><p className="text-[11px] text-subtext mt-1">Avg. health</p></div></div>
+        <div className="p-4 flex items-center gap-3"><AlertTriangle size={16} className="text-[var(--warn-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{totalAttention}</p><p className="text-[11px] text-subtext mt-1">Need attention</p></div></div>
+        <div className="p-4 flex items-center gap-3"><CheckCircle2 size={16} className="text-[var(--ok-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{avgHealth}%</p><p className="text-[11px] text-subtext mt-1">Avg. health</p></div></div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -236,9 +236,9 @@ function AllPropertiesOverview({
             <div className="flex items-center justify-between mb-3">
               <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center"><MapPin size={16} className="text-primary" /></div>
               {p.itemsNeedAttention > 0 ? (
-                <span className="flex items-center gap-1 text-[10px] font-semibold bg-[#EEB06E1F] text-[#EEB06E] px-2 py-0.5 rounded-full"><AlertTriangle size={10} /> {p.itemsNeedAttention} attention</span>
+                <span className="flex items-center gap-1 text-[10px] font-semibold bg-[var(--warn-bg)] text-[var(--warn-fg)] px-2 py-0.5 rounded-full"><AlertTriangle size={10} /> {p.itemsNeedAttention} attention</span>
               ) : (
-                <span className="flex items-center gap-1 text-[10px] font-semibold bg-[#6ED3AA1F] text-[#6ED3AA] px-2 py-0.5 rounded-full"><CheckCircle2 size={10} /> Current</span>
+                <span className="flex items-center gap-1 text-[10px] font-semibold bg-[var(--ok-bg)] text-[var(--ok-fg)] px-2 py-0.5 rounded-full"><CheckCircle2 size={10} /> Current</span>
               )}
             </div>
             <p className="text-[14px] font-bold text-fg">{p.name}</p>

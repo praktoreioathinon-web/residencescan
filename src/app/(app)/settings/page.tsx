@@ -88,7 +88,7 @@ export default function SettingsPage() {
         <p className="text-[12.5px] text-subtext">Maintenance reminders and attention alerts are on by default in this demo.</p>
       </div>
 
-      <button onClick={logout} className="text-[12.5px] text-[#ED917C] font-semibold">Sign out</button>
+      <button onClick={logout} className="text-[12.5px] text-[var(--attention-fg)] font-semibold">Sign out</button>
     </div>
   );
 }

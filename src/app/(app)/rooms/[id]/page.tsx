@@ -37,7 +37,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
         </button>
       </div>
 
-      <div className="rounded-2xl border border-line p-6 mb-5" style={{ background: "linear-gradient(160deg, #55D6C714, transparent)" }}>
+      <div className="rounded-2xl border border-line p-6 mb-5" style={{ background: "linear-gradient(160deg, var(--primary-wash), transparent)" }}>
         <p className="flex items-center gap-1.5 text-[11.5px] text-primary font-semibold mb-8">
           <Sparkles size={13} /> {room.equipmentCount} equipment records
         </p>
@@ -62,7 +62,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
               <div key={eq.name} className="flex items-center gap-3 rounded-2xl border border-line p-3.5">
                 <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-primary" /></div>
                 <div className="flex-1"><p className="text-[13.5px] font-semibold text-fg">{eq.name}</p><p className="text-[11.5px] text-subtext">{eq.model}</p></div>
-                <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full ${eq.status === "Good" ? "bg-[#6ED3AA1F] text-[#6ED3AA]" : "bg-[#EEB06E1F] text-[#EEB06E]"}`}>{eq.status}</span>
+                <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full ${eq.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>{eq.status}</span>
                 <ChevronRight size={14} className="text-subtext" />
               </div>
             );

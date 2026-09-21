@@ -72,15 +72,15 @@ export default function XRayPage() {
                 <polygon points={r.points} fill="#55D6C70A" stroke="#55D6C766" strokeWidth={1.5} />
                 <text x={cx} y={cy} textAnchor="middle" fontSize={13} fill="#F4F8FA99" fontWeight={600}>{r.name}</text>
                 <circle cx={pts[1][0] - 12} cy={pts[0][1] + 8} r={11} fill="#55D6C7" />
-                <text x={pts[1][0] - 12} y={pts[0][1] + 12} textAnchor="middle" fontSize={10} fontWeight={700} fill="#04100F">{r.count}</text>
+                <text x={pts[1][0] - 12} y={pts[0][1] + 12} textAnchor="middle" fontSize={10} fontWeight={700} fill="var(--primary-fg)">{r.count}</text>
               </g>
             );
           })}
         </svg>
 
         <div className="absolute bottom-4 left-4 flex items-center gap-4 text-[11px] text-subtext">
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#6ED3AA]" /> Online</span>
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#ED917C]" /> Attention</span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[var(--ok-fg)]" /> Online</span>
+          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[var(--attention-fg)]" /> Attention</span>
           <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary" /> Equipment record</span>
         </div>
       </div>

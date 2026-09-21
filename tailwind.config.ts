@@ -5,15 +5,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: "#071017",
-        card: "#0C1821",
-        surface: "#101E28",
-        popover: "#101E28",
-        fg: "#F4F8FA",
-        subtext: "#8EA4AE",
-        line: "#FFFFFF1A",
-        primary: "#55D6C7",
-        "primary-fg": "#04100F",
+        bg: "var(--bg)",
+        card: "var(--card)",
+        surface: "var(--surface)",
+        popover: "var(--surface)",
+        fg: "var(--fg)",
+        subtext: "var(--subtext)",
+        line: "var(--line)",
+        primary: "var(--primary)",
+        "primary-fg": "var(--primary-fg)",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],

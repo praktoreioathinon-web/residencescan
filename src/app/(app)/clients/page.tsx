@@ -232,7 +232,7 @@ function ClientFormModal({
           <select value={clientPlan} onChange={(e) => setClientPlan(e.target.value as Plan)} className="rounded-lg border border-line px-3.5 py-2.5 text-[13px]">
             {PLANS.map((p) => <option key={p} value={p}>{p} plan</option>)}
           </select>
-          {error && <p className="text-[12px] text-[#ED917C]">{error}</p>}
+          {error && <p className="text-[12px] text-[var(--attention-fg)]">{error}</p>}
           <button type="submit" className="mt-1 bg-primary text-primary-fg text-[13px] font-semibold rounded-full py-2.5">{title === "New client" ? "Create client" : "Save changes"}</button>
         </div>
       </form>

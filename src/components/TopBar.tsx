@@ -1,4 +1,5 @@
 import { Search, Bell, Zap } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 export default function TopBar() {
   return (
@@ -27,9 +28,10 @@ export default function TopBar() {
 
       <div className="relative w-8 h-8 rounded-full border border-line flex items-center justify-center flex-shrink-0">
         <Bell size={14} className="text-subtext" />
-        <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[#ED917C]" />
+        <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[var(--attention-fg)]" />
       </div>
       <div className="w-8 h-8 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center flex-shrink-0">SC</div>
+      <ThemeToggle />
     </div>
   );
 }

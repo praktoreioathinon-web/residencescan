@@ -7,7 +7,7 @@ import { useStore } from "@/lib/store";
 import PropertyPicker from "@/components/PropertyPicker";
 
 const ICON_BY_INDEX = [Home, BedDouble, ChefHat, Waves, Cog, Building2];
-const TINT_BY_INDEX = ["#2F5FE014", "#B39DDB14", "#EEB06E14", "#55D6C714", "#6ED3AA14", "#B39DDB14"];
+const TINT_BY_INDEX = ["#2F5FE014", "#B39DDB14", "var(--warn-bg)", "var(--primary-wash)", "var(--ok-bg)", "#B39DDB14"];
 
 const TABS = ["All Rooms", "Indoor", "Outdoor", "Technical"] as const;
 
@@ -91,9 +91,9 @@ export default function RoomsPage() {
               <div className="flex items-start justify-between mb-6">
                 <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center"><Icon size={16} className="text-fg" /></div>
                 {r.badge === "current" ? (
-                  <span className="flex items-center gap-1 text-[10px] font-semibold bg-[#6ED3AA1F] text-[#6ED3AA] px-2 py-0.5 rounded-full"><CheckCircle2 size={10} /> Current</span>
+                  <span className="flex items-center gap-1 text-[10px] font-semibold bg-[var(--ok-bg)] text-[var(--ok-fg)] px-2 py-0.5 rounded-full"><CheckCircle2 size={10} /> Current</span>
                 ) : (
-                  <span className="flex items-center gap-1 text-[10px] font-semibold bg-[#EEB06E1F] text-[#EEB06E] px-2 py-0.5 rounded-full"><AlertTriangle size={10} /> {r.badgeCount} attention</span>
+                  <span className="flex items-center gap-1 text-[10px] font-semibold bg-[var(--warn-bg)] text-[var(--warn-fg)] px-2 py-0.5 rounded-full"><AlertTriangle size={10} /> {r.badgeCount} attention</span>
                 )}
               </div>
               <p className="text-[14px] font-bold text-fg">{r.name}</p>

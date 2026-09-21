@@ -30,14 +30,14 @@ export default function PropertyPicker({ properties, onSelect }: { properties: P
             ? { backgroundImage: `linear-gradient(to top, rgba(7,16,23,0.85), rgba(7,16,23,0.15)), url(${p.photoUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
             : { background: "linear-gradient(135deg, #14242E, #0C1821)" }}>
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-[11px] bg-black/40 backdrop-blur px-2.5 py-1 rounded-full">
+            <span className="flex items-center gap-1.5 text-[11px] text-white bg-black/40 backdrop-blur px-2.5 py-1 rounded-full">
               <ShieldCheck size={12} className="text-primary" /> Professionally recorded
             </span>
-            <span className="text-[11px] bg-black/40 px-2.5 py-1 rounded-full">Updated {p.updated}</span>
+            <span className="text-[11px] text-white bg-black/40 px-2.5 py-1 rounded-full">Updated {p.updated}</span>
           </div>
           <div>
-            <p className="text-[12px] text-subtext">{p.location}</p>
-            <p className="text-xl font-bold text-fg mt-0.5">{p.name}</p>
+            <p className="text-[12px] text-white/60">{p.location}</p>
+            <p className="text-xl font-bold text-white mt-0.5">{p.name}</p>
             <button onClick={() => onSelect(p.id)} className="flex items-center gap-1.5 mt-2 bg-primary text-primary-fg text-[11.5px] font-semibold px-3 py-1.5 rounded-full">
               <ImageIcon size={13} /> View property <ChevronRight size={12} />
             </button>

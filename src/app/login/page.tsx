@@ -49,7 +49,7 @@ export default function LoginPage() {
             type="password" required placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
             className="rounded-lg border border-line px-3.5 py-2.5 text-[13.5px] outline-none focus:border-primary/50"
           />
-          {error && <p className="text-[12px] text-[#ED917C]">{error}</p>}
+          {error && <p className="text-[12px] text-[var(--attention-fg)]">{error}</p>}
           <button type="submit" className="mt-2 bg-primary text-primary-fg text-[13.5px] font-semibold rounded-full py-2.5">
             Sign in
           </button>

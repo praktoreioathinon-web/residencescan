@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { ACCOUNTS, SEED_PROPERTIES, SEED_CLIENTS, SEED_SUPPLIERS, Property, ClientRecord, Supplier, Plan, Role } from "./data";
+import { ACCOUNTS, SEED_PROPERTIES, SEED_CLIENTS, SEED_SUPPLIERS, SEED_VERSION, Property, ClientRecord, Supplier, Plan, Role } from "./data";
 
 export type Session = { email: string; role: Role; name: string };
 
@@ -38,6 +38,22 @@ const LS_PROPERTIES = "rs_properties";
 const LS_CLIENTS = "rs_clients";
 const LS_SUPPLIERS = "rs_suppliers";
 const LS_SELECTED = "rs_selected";
+const LS_SEED_VERSION = "rs_seed_version";
+
+// Brings a browser's cached properties up to date with newer seed data (e.g. added
+// photos) without discarding anything the user changed locally: any field the user
+// customized (photo upload, client assignment, etc.) is kept as-is, seed-only fields
+// are filled in when missing, and properties the user added themselves pass through.
+function mergeSeedProperties(cached: Property[]): Property[] {
+  const byId = new Map(cached.map((p) => [p.id, p]));
+  const merged = SEED_PROPERTIES.map((seed) => {
+    const existing = byId.get(seed.id);
+    if (!existing) return seed;
+    byId.delete(seed.id);
+    return { ...seed, ...existing, photoUrl: existing.photoUrl ?? seed.photoUrl };
+  });
+  return [...merged, ...Array.from(byId.values())];
+}
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -52,8 +68,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try {
       const s = localStorage.getItem(LS_SESSION);
       if (s) setSession(JSON.parse(s));
+
+      const storedVersion = Number(localStorage.getItem(LS_SEED_VERSION) ?? "0");
+      const isStale = storedVersion < SEED_VERSION;
+
       const p = localStorage.getItem(LS_PROPERTIES);
-      if (p) setProperties(JSON.parse(p));
+      if (p) {
+        const cached = JSON.parse(p) as Property[];
+        const next = isStale ? mergeSeedProperties(cached) : cached;
+        setProperties(next);
+        if (isStale) localStorage.setItem(LS_PROPERTIES, JSON.stringify(next));
+      }
+      if (isStale) localStorage.setItem(LS_SEED_VERSION, String(SEED_VERSION));
+
       const c = localStorage.getItem(LS_CLIENTS);
       if (c) setClients(JSON.parse(c));
       const sup = localStorage.getItem(LS_SUPPLIERS);

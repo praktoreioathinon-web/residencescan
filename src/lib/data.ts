@@ -1,3 +1,7 @@
+// Bump this whenever SEED_PROPERTIES/SEED_CLIENTS/SEED_SUPPLIERS change in a way
+// that should reach browsers with older cached data (e.g. new seed photos).
+export const SEED_VERSION = 2;
+
 export type Role = "admin" | "client" | "support";
 
 export type Account = { email: string; password: string; role: Role; name: string };

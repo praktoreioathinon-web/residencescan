@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Grid2x2, Cog, Waves, Store, Camera, Scan, ChevronRight, ImageIcon, ShieldCheck, AlertTriangle, CheckCircle2, Building2, Users, MapPin } from "lucide-react";
 import { maintenanceItems, Property, ClientRecord } from "@/lib/data";
 import { useStore } from "@/lib/store";
@@ -53,6 +54,7 @@ function Bar({ label, value, max, pctLabel }: { label: string; value?: number; m
 }
 
 export default function OverviewPage() {
+  const router = useRouter();
   const { session, properties, clients, selectedClientEmail, selectedPropertyId, setSelectedClientEmail, setSelectedPropertyId, selectClientAndProperty, setPropertyPhoto } = useStore();
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>, propertyId: string) {
@@ -140,9 +142,10 @@ export default function OverviewPage() {
         </div>
       </div>
       {myProperties.length > 1 && (
-        <Link href="/rooms" className="text-[11.5px] text-primary font-semibold flex items-center justify-center gap-1 mt-2.5">
+        <button onClick={() => { setSelectedPropertyId(null); router.push("/rooms"); }}
+          className="w-full text-[11.5px] text-primary font-semibold flex items-center justify-center gap-1 mt-2.5">
           Switch property <ChevronRight size={11} />
-        </Link>
+        </button>
       )}
 
       <div className="rounded-2xl border border-line p-5 mt-5 flex items-center justify-between flex-wrap gap-4">

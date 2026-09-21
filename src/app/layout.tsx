@@ -11,7 +11,8 @@ const themeInitScript = `
 (function () {
   try {
     var theme = localStorage.getItem("rs_theme");
-    if (theme === "light") document.documentElement.setAttribute("data-theme", "light");
+    var isLight = theme === "light" || (!theme && window.matchMedia("(prefers-color-scheme: light)").matches);
+    if (isLight) document.documentElement.setAttribute("data-theme", "light");
   } catch (e) {}
 })();
 `;

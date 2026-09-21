@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, useSearchParams } from "next/navigation";
 import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { EquipmentItem } from "@/lib/data";
@@ -10,11 +10,22 @@ import { EquipmentItem } from "@/lib/data";
 const EQUIP_ICONS = [Sparkles, Fan, Sun];
 
 export default function RoomDetailPage({ params }: { params: { id: string } }) {
+  const searchParams = useSearchParams();
   const { properties, selectedPropertyId, setEquipmentPhoto } = useStore();
   const property = properties.find((p) => p.id === selectedPropertyId);
   const room = property?.rooms.find((r) => r.id === params.id);
   const [tab, setTab] = useState<"Equipment" | "Documents" | "Maintenance" | "Photos">("Equipment");
   const [selectedEquipment, setSelectedEquipment] = useState<EquipmentItem | null>(null);
+
+  useEffect(() => {
+    const eqName = searchParams.get("eq");
+    if (eqName && room) {
+      const match = room.equipment.find((e) => e.name === eqName);
+      if (match) setSelectedEquipment(match);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, room?.id]);
+
   if (!room) return notFound();
 
   function handleEquipmentPhoto(e: React.ChangeEvent<HTMLInputElement>, equipmentName: string) {

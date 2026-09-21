@@ -8,6 +8,18 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     setLight(document.documentElement.getAttribute("data-theme") === "light");
+
+    // Until the user picks a theme explicitly, keep following the OS setting live
+    // (e.g. macOS switching to Night Shift / dark mode at sunset).
+    const media = window.matchMedia("(prefers-color-scheme: light)");
+    function onSystemChange(e: MediaQueryListEvent) {
+      if (localStorage.getItem("rs_theme")) return;
+      setLight(e.matches);
+      if (e.matches) document.documentElement.setAttribute("data-theme", "light");
+      else document.documentElement.removeAttribute("data-theme");
+    }
+    media.addEventListener("change", onSystemChange);
+    return () => media.removeEventListener("change", onSystemChange);
   }, []);
 
   function toggle() {

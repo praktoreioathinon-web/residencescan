@@ -89,11 +89,16 @@ export default function ClientsPage() {
     return (
       <div className="px-8 py-6 max-w-4xl">
         <button onClick={() => setSelectedClientEmail(null)} className="text-[12.5px] text-subtext mb-3">← All clients</button>
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between mb-1 gap-2">
           <h1 className="text-2xl font-bold text-fg">{activeClient.name}</h1>
-          <button onClick={() => openEditClient(activeClient)} className="flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3 py-1.5 rounded-full text-fg">
-            <Pencil size={12} /> Edit client
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={openAddClient} className="flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3 py-1.5 rounded-full text-fg">
+              <Plus size={12} /> New client
+            </button>
+            <button onClick={() => openEditClient(activeClient)} className="flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3 py-1.5 rounded-full text-fg">
+              <Pencil size={12} /> Edit client
+            </button>
+          </div>
         </div>
         <p className="text-[12.5px] text-subtext mb-5">{activeClientProperties.length} {activeClientProperties.length === 1 ? "property" : "properties"} · {activeClient.email} · {activeClient.plan} plan</p>
         <PropertyPicker
@@ -102,10 +107,11 @@ export default function ClientsPage() {
         />
         {showClientForm && (
           <ClientFormModal
-            title="Edit client" clientName={clientName} setClientName={setClientName}
-            clientEmail={clientEmail} setClientEmail={setClientEmail} emailLocked
+            title={editingClient ? "Edit client" : "New client"}
+            clientName={clientName} setClientName={setClientName}
+            clientEmail={clientEmail} setClientEmail={setClientEmail} emailLocked={!!editingClient}
             clientPlan={clientPlan} setClientPlan={setClientPlan} error={clientError}
-            onSubmit={submitClient} onClose={() => setEditingClient(null)}
+            onSubmit={submitClient} onClose={() => { setShowAddClient(false); setEditingClient(null); }}
           />
         )}
       </div>

@@ -234,7 +234,11 @@ function AllPropertiesOverview({
         {properties.map((p) => (
           <button key={p.id} onClick={() => onOpen(p)} className="rounded-2xl border border-line p-4 text-left hover:border-primary/40">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center"><MapPin size={16} className="text-primary" /></div>
+              {p.photoUrl ? (
+                <div className="w-9 h-9 rounded-lg bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url(${p.photoUrl})` }} />
+              ) : (
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><MapPin size={16} className="text-primary" /></div>
+              )}
               {p.itemsNeedAttention > 0 ? (
                 <span className="flex items-center gap-1 text-[10px] font-semibold bg-[var(--warn-bg)] text-[var(--warn-fg)] px-2 py-0.5 rounded-full"><AlertTriangle size={10} /> {p.itemsNeedAttention} attention</span>
               ) : (

@@ -18,6 +18,7 @@ type Store = {
   addProperty: (p: { name: string; area: string; location: string }) => Property;
   assignProperty: (propertyId: string, clientEmail: string) => void;
   setPropertyPhoto: (propertyId: string, photoUrl: string) => void;
+  setEquipmentPhoto: (propertyId: string, roomId: string, equipmentName: string, photoUrl: string) => void;
 
   addClient: (c: { name: string; email: string; plan: Plan }) => void;
   updateClient: (email: string, updates: Partial<Omit<ClientRecord, "email">>) => void;
@@ -29,6 +30,7 @@ type Store = {
   setSelectedClientEmail: (email: string | null) => void;
   selectedPropertyId: string | null;
   setSelectedPropertyId: (id: string | null) => void;
+  selectClientAndProperty: (clientEmail: string | null, propertyId: string | null) => void;
 };
 
 const StoreContext = createContext<Store | null>(null);
@@ -50,7 +52,19 @@ function mergeSeedProperties(cached: Property[]): Property[] {
     const existing = byId.get(seed.id);
     if (!existing) return seed;
     byId.delete(seed.id);
-    return { ...seed, ...existing, photoUrl: existing.photoUrl ?? seed.photoUrl };
+    // Room/equipment structure always comes from the current seed (it's reference
+    // data, not user-editable), but any equipment photo the user uploaded is
+    // carried over onto the matching room+equipment if it still exists.
+    const rooms = seed.rooms.map((seedRoom) => {
+      const existingRoom = existing.rooms?.find((r) => r.id === seedRoom.id);
+      if (!existingRoom) return seedRoom;
+      const equipment = seedRoom.equipment.map((seedEq) => {
+        const existingEq = existingRoom.equipment.find((e) => e.name === seedEq.name);
+        return existingEq?.photoUrl ? { ...seedEq, photoUrl: existingEq.photoUrl } : seedEq;
+      });
+      return { ...seedRoom, equipment };
+    });
+    return { ...seed, ...existing, rooms, photoUrl: existing.photoUrl ?? seed.photoUrl };
   });
   return [...merged, ...Array.from(byId.values())];
 }
@@ -157,6 +171,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     persistProperties(properties.map((p) => (p.id === propertyId ? { ...p, photoUrl } : p)));
   }
 
+  function setEquipmentPhoto(propertyId: string, roomId: string, equipmentName: string, photoUrl: string) {
+    persistProperties(properties.map((p) => {
+      if (p.id !== propertyId) return p;
+      return {
+        ...p,
+        rooms: p.rooms.map((r) => {
+          if (r.id !== roomId) return r;
+          return { ...r, equipment: r.equipment.map((e) => (e.name === equipmentName ? { ...e, photoUrl } : e)) };
+        }),
+      };
+    }));
+  }
+
   function addClient(c: { name: string; email: string; plan: Plan }) {
     persistClients([...clients, { name: c.name, email: c.email.trim().toLowerCase(), plan: c.plan }]);
   }
@@ -185,16 +212,27 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     persistSelected(selectedClientEmail, id);
   }
 
+  // Sets both together atomically. Calling setSelectedClientEmail then
+  // setSelectedPropertyId back-to-back persists the wrong pair to localStorage,
+  // since the second call reads selectedClientEmail from the still-stale closure
+  // of the current render, not the value the first call just set.
+  function selectClientAndProperty(clientEmail: string | null, propertyId: string | null) {
+    setSelectedClientEmailState(clientEmail);
+    setSelectedPropertyIdState(propertyId);
+    persistSelected(clientEmail, propertyId);
+  }
+
   return (
     <StoreContext.Provider
       value={{
         ready, session, login, logout,
         properties, clients, suppliers,
-        addProperty, assignProperty, setPropertyPhoto,
+        addProperty, assignProperty, setPropertyPhoto, setEquipmentPhoto,
         addClient, updateClient,
         addSupplier, updateSupplier,
         selectedClientEmail, setSelectedClientEmail,
         selectedPropertyId, setSelectedPropertyId,
+        selectClientAndProperty,
       }}
     >
       {children}

@@ -53,7 +53,7 @@ function Bar({ label, value, max, pctLabel }: { label: string; value?: number; m
 }
 
 export default function OverviewPage() {
-  const { session, properties, clients, selectedClientEmail, selectedPropertyId, setSelectedClientEmail, setSelectedPropertyId, setPropertyPhoto } = useStore();
+  const { session, properties, clients, selectedClientEmail, selectedPropertyId, setSelectedClientEmail, setSelectedPropertyId, selectClientAndProperty, setPropertyPhoto } = useStore();
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>, propertyId: string) {
     const file = e.target.files?.[0];
@@ -80,7 +80,7 @@ export default function OverviewPage() {
       return (
         <AllPropertiesOverview
           properties={properties} clients={clients}
-          onOpen={(p) => { setSelectedClientEmail(p.clientEmail); setSelectedPropertyId(p.id); }}
+          onOpen={(p) => selectClientAndProperty(p.clientEmail, p.id)}
         />
       );
     }
@@ -110,7 +110,15 @@ export default function OverviewPage() {
         <p className="text-[10px] tracking-widest text-subtext font-semibold">{myProperties.length > 1 ? `${myProperties.length} PROPERTIES` : "MY RESIDENCE"}</p>
         {myProperties.length > 1 && <span className="text-[11px] text-subtext">{index + 1} / {myProperties.length}</span>}
       </div>
-      <h1 className="text-2xl font-bold text-fg mb-4">{property.name}</h1>
+      <div className="flex items-center justify-between mb-4 gap-3">
+        <h1 className="text-2xl font-bold text-fg">{property.name}</h1>
+        {(session?.role === "admin" || session?.role === "support") && (
+          <button onClick={() => setSelectedClientEmail(null)}
+            className="flex-shrink-0 flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3.5 py-1.5 rounded-full text-fg hover:border-primary/40">
+            <Building2 size={13} /> All properties
+          </button>
+        )}
+      </div>
 
       <div className="rounded-2xl overflow-hidden border border-line relative h-64 flex flex-col justify-between p-4"
         style={property.photoUrl
@@ -232,22 +240,24 @@ function AllPropertiesOverview({
 
       <div className="grid grid-cols-2 gap-3">
         {properties.map((p) => (
-          <button key={p.id} onClick={() => onOpen(p)} className="rounded-2xl border border-line p-4 text-left hover:border-primary/40">
-            <div className="flex items-center justify-between mb-3">
-              {p.photoUrl ? (
-                <div className="w-9 h-9 rounded-lg bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url(${p.photoUrl})` }} />
-              ) : (
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><MapPin size={16} className="text-primary" /></div>
-              )}
+          <button key={p.id} onClick={() => onOpen(p)}
+            className="relative rounded-2xl overflow-hidden border border-line h-40 flex flex-col justify-between p-4 text-left hover:border-primary/40"
+            style={p.photoUrl
+              ? { backgroundImage: `linear-gradient(to top, rgba(7,16,23,0.85), rgba(7,16,23,0.15)), url(${p.photoUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
+              : { background: "linear-gradient(135deg, #14242E, #0C1821)" }}>
+            <div className="flex items-center justify-between">
+              <div className="w-9 h-9 rounded-lg bg-black/40 backdrop-blur flex items-center justify-center flex-shrink-0"><MapPin size={16} className="text-primary" /></div>
               {p.itemsNeedAttention > 0 ? (
-                <span className="flex items-center gap-1 text-[10px] font-semibold bg-[var(--warn-bg)] text-[var(--warn-fg)] px-2 py-0.5 rounded-full"><AlertTriangle size={10} /> {p.itemsNeedAttention} attention</span>
+                <span className="flex items-center gap-1 text-[10px] font-semibold text-white bg-black/40 backdrop-blur px-2 py-0.5 rounded-full"><AlertTriangle size={10} /> {p.itemsNeedAttention} attention</span>
               ) : (
-                <span className="flex items-center gap-1 text-[10px] font-semibold bg-[var(--ok-bg)] text-[var(--ok-fg)] px-2 py-0.5 rounded-full"><CheckCircle2 size={10} /> Current</span>
+                <span className="flex items-center gap-1 text-[10px] font-semibold text-white bg-black/40 backdrop-blur px-2 py-0.5 rounded-full"><CheckCircle2 size={10} /> Current</span>
               )}
             </div>
-            <p className="text-[14px] font-bold text-fg">{p.name}</p>
-            <p className="text-[11px] text-subtext mt-0.5">{p.area} · {clientName(p.clientEmail)}</p>
-            <p className="text-[11px] text-primary font-semibold mt-2">{p.health}% health</p>
+            <div>
+              <p className="text-[15px] font-bold text-white">{p.name}</p>
+              <p className="text-[11px] text-white/70 mt-0.5">{p.area} · {clientName(p.clientEmail)}</p>
+              <p className="text-[11px] text-primary font-semibold mt-1.5">{p.health}% health</p>
+            </div>
           </button>
         ))}
       </div>

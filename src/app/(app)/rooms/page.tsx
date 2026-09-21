@@ -2,12 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, CheckCircle2, AlertTriangle, BedDouble, Home, ChefHat, Waves, Cog, Building2, ArrowLeftRight } from "lucide-react";
+import { Plus, CheckCircle2, AlertTriangle, BedDouble, Home, ChefHat, Waves, Cog, Building2, ArrowLeftRight, Martini, Trees, Flame, Zap } from "lucide-react";
 import { useStore } from "@/lib/store";
 import PropertyPicker from "@/components/PropertyPicker";
 
-const ICON_BY_INDEX = [Home, BedDouble, ChefHat, Waves, Cog, Building2];
+const ICON_BY_NAME: [string, typeof Home][] = [
+  ["Living Room", Home], ["Bedroom", BedDouble], ["Kitchen", ChefHat], ["Guest House", Building2],
+  ["Pool Bar", Martini], ["Pool", Waves], ["Garden", Trees],
+  ["Boiler", Flame], ["Electrical", Zap],
+];
 const TINT_BY_INDEX = ["#2F5FE014", "#B39DDB14", "var(--warn-bg)", "var(--primary-wash)", "var(--ok-bg)", "#B39DDB14"];
+
+function roomIcon(name: string) {
+  return ICON_BY_NAME.find(([key]) => name.includes(key))?.[1] ?? Cog;
+}
 
 const TABS = ["All Rooms", "Indoor", "Outdoor", "Technical"] as const;
 
@@ -84,7 +92,7 @@ export default function RoomsPage() {
 
       <div className="grid grid-cols-3 gap-3">
         {filtered.map((r, i) => {
-          const Icon = ICON_BY_INDEX[i % ICON_BY_INDEX.length];
+          const Icon = roomIcon(r.name);
           return (
             <Link key={r.id} href={`/rooms/${r.id}`} className="rounded-2xl border border-line p-4 block"
               style={{ background: `linear-gradient(160deg, ${TINT_BY_INDEX[i % TINT_BY_INDEX.length]}, transparent)` }}>

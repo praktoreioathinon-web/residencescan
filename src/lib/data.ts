@@ -1,6 +1,6 @@
 // Bump this whenever SEED_PROPERTIES/SEED_CLIENTS/SEED_SUPPLIERS change in a way
 // that should reach browsers with older cached data (e.g. new seed photos).
-export const SEED_VERSION = 2;
+export const SEED_VERSION = 3;
 
 export type Role = "admin" | "client" | "support";
 
@@ -12,7 +12,7 @@ export const ACCOUNTS: Account[] = [
   { email: "support@residencescan.com", password: "support123", role: "support", name: "Support Team" },
 ];
 
-export type EquipmentItem = { name: string; model: string; status: "Good" | "Due soon" };
+export type EquipmentItem = { name: string; model: string; status: "Good" | "Due soon"; photoUrl?: string };
 
 export type Room = {
   id: string;
@@ -30,10 +30,11 @@ export type Room = {
 };
 
 function makeRooms(prefix: string): Room[] {
-  return [
+  const rooms: Omit<Room, "number">[] = [
+    // Indoor
     {
-      id: `${prefix}-living-room`, number: "01", name: "Living Room", category: "Indoor",
-      subtitle: "Main residence · Ground floor", equipmentCount: 12, documentsCount: 8, maintenanceCount: 4, photosCount: 18,
+      id: `${prefix}-living-room`, name: "Living Room", category: "Indoor",
+      subtitle: "Main residence · Ground floor", equipmentCount: 3, documentsCount: 8, maintenanceCount: 4, photosCount: 18,
       badge: "attention", badgeCount: 1,
       equipment: [
         { name: "Samsung Frame TV", model: "QE65LS03B · Installed 2024", status: "Good" },
@@ -42,8 +43,8 @@ function makeRooms(prefix: string): Room[] {
       ],
     },
     {
-      id: `${prefix}-main-bedroom`, number: "02", name: "Main Bedroom", category: "Indoor",
-      subtitle: "Main residence · First floor", equipmentCount: 9, documentsCount: 5, maintenanceCount: 2, photosCount: 11,
+      id: `${prefix}-bedroom-1`, name: "Bedroom 1", category: "Indoor",
+      subtitle: "Main residence · First floor", equipmentCount: 2, documentsCount: 5, maintenanceCount: 2, photosCount: 11,
       badge: "current",
       equipment: [
         { name: "Mitsubishi A/C", model: "MSZ-LN35 · Installed 2023", status: "Good" },
@@ -51,8 +52,17 @@ function makeRooms(prefix: string): Room[] {
       ],
     },
     {
-      id: `${prefix}-kitchen`, number: "03", name: "Kitchen", category: "Indoor",
-      subtitle: "Main residence · Ground floor", equipmentCount: 14, documentsCount: 6, maintenanceCount: 5, photosCount: 9,
+      id: `${prefix}-bedroom-2`, name: "Bedroom 2", category: "Indoor",
+      subtitle: "Main residence · First floor", equipmentCount: 2, documentsCount: 3, maintenanceCount: 1, photosCount: 9,
+      badge: "current",
+      equipment: [
+        { name: "Daikin A/C", model: "FTXS25 · Installed 2023", status: "Good" },
+        { name: "Smart Blinds", model: "Somfy io · Installed 2024", status: "Good" },
+      ],
+    },
+    {
+      id: `${prefix}-kitchen`, name: "Kitchen", category: "Indoor",
+      subtitle: "Main residence · Ground floor", equipmentCount: 2, documentsCount: 6, maintenanceCount: 5, photosCount: 9,
       badge: "attention", badgeCount: 1,
       equipment: [
         { name: "Miele Oven", model: "H7264BP · Installed 2022", status: "Good" },
@@ -60,8 +70,18 @@ function makeRooms(prefix: string): Room[] {
       ],
     },
     {
-      id: `${prefix}-pool-area`, number: "04", name: "Pool Area", category: "Outdoor",
-      subtitle: "Outdoor · Poolside", equipmentCount: 11, documentsCount: 4, maintenanceCount: 6, photosCount: 22,
+      id: `${prefix}-guest-house`, name: "Guest House", category: "Indoor",
+      subtitle: "Secondary building", equipmentCount: 2, documentsCount: 3, maintenanceCount: 2, photosCount: 14,
+      badge: "current",
+      equipment: [
+        { name: "LG A/C", model: "S12ET · Installed 2024", status: "Good" },
+        { name: "Water Heater", model: "Ariston 80L · Installed 2023", status: "Good" },
+      ],
+    },
+    // Outdoor
+    {
+      id: `${prefix}-pool-area`, name: "Pool Area", category: "Outdoor",
+      subtitle: "Outdoor · Poolside", equipmentCount: 2, documentsCount: 4, maintenanceCount: 6, photosCount: 22,
       badge: "current",
       equipment: [
         { name: "Pool Heat Pump", model: "Zodiac Z300 · Installed 2023", status: "Good" },
@@ -69,8 +89,27 @@ function makeRooms(prefix: string): Room[] {
       ],
     },
     {
-      id: `${prefix}-pump-room`, number: "05", name: "Pump Room", category: "Technical",
-      subtitle: "Technical room · Basement", equipmentCount: 18, documentsCount: 10, maintenanceCount: 7, photosCount: 6,
+      id: `${prefix}-pool-bar`, name: "Pool Bar", category: "Outdoor",
+      subtitle: "Outdoor · Poolside", equipmentCount: 2, documentsCount: 2, maintenanceCount: 1, photosCount: 7,
+      badge: "current",
+      equipment: [
+        { name: "Outdoor Fridge", model: "Dometic N30S · Installed 2023", status: "Good" },
+        { name: "Bar Lighting", model: "Somfy io · Installed 2024", status: "Good" },
+      ],
+    },
+    {
+      id: `${prefix}-garden`, name: "Garden", category: "Outdoor",
+      subtitle: "Outdoor · Grounds", equipmentCount: 2, documentsCount: 2, maintenanceCount: 3, photosCount: 10,
+      badge: "attention", badgeCount: 1,
+      equipment: [
+        { name: "Irrigation System", model: "Hunter Pro-C · Service due", status: "Due soon" },
+        { name: "Garden Lighting", model: "Somfy io · Installed 2023", status: "Good" },
+      ],
+    },
+    // Technical
+    {
+      id: `${prefix}-pump-room`, name: "Pump Room", category: "Technical",
+      subtitle: "Technical room · Basement", equipmentCount: 3, documentsCount: 10, maintenanceCount: 7, photosCount: 6,
       badge: "attention", badgeCount: 2,
       equipment: [
         { name: "Pool Filter Pump", model: "Pentair Whisperflo · Inspection due", status: "Due soon" },
@@ -79,15 +118,40 @@ function makeRooms(prefix: string): Room[] {
       ],
     },
     {
-      id: `${prefix}-guest-house`, number: "06", name: "Guest House", category: "Indoor",
-      subtitle: "Secondary building", equipmentCount: 8, documentsCount: 3, maintenanceCount: 2, photosCount: 14,
+      id: `${prefix}-boiler-room`, name: "Boiler Room", category: "Technical",
+      subtitle: "Technical room · Basement", equipmentCount: 2, documentsCount: 5, maintenanceCount: 3, photosCount: 4,
       badge: "current",
       equipment: [
-        { name: "LG A/C", model: "S12ET · Installed 2024", status: "Good" },
-        { name: "Water Heater", model: "Ariston 80L · Installed 2023", status: "Good" },
+        { name: "Gas Boiler", model: "Vaillant ecoTEC · Installed 2022", status: "Good" },
+        { name: "Pressure Tank", model: "Reflex NG25 · Installed 2022", status: "Good" },
+      ],
+    },
+    {
+      id: `${prefix}-electrical-panel-1`, name: "Electrical Panel 1", category: "Technical",
+      subtitle: "Technical · Main distribution", equipmentCount: 1, documentsCount: 4, maintenanceCount: 1, photosCount: 3,
+      badge: "current",
+      equipment: [
+        { name: "Main Distribution Board", model: "Schneider Resi9 · Installed 2022", status: "Good" },
+      ],
+    },
+    {
+      id: `${prefix}-electrical-panel-2`, name: "Electrical Panel 2", category: "Technical",
+      subtitle: "Technical · Pool circuit", equipmentCount: 1, documentsCount: 2, maintenanceCount: 1, photosCount: 2,
+      badge: "current",
+      equipment: [
+        { name: "Pool Equipment Board", model: "Schneider Resi9 · Installed 2023", status: "Good" },
+      ],
+    },
+    {
+      id: `${prefix}-electrical-panel-3`, name: "Electrical Panel 3", category: "Technical",
+      subtitle: "Technical · Guest house circuit", equipmentCount: 1, documentsCount: 2, maintenanceCount: 1, photosCount: 2,
+      badge: "attention", badgeCount: 1,
+      equipment: [
+        { name: "Guest House Board", model: "Schneider Resi9 · Inspection due", status: "Due soon" },
       ],
     },
   ];
+  return rooms.map((r, i) => ({ ...r, number: String(i + 1).padStart(2, "0") }));
 }
 
 export type Property = {

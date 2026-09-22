@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { ACCOUNTS, SEED_PROPERTIES, SEED_CLIENTS, SEED_SUPPLIERS, SEED_VERSION, Property, ClientRecord, Supplier, Plan, Role } from "./data";
+import { ACCOUNTS, SEED_PROPERTIES, SEED_CLIENTS, SEED_SUPPLIERS, SEED_VERSION, Property, ClientRecord, Supplier, Plan, Role, Room } from "./data";
 
 export type Session = { email: string; role: Role; name: string };
 
@@ -16,6 +16,7 @@ type Store = {
   suppliers: Supplier[];
 
   addProperty: (p: { name: string; area: string; location: string }) => Property;
+  addRoom: (propertyId: string, r: { name: string; category: Room["category"] }) => void;
   assignProperty: (propertyId: string, clientEmail: string) => void;
   setPropertyPhoto: (propertyId: string, photoUrl: string) => void;
   setEquipmentPhoto: (propertyId: string, roomId: string, equipmentName: string, photoUrl: string) => void;
@@ -171,6 +172,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return next;
   }
 
+  function addRoom(propertyId: string, r: { name: string; category: Room["category"] }) {
+    persistProperties(properties.map((p) => {
+      if (p.id !== propertyId) return p;
+      const slug = r.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const newRoom: Room = {
+        id: `${p.id}-${slug}-${Math.random().toString(36).slice(2, 6)}`,
+        number: String(p.rooms.length + 1).padStart(2, "0"),
+        name: r.name, category: r.category, subtitle: "Added manually",
+        equipmentCount: 0, documentsCount: 0, maintenanceCount: 0, photosCount: 0,
+        badge: "current", equipment: [],
+      };
+      return { ...p, rooms: [...p.rooms, newRoom] };
+    }));
+  }
+
   function assignProperty(propertyId: string, clientEmail: string) {
     persistProperties(properties.map((p) => (p.id === propertyId ? { ...p, clientEmail } : p)));
   }
@@ -262,7 +278,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       value={{
         ready, session, login, logout,
         properties, clients, suppliers,
-        addProperty, assignProperty, setPropertyPhoto, setEquipmentPhoto,
+        addProperty, addRoom, assignProperty, setPropertyPhoto, setEquipmentPhoto,
         reportEquipmentIssue, clearEquipmentIssue,
         addClient, updateClient,
         addSupplier, updateSupplier,

@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { notFound, useSearchParams } from "next/navigation";
-import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon, Camera, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { EquipmentItem } from "@/lib/data";
+import { compressImageToWebp } from "@/lib/image";
 
 const EQUIP_ICONS = [Sparkles, Fan, Sun];
 const TAB_KEYS = ["Equipment", "Documents", "Maintenance", "Photos"] as const;
@@ -37,14 +38,10 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   function handleEquipmentPhoto(e: React.ChangeEvent<HTMLInputElement>, equipmentName: string) {
     const file = e.target.files?.[0];
     if (!file || !property || !room) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setEquipmentPhoto(property.id, room.id, equipmentName, reader.result);
-        setSelectedEquipment((prev) => (prev && prev.name === equipmentName ? { ...prev, photoUrl: reader.result as string } : prev));
-      }
-    };
-    reader.readAsDataURL(file);
+    compressImageToWebp(file).then((dataUrl) => {
+      setEquipmentPhoto(property.id, room.id, equipmentName, dataUrl);
+      setSelectedEquipment((prev) => (prev && prev.name === equipmentName ? { ...prev, photoUrl: dataUrl } : prev));
+    });
   }
 
   function submitIssue(equipmentName: string) {
@@ -144,10 +141,18 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
               <button onClick={() => setSelectedEquipment(null)} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center">
                 <X size={14} className="text-white" />
               </button>
-              <label className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[11px] font-semibold text-white bg-black/50 px-2.5 py-1.5 rounded-full cursor-pointer">
-                <ImageIcon size={12} /> {selectedEquipment.photoUrl ? "Change photo" : "Add photo"}
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleEquipmentPhoto(e, selectedEquipment.name)} />
-              </label>
+              <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+                <label title={selectedEquipment.photoUrl ? "Change photo" : "Upload photo"}
+                  className="flex items-center gap-1.5 text-[11px] font-semibold text-white bg-black/50 px-2.5 py-1.5 rounded-full cursor-pointer">
+                  <ImageIcon size={12} />
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleEquipmentPhoto(e, selectedEquipment.name)} />
+                </label>
+                <label title="Take photo"
+                  className="flex items-center gap-1.5 text-[11px] font-semibold text-white bg-black/50 px-2.5 py-1.5 rounded-full cursor-pointer">
+                  <Camera size={12} />
+                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handleEquipmentPhoto(e, selectedEquipment.name)} />
+                </label>
+              </div>
             </div>
             <div className="p-5">
               <div className="flex items-center justify-between mb-1">

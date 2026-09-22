@@ -21,11 +21,16 @@ function roomIcon(name: string) {
 
 const TABS = ["All Rooms", "Indoor", "Outdoor", "Technical"] as const;
 
+const CATEGORIES: Room["category"][] = ["Indoor", "Outdoor", "Technical"];
+
 export default function RoomsPage() {
   const router = useRouter();
-  const { session, properties, selectedClientEmail, selectedPropertyId, setSelectedPropertyId } = useStore();
+  const { session, properties, selectedClientEmail, selectedPropertyId, setSelectedPropertyId, addRoom } = useStore();
   const [tab, setTab] = useState<(typeof TABS)[number]>("All Rooms");
   const [statModal, setStatModal] = useState<"equipment" | "attention" | "documents" | null>(null);
+  const [showAddRoom, setShowAddRoom] = useState(false);
+  const [newRoomName, setNewRoomName] = useState("");
+  const [newRoomCategory, setNewRoomCategory] = useState<Room["category"]>("Indoor");
   const canEdit = session?.role !== "client";
 
   const clientEmail = session?.role === "client" ? session.email : selectedClientEmail;
@@ -65,6 +70,15 @@ export default function RoomsPage() {
     router.push(`/rooms/${r.id}${extraQuery ?? ""}`);
   }
 
+  function submitAddRoom(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newRoomName.trim()) return;
+    addRoom(property!.id, { name: newRoomName.trim(), category: newRoomCategory });
+    setShowAddRoom(false);
+    setNewRoomName("");
+    setNewRoomCategory("Indoor");
+  }
+
   return (
     <div className="px-8 py-6 max-w-4xl">
       <div className="flex items-center justify-between mb-5">
@@ -79,7 +93,7 @@ export default function RoomsPage() {
             </button>
           )}
           {canEdit && (
-            <button className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
+            <button onClick={() => setShowAddRoom(true)} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
               <Plus size={14} /> Add room
             </button>
           )}
@@ -167,6 +181,26 @@ export default function RoomsPage() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {showAddRoom && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setShowAddRoom(false)}>
+          <form onSubmit={submitAddRoom} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-bold text-fg text-[15px]">Add room</p>
+              <button type="button" onClick={() => setShowAddRoom(false)}><X size={16} className="text-subtext" /></button>
+            </div>
+            <div className="flex flex-col gap-2.5">
+              <input required autoFocus placeholder="Room name (e.g. Bedroom 3)" value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)}
+                className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
+              <select value={newRoomCategory} onChange={(e) => setNewRoomCategory(e.target.value as Room["category"])}
+                className="rounded-lg border border-line px-3.5 py-2.5 text-[13px]">
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <button type="submit" className="mt-1 bg-primary text-primary-fg text-[13px] font-semibold rounded-full py-2.5">Create room</button>
+            </div>
+          </form>
         </div>
       )}
     </div>

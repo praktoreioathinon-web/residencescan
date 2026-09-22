@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Grid2x2, Cog, Waves, Store, Camera, Scan, ChevronRight, ImageIcon, ShieldCheck, AlertTriangle, CheckCircle2, Building2, Users, MapPin } from "lucide-react";
 import { maintenanceItems, Property, ClientRecord } from "@/lib/data";
 import { useStore } from "@/lib/store";
+import { compressImageToWebp } from "@/lib/image";
 
 const QUICK_ACCESS = [
   { href: "/rooms", label: "All Rooms", sub: "rooms", icon: Grid2x2 },
@@ -60,11 +61,7 @@ export default function OverviewPage() {
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>, propertyId: string) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") setPropertyPhoto(propertyId, reader.result);
-    };
-    reader.readAsDataURL(file);
+    compressImageToWebp(file).then((dataUrl) => setPropertyPhoto(propertyId, dataUrl));
   }
 
   const clientEmail = session?.role === "client" ? session.email : selectedClientEmail;
@@ -135,10 +132,16 @@ export default function OverviewPage() {
         <div>
           <p className="text-[12px] text-white/60">{property.location}</p>
           <p className="text-xl font-bold text-white mt-0.5">{property.name}</p>
-          <label className="flex items-center gap-1.5 mt-2 text-[11.5px] text-white bg-white/10 px-3 py-1.5 rounded-full w-fit cursor-pointer">
-            <ImageIcon size={13} /> {property.photoUrl ? "Change photo" : "Upload photo"}
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoChange(e, property.id)} />
-          </label>
+          <div className="flex items-center gap-2 mt-2">
+            <label className="flex items-center gap-1.5 text-[11.5px] text-white bg-white/10 px-3 py-1.5 rounded-full w-fit cursor-pointer">
+              <ImageIcon size={13} /> {property.photoUrl ? "Change photo" : "Upload photo"}
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoChange(e, property.id)} />
+            </label>
+            <label className="flex items-center gap-1.5 text-[11.5px] text-white bg-white/10 px-3 py-1.5 rounded-full w-fit cursor-pointer">
+              <Camera size={13} /> Take photo
+              <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handlePhotoChange(e, property.id)} />
+            </label>
+          </div>
         </div>
       </div>
       {myProperties.length > 1 && (
@@ -183,27 +186,40 @@ export default function OverviewPage() {
         </div>
         <Link href="/maintenance" className="text-[12px] text-primary font-semibold flex items-center gap-1">View all <ChevronRight size={12} /></Link>
       </div>
-      <div className="rounded-2xl border border-line divide-y divide-line">
-        {maintenanceItems.map((m) => (
-          <div key={m.title} className="flex items-center gap-3 p-3.5">
-            <div className="text-center w-9 flex-shrink-0">
-              <p className="text-[13px] font-bold text-fg leading-none">{m.date}</p>
-              <p className="text-[9px] text-subtext mt-0.5">{m.month}</p>
+      {property.rooms.length === 0 ? (
+        <div className="rounded-2xl border border-line p-6 text-center">
+          <p className="text-[12.5px] text-subtext">No rooms added yet — maintenance will show up here once you add rooms and equipment.</p>
+          <Link href="/rooms" className="inline-block text-[12px] text-primary font-semibold mt-2">Go to Rooms</Link>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-line divide-y divide-line">
+          {maintenanceItems.map((m) => (
+            <div key={m.title} className="flex items-center gap-3 p-3.5">
+              <div className="text-center w-9 flex-shrink-0">
+                <p className="text-[13px] font-bold text-fg leading-none">{m.date}</p>
+                <p className="text-[9px] text-subtext mt-0.5">{m.month}</p>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Camera size={14} className="text-primary" /></div>
+              <div className="flex-1"><p className="text-[13px] font-semibold text-fg">{m.title}</p><p className="text-[11px] text-subtext">{m.subtitle}</p></div>
+              <span className={`text-[10.5px] font-semibold px-2 py-1 rounded-full ${STATUS_STYLE[m.status]}`}>{m.status}</span>
+              <ChevronRight size={14} className="text-subtext" />
             </div>
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Camera size={14} className="text-primary" /></div>
-            <div className="flex-1"><p className="text-[13px] font-semibold text-fg">{m.title}</p><p className="text-[11px] text-subtext">{m.subtitle}</p></div>
-            <span className={`text-[10.5px] font-semibold px-2 py-1 rounded-full ${STATUS_STYLE[m.status]}`}>{m.status}</span>
-            <ChevronRight size={14} className="text-subtext" />
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-3 gap-3 mt-5 mb-8">
         <div className="rounded-2xl border border-line p-4" style={{ background: "linear-gradient(160deg, var(--attention-wash), transparent)" }}>
           <div className="flex items-center gap-1.5 text-[10px] tracking-widest text-[var(--attention-fg)] font-semibold"><AlertTriangle size={11} /> ATTENTION</div>
-          <p className="text-[14px] font-bold text-fg mt-2">{property.itemsNeedAttention} items need review</p>
-          <p className="text-[11px] text-subtext mt-1">Water pre-filter replacement and pump-room pressure check.</p>
-          <Link href="/rooms" className="text-[12px] text-[var(--attention-fg)] font-semibold flex items-center gap-1 mt-2.5">Review now <ChevronRight size={12} /></Link>
+          {property.itemsNeedAttention > 0 ? (
+            <>
+              <p className="text-[14px] font-bold text-fg mt-2">{property.itemsNeedAttention} items need review</p>
+              <p className="text-[11px] text-subtext mt-1">Water pre-filter replacement and pump-room pressure check.</p>
+              <Link href="/rooms" className="text-[12px] text-[var(--attention-fg)] font-semibold flex items-center gap-1 mt-2.5">Review now <ChevronRight size={12} /></Link>
+            </>
+          ) : (
+            <p className="text-[13px] text-subtext mt-2">Nothing needs attention right now.</p>
+          )}
         </div>
         <div className="rounded-2xl border border-line p-4" style={{ background: "linear-gradient(160deg, var(--primary-wash), transparent)" }}>
           <div className="w-9 h-9 rounded-lg border border-line flex items-center justify-center mb-2"><Scan size={16} className="text-primary" /></div>
@@ -214,8 +230,14 @@ export default function OverviewPage() {
         </div>
         <div className="rounded-2xl border border-line p-4">
           <div className="flex items-center gap-1.5 text-[10px] tracking-widest text-subtext font-semibold"><CheckCircle2 size={11} className="text-primary" /> RECENT UPDATE</div>
-          <p className="text-[13.5px] font-bold text-fg mt-2">Pool pump record updated</p>
-          <p className="text-[11px] text-subtext mt-1">Today, 10:24 · by S. Charitopoulos</p>
+          {property.rooms.length > 0 ? (
+            <>
+              <p className="text-[13.5px] font-bold text-fg mt-2">Pool pump record updated</p>
+              <p className="text-[11px] text-subtext mt-1">Today, 10:24 · by S. Charitopoulos</p>
+            </>
+          ) : (
+            <p className="text-[13px] text-subtext mt-2">No activity yet.</p>
+          )}
         </div>
       </div>
     </div>

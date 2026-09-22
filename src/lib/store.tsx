@@ -19,6 +19,8 @@ type Store = {
   assignProperty: (propertyId: string, clientEmail: string) => void;
   setPropertyPhoto: (propertyId: string, photoUrl: string) => void;
   setEquipmentPhoto: (propertyId: string, roomId: string, equipmentName: string, photoUrl: string) => void;
+  reportEquipmentIssue: (propertyId: string, roomId: string, equipmentName: string, note: string) => void;
+  clearEquipmentIssue: (propertyId: string, roomId: string, equipmentName: string) => void;
 
   addClient: (c: { name: string; email: string; plan: Plan }) => void;
   updateClient: (email: string, updates: Partial<Omit<ClientRecord, "email">>) => void;
@@ -60,11 +62,16 @@ function mergeSeedProperties(cached: Property[]): Property[] {
       if (!existingRoom) return seedRoom;
       const equipment = seedRoom.equipment.map((seedEq) => {
         const existingEq = existingRoom.equipment.find((e) => e.name === seedEq.name);
-        return existingEq?.photoUrl ? { ...seedEq, photoUrl: existingEq.photoUrl } : seedEq;
+        if (!existingEq) return seedEq;
+        return {
+          ...seedEq,
+          ...(existingEq.photoUrl ? { photoUrl: existingEq.photoUrl } : {}),
+          ...(existingEq.issueNote ? { issueNote: existingEq.issueNote, issueReportedAt: existingEq.issueReportedAt } : {}),
+        };
       });
       return { ...seedRoom, equipment };
     });
-    return { ...seed, ...existing, rooms, photoUrl: existing.photoUrl ?? seed.photoUrl };
+    return { ...seed, ...existing, rooms, maintenanceLog: seed.maintenanceLog, photoUrl: existing.photoUrl ?? seed.photoUrl };
   });
   return [...merged, ...Array.from(byId.values())];
 }
@@ -158,6 +165,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       health: 100, itemsNeedAttention: 0, systemsOnline: [0, 0], maintenanceCurrent: [0, 0], documentsCompletePct: 0,
       updated: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
       rooms: [],
+      maintenanceLog: [],
     };
     persistProperties([...properties, next]);
     return next;
@@ -179,6 +187,33 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         rooms: p.rooms.map((r) => {
           if (r.id !== roomId) return r;
           return { ...r, equipment: r.equipment.map((e) => (e.name === equipmentName ? { ...e, photoUrl } : e)) };
+        }),
+      };
+    }));
+  }
+
+  function reportEquipmentIssue(propertyId: string, roomId: string, equipmentName: string, note: string) {
+    const reportedAt = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    persistProperties(properties.map((p) => {
+      if (p.id !== propertyId) return p;
+      return {
+        ...p,
+        rooms: p.rooms.map((r) => {
+          if (r.id !== roomId) return r;
+          return { ...r, equipment: r.equipment.map((e) => (e.name === equipmentName ? { ...e, issueNote: note, issueReportedAt: reportedAt } : e)) };
+        }),
+      };
+    }));
+  }
+
+  function clearEquipmentIssue(propertyId: string, roomId: string, equipmentName: string) {
+    persistProperties(properties.map((p) => {
+      if (p.id !== propertyId) return p;
+      return {
+        ...p,
+        rooms: p.rooms.map((r) => {
+          if (r.id !== roomId) return r;
+          return { ...r, equipment: r.equipment.map((e) => (e.name === equipmentName ? { ...e, issueNote: undefined, issueReportedAt: undefined } : e)) };
         }),
       };
     }));
@@ -228,6 +263,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         ready, session, login, logout,
         properties, clients, suppliers,
         addProperty, assignProperty, setPropertyPhoto, setEquipmentPhoto,
+        reportEquipmentIssue, clearEquipmentIssue,
         addClient, updateClient,
         addSupplier, updateSupplier,
         selectedClientEmail, setSelectedClientEmail,

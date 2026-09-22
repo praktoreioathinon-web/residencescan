@@ -14,6 +14,7 @@ const AREA: Record<string, string> = {
 
 export default function MaintenancePage() {
   const { session, properties, selectedClientEmail, selectedPropertyId } = useStore();
+  const canEdit = session?.role !== "client";
   const clientEmail = session?.role === "client" ? session.email : selectedClientEmail;
   const property = properties.find((p) => p.clientEmail === clientEmail && p.id === selectedPropertyId)
     ?? properties.find((p) => p.clientEmail === clientEmail);
@@ -35,9 +36,11 @@ export default function MaintenancePage() {
           <p className="text-[10px] tracking-widest text-subtext font-semibold">{property.name.toUpperCase()}</p>
           <h1 className="text-2xl font-bold text-fg">Maintenance</h1>
         </div>
-        <button className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
-          <Plus size={14} /> Add maintenance
-        </button>
+        {canEdit && (
+          <button className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
+            <Plus size={14} /> Add maintenance
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-3 rounded-2xl border border-line divide-x divide-line mb-6">

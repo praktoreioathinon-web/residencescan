@@ -3,21 +3,27 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { notFound, useSearchParams } from "next/navigation";
-import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon } from "lucide-react";
+import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { EquipmentItem } from "@/lib/data";
 
 const EQUIP_ICONS = [Sparkles, Fan, Sun];
+const TAB_KEYS = ["Equipment", "Documents", "Maintenance", "Photos"] as const;
 
 export default function RoomDetailPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
-  const { properties, selectedPropertyId, setEquipmentPhoto } = useStore();
+  const { session, properties, selectedPropertyId, setEquipmentPhoto, reportEquipmentIssue, clearEquipmentIssue } = useStore();
   const property = properties.find((p) => p.id === selectedPropertyId);
   const room = property?.rooms.find((r) => r.id === params.id);
-  const [tab, setTab] = useState<"Equipment" | "Documents" | "Maintenance" | "Photos">("Equipment");
+  const [tab, setTab] = useState<(typeof TAB_KEYS)[number]>("Equipment");
   const [selectedEquipment, setSelectedEquipment] = useState<EquipmentItem | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportText, setReportText] = useState("");
+  const canEdit = session?.role !== "client";
 
   useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && (TAB_KEYS as readonly string[]).includes(tabParam)) setTab(tabParam as (typeof TAB_KEYS)[number]);
     const eqName = searchParams.get("eq");
     if (eqName && room) {
       const match = room.equipment.find((e) => e.name === eqName);
@@ -41,6 +47,26 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
     reader.readAsDataURL(file);
   }
 
+  function submitIssue(equipmentName: string) {
+    if (!property || !room || !reportText.trim()) return;
+    reportEquipmentIssue(property.id, room.id, equipmentName, reportText.trim());
+    setSelectedEquipment((prev) => (prev && prev.name === equipmentName ? { ...prev, issueNote: reportText.trim(), issueReportedAt: "just now" } : prev));
+    setReportOpen(false);
+    setReportText("");
+  }
+
+  function resolveIssue(equipmentName: string) {
+    if (!property || !room) return;
+    clearEquipmentIssue(property.id, room.id, equipmentName);
+    setSelectedEquipment((prev) => (prev && prev.name === equipmentName ? { ...prev, issueNote: undefined, issueReportedAt: undefined } : prev));
+  }
+
+  function openEquipment(eq: EquipmentItem) {
+    setSelectedEquipment(eq);
+    setReportOpen(false);
+    setReportText("");
+  }
+
   const tabs = [
     { key: "Equipment" as const, count: room.equipmentCount },
     { key: "Documents" as const, count: room.documentsCount },
@@ -58,9 +84,11 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
             <h1 className="text-2xl font-bold text-fg">{room.name}</h1>
           </div>
         </div>
-        <button className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
-          <Plus size={14} /> Add equipment
-        </button>
+        {canEdit && (
+          <button className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
+            <Plus size={14} /> Add equipment
+          </button>
+        )}
       </div>
 
       <div className="rounded-2xl border border-line p-6 mb-5" style={{ background: "linear-gradient(160deg, var(--primary-wash), transparent)" }}>
@@ -85,7 +113,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
           {room.equipment.map((eq, i) => {
             const Icon = EQUIP_ICONS[i % EQUIP_ICONS.length];
             return (
-              <button key={eq.name} onClick={() => setSelectedEquipment(eq)}
+              <button key={eq.name} onClick={() => openEquipment(eq)}
                 className="flex items-center gap-3 rounded-2xl border border-line p-3.5 text-left hover:border-primary/40">
                 {eq.photoUrl ? (
                   <div className="w-9 h-9 rounded-lg bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url(${eq.photoUrl})` }} />
@@ -93,7 +121,9 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
                   <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-primary" /></div>
                 )}
                 <div className="flex-1"><p className="text-[13.5px] font-semibold text-fg">{eq.name}</p><p className="text-[11.5px] text-subtext">{eq.model}</p></div>
-                <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full ${eq.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>{eq.status}</span>
+                <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full ${eq.issueNote ? "bg-[var(--attention-wash)] text-[var(--attention-fg)]" : eq.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>
+                  {eq.issueNote ? "Issue reported" : eq.status}
+                </span>
                 <ChevronRight size={14} className="text-subtext" />
               </button>
             );
@@ -122,13 +152,46 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
             <div className="p-5">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-[15px] font-bold text-fg">{selectedEquipment.name}</p>
-                <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full ${selectedEquipment.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>{selectedEquipment.status}</span>
+                <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full ${selectedEquipment.issueNote ? "bg-[var(--attention-wash)] text-[var(--attention-fg)]" : selectedEquipment.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>
+                  {selectedEquipment.issueNote ? "Issue reported" : selectedEquipment.status}
+                </span>
               </div>
               <p className="text-[12.5px] text-subtext mb-4">{selectedEquipment.model}</p>
-              <div className="rounded-xl border border-line divide-y divide-line text-[12.5px]">
+              <div className="rounded-xl border border-line divide-y divide-line text-[12.5px] mb-4">
                 <div className="flex items-center justify-between p-3"><span className="text-subtext">Room</span><span className="text-fg font-semibold">{room.name}</span></div>
                 <div className="flex items-center justify-between p-3"><span className="text-subtext">Property</span><span className="text-fg font-semibold">{property?.name}</span></div>
               </div>
+
+              {selectedEquipment.issueNote ? (
+                <div className="rounded-xl p-3.5" style={{ background: "var(--attention-wash)" }}>
+                  <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--attention-fg)]"><AlertTriangle size={12} /> Reported {selectedEquipment.issueReportedAt}</p>
+                  <p className="text-[12.5px] text-fg mt-1.5">{selectedEquipment.issueNote}</p>
+                  {canEdit && (
+                    <button onClick={() => resolveIssue(selectedEquipment.name)}
+                      className="flex items-center gap-1.5 text-[12px] text-[var(--ok-fg)] font-semibold mt-2.5">
+                      <CheckCircle2 size={13} /> Mark resolved
+                    </button>
+                  )}
+                </div>
+              ) : !canEdit && (
+                reportOpen ? (
+                  <div className="rounded-xl border border-line p-3.5">
+                    <textarea autoFocus value={reportText} onChange={(e) => setReportText(e.target.value)}
+                      placeholder="Describe the issue (e.g. not turning on, making noise)…"
+                      className="w-full rounded-lg border border-line px-3 py-2 text-[12.5px] outline-none focus:border-primary/50" style={{ height: 70 }} />
+                    <div className="flex items-center gap-2 mt-2">
+                      <button onClick={() => submitIssue(selectedEquipment.name)} disabled={!reportText.trim()}
+                        className="bg-primary text-primary-fg text-[12px] font-semibold px-3.5 py-2 rounded-full disabled:opacity-40">Submit report</button>
+                      <button onClick={() => { setReportOpen(false); setReportText(""); }} className="text-[12px] text-subtext px-2">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => setReportOpen(true)}
+                    className="w-full flex items-center justify-center gap-1.5 border border-dashed border-line rounded-xl py-2.5 text-[12.5px] text-[var(--attention-fg)] font-semibold">
+                    <AlertTriangle size={13} /> Report an issue
+                  </button>
+                )
+              )}
             </div>
           </div>
         </div>

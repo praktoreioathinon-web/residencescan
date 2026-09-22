@@ -1,6 +1,6 @@
 // Bump this whenever SEED_PROPERTIES/SEED_CLIENTS/SEED_SUPPLIERS change in a way
 // that should reach browsers with older cached data (e.g. new seed photos).
-export const SEED_VERSION = 3;
+export const SEED_VERSION = 4;
 
 export type Role = "admin" | "client" | "support";
 
@@ -12,7 +12,10 @@ export const ACCOUNTS: Account[] = [
   { email: "support@residencescan.com", password: "support123", role: "support", name: "Support Team" },
 ];
 
-export type EquipmentItem = { name: string; model: string; status: "Good" | "Due soon"; photoUrl?: string };
+export type EquipmentItem = {
+  name: string; model: string; status: "Good" | "Due soon"; photoUrl?: string;
+  issueNote?: string; issueReportedAt?: string;
+};
 
 export type Room = {
   id: string;
@@ -154,6 +157,26 @@ function makeRooms(prefix: string): Room[] {
   return rooms.map((r, i) => ({ ...r, number: String(i + 1).padStart(2, "0") }));
 }
 
+export type MaintenanceLogEntry = {
+  id: string;
+  date: string;
+  title: string;
+  room: string;
+  supplier: string;
+  notes: string;
+};
+
+function makeMaintenanceLog(prefix: string): MaintenanceLogEntry[] {
+  return [
+    { id: `${prefix}-log-1`, date: "14 Sep 2026", title: "Pool filter cleaned & inspected", room: "Pool Area", supplier: "Vitalis Pools", notes: "Filter cartridge cleaned, pressure tested, no leaks found." },
+    { id: `${prefix}-log-2`, date: "2 Sep 2026", title: "Daikin A/C annual service", room: "Living Room", supplier: "Daikin Service Mykonos", notes: "Refrigerant levels checked, filters replaced, unit running within spec." },
+    { id: `${prefix}-log-3`, date: "20 Aug 2026", title: "Water pre-filter replaced", room: "Pump Room", supplier: "Sideris Water Systems", notes: "Main supply pre-filter cartridge replaced, water pressure restored to normal." },
+    { id: `${prefix}-log-4`, date: "5 Aug 2026", title: "Electrical panel inspection", room: "Electrical Panel 1", supplier: "Mykonos Electrical Support", notes: "Circuit breakers tested, no faults found, panel labelling updated." },
+    { id: `${prefix}-log-5`, date: "22 Jul 2026", title: "Garden irrigation system check", room: "Garden", supplier: "Vitalis Pools", notes: "Sprinkler heads adjusted, timer reprogrammed for the summer schedule." },
+    { id: `${prefix}-log-6`, date: "10 Jul 2026", title: "Boiler annual service", room: "Boiler Room", supplier: "Sideris Water Systems", notes: "Boiler serviced, pressure tank checked, safety valve tested." },
+  ];
+}
+
 export type Property = {
   id: string;
   name: string;
@@ -168,6 +191,7 @@ export type Property = {
   updated: string;
   rooms: Room[];
   photoUrl?: string;
+  maintenanceLog: MaintenanceLogEntry[];
 };
 
 export const SEED_PROPERTIES: Property[] = [
@@ -176,42 +200,49 @@ export const SEED_PROPERTIES: Property[] = [
     clientEmail: "client@residencescan.com", health: 92, itemsNeedAttention: 2,
     systemsOnline: [24, 26], maintenanceCurrent: [18, 20], documentsCompletePct: 94, updated: "16 Sep 2026",
     rooms: makeRooms("vm"), photoUrl: "/properties/villa-mykonos.png",
+    maintenanceLog: makeMaintenanceLog("vm"),
   },
   {
     id: "villa-fanari", name: "Villa Fanari", area: "Mykonos", location: "Fanari, Mykonos",
     clientEmail: "client@residencescan.com", health: 88, itemsNeedAttention: 1,
     systemsOnline: [19, 20], maintenanceCurrent: [14, 15], documentsCompletePct: 90, updated: "12 Sep 2026",
     rooms: makeRooms("vf"), photoUrl: "/properties/villa-fanari.png",
+    maintenanceLog: makeMaintenanceLog("vf"),
   },
   {
     id: "villa-elia", name: "Villa Elia", area: "Mykonos", location: "Elia, Mykonos",
     clientEmail: "client@residencescan.com", health: 96, itemsNeedAttention: 0,
     systemsOnline: [22, 22], maintenanceCurrent: [16, 16], documentsCompletePct: 100, updated: "18 Sep 2026",
     rooms: makeRooms("ve"), photoUrl: "/properties/villa-elia.png",
+    maintenanceLog: makeMaintenanceLog("ve"),
   },
   {
     id: "penthouse-kolonaki", name: "Penthouse Kolonaki", area: "Athens", location: "Kolonaki, Athens",
     clientEmail: "client@residencescan.com", health: 81, itemsNeedAttention: 3,
     systemsOnline: [17, 20], maintenanceCurrent: [11, 14], documentsCompletePct: 85, updated: "10 Sep 2026",
     rooms: makeRooms("pk"), photoUrl: "/properties/penthouse-kolonaki.png",
+    maintenanceLog: makeMaintenanceLog("pk"),
   },
   {
     id: "riviera-house", name: "Riviera House", area: "Athens", location: "Glyfada, Athens",
     clientEmail: "client@residencescan.com", health: 90, itemsNeedAttention: 1,
     systemsOnline: [20, 21], maintenanceCurrent: [15, 16], documentsCompletePct: 92, updated: "14 Sep 2026",
     rooms: makeRooms("rh"), photoUrl: "/properties/riviera-house.png",
+    maintenanceLog: makeMaintenanceLog("rh"),
   },
   {
     id: "villa-paros", name: "Villa Paros", area: "Paros", location: "Naoussa, Paros",
     clientEmail: "nikos@example.com", health: 94, itemsNeedAttention: 0,
     systemsOnline: [18, 18], maintenanceCurrent: [12, 12], documentsCompletePct: 97, updated: "15 Sep 2026",
     rooms: makeRooms("vp"), photoUrl: "/properties/villa-paros.png",
+    maintenanceLog: makeMaintenanceLog("vp"),
   },
   {
     id: "villa-naxos", name: "Villa Naxos", area: "Naxos", location: "Agios Prokopios, Naxos",
     clientEmail: "nikos@example.com", health: 85, itemsNeedAttention: 1,
     systemsOnline: [16, 18], maintenanceCurrent: [10, 12], documentsCompletePct: 88, updated: "9 Sep 2026",
     rooms: makeRooms("vn"), photoUrl: "/properties/villa-naxos.png",
+    maintenanceLog: makeMaintenanceLog("vn"),
   },
 ];
 

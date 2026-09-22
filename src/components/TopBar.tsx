@@ -108,7 +108,7 @@ export default function TopBar() {
   const initials = (session?.name ?? "?").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
   return (
-    <div className="flex items-center gap-4 px-4 md:px-8 py-4 border-b border-line relative">
+    <div className="no-print flex items-center gap-4 px-4 md:px-8 py-4 border-b border-line relative">
       <div className="hidden md:flex w-8 h-8 rounded-lg bg-primary/10 items-center justify-center flex-shrink-0">
         <Zap size={16} className="text-primary" />
       </div>

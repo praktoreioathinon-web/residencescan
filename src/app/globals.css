@@ -72,3 +72,28 @@ input::placeholder {
   background-color: var(--line);
   border-radius: 999px;
 }
+
+@media print {
+  :root, :root[data-theme="light"], :root[data-theme="dark"] {
+    color-scheme: light;
+    --bg: #FFFFFF;
+    --card: #FFFFFF;
+    --surface: #F4F6F8;
+    --fg: #10202E;
+    --subtext: #475569;
+    --line: #D8DEE4;
+    --primary: #0D9488;
+    --primary-fg: #FFFFFF;
+    --primary-wash: #0D948814;
+    --warn-fg: #B45309;
+    --warn-bg: #FDF1E0;
+    --ok-fg: #15803D;
+    --ok-bg: #E3F5EA;
+    --attention-fg: #C2410C;
+    --attention-wash: #C2410C14;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Grid2x2, Scan, Camera, Store, Users, Settings, Plus, ChevronRight, LogOut, Menu, X, Zap } from "lucide-react";
+import { Home, Grid2x2, Scan, Camera, Store, Users, Settings, Plus, ChevronRight, LogOut, Menu, X, Zap, FileText } from "lucide-react";
 import { useStore } from "@/lib/store";
 
 const BASE_NAV = [
@@ -23,6 +23,7 @@ export default function Sidebar() {
   const nav = [
     ...BASE_NAV,
     ...(session?.role === "admin" || session?.role === "support" ? [{ href: "/clients", label: "Clients", icon: Users }] : []),
+    { href: "/reports", label: "Reports", icon: FileText },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
 
@@ -31,7 +32,7 @@ export default function Sidebar() {
   return (
     <>
       {!open && (
-        <div className="md:hidden fixed top-0 inset-x-0 h-14 z-30 bg-bg border-b border-line flex items-center justify-between px-4">
+        <div className="no-print md:hidden fixed top-0 inset-x-0 h-14 z-30 bg-bg border-b border-line flex items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center"><Zap size={14} className="text-primary" /></div>
             <p className="font-bold text-fg text-[13px] leading-none">ResidenceScan</p>
@@ -44,7 +45,7 @@ export default function Sidebar() {
         <div className="md:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setOpen(false)} />
       )}
 
-      <div className={`fixed md:static top-0 left-0 h-screen w-72 md:w-60 z-50 flex-shrink-0 flex flex-col border-r border-line bg-bg px-4 py-6 transition-transform duration-200 md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"} md:sticky md:top-0`}>
+      <div className={`no-print fixed md:static top-0 left-0 h-screen w-72 md:w-60 z-50 flex-shrink-0 flex flex-col border-r border-line bg-bg px-4 py-6 transition-transform duration-200 md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"} md:sticky md:top-0`}>
         <div className="flex items-center justify-between mb-3 md:hidden">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center"><Zap size={14} className="text-primary" /></div>

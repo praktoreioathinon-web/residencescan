@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, CheckCircle2, AlertTriangle, BedDouble, Home, ChefHat, Waves, Cog, Building2, ArrowLeftRight, Martini, Trees, Flame, Zap } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Plus, CheckCircle2, AlertTriangle, BedDouble, Home, ChefHat, Waves, Cog, Building2, ArrowLeftRight, Martini, Trees, Flame, Zap, X, Wrench, FileText } from "lucide-react";
 import { useStore } from "@/lib/store";
 import PropertyPicker from "@/components/PropertyPicker";
+import { Room } from "@/lib/data";
 
 const ICON_BY_NAME: [string, typeof Home][] = [
   ["Living Room", Home], ["Bedroom", BedDouble], ["Kitchen", ChefHat], ["Guest House", Building2],
@@ -20,8 +22,11 @@ function roomIcon(name: string) {
 const TABS = ["All Rooms", "Indoor", "Outdoor", "Technical"] as const;
 
 export default function RoomsPage() {
+  const router = useRouter();
   const { session, properties, selectedClientEmail, selectedPropertyId, setSelectedPropertyId } = useStore();
   const [tab, setTab] = useState<(typeof TABS)[number]>("All Rooms");
+  const [statModal, setStatModal] = useState<"equipment" | "attention" | "documents" | null>(null);
+  const canEdit = session?.role !== "client";
 
   const clientEmail = session?.role === "client" ? session.email : selectedClientEmail;
   const myProperties = properties.filter((p) => p.clientEmail === clientEmail);
@@ -49,9 +54,16 @@ export default function RoomsPage() {
 
   const rooms = property.rooms;
   const filtered = tab === "All Rooms" ? rooms : rooms.filter((r) => r.category === tab);
+  const allEquipment = rooms.flatMap((r) => r.equipment.map((eq) => ({ ...eq, room: r })));
   const totalEquipment = rooms.reduce((s, r) => s + r.equipmentCount, 0);
   const totalDocs = rooms.reduce((s, r) => s + r.documentsCount, 0);
-  const needAttention = rooms.filter((r) => r.badge === "attention").length;
+  const attentionRooms = rooms.filter((r) => r.badge === "attention");
+  const documentRooms = rooms.filter((r) => r.documentsCount > 0);
+
+  function goToRoom(r: Room, extraQuery?: string) {
+    setStatModal(null);
+    router.push(`/rooms/${r.id}${extraQuery ?? ""}`);
+  }
 
   return (
     <div className="px-8 py-6 max-w-4xl">
@@ -66,19 +78,25 @@ export default function RoomsPage() {
               <ArrowLeftRight size={13} /> Switch property
             </button>
           )}
-          <button className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
-            <Plus size={14} /> Add room
-          </button>
+          {canEdit && (
+            <button className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
+              <Plus size={14} /> Add room
+            </button>
+          )}
         </div>
       </div>
 
       <div className="grid grid-cols-4 rounded-2xl border border-line divide-x divide-line mb-5">
-        {[[String(rooms.length), "Rooms"], [String(totalEquipment), "Equipment"], [String(needAttention), "Need attention"], [String(totalDocs), "Documents"]].map(([n, l]) => (
-          <div key={l} className="p-4">
-            <p className="text-xl font-bold text-fg">{n}</p>
-            <p className="text-[11px] text-subtext">{l}</p>
-          </div>
-        ))}
+        <div className="p-4"><p className="text-xl font-bold text-fg">{rooms.length}</p><p className="text-[11px] text-subtext">Rooms</p></div>
+        <button onClick={() => setStatModal("equipment")} className="p-4 text-left hover:bg-white/5">
+          <p className="text-xl font-bold text-fg">{totalEquipment}</p><p className="text-[11px] text-subtext">Equipment</p>
+        </button>
+        <button onClick={() => setStatModal("attention")} className="p-4 text-left hover:bg-white/5">
+          <p className="text-xl font-bold text-fg">{attentionRooms.length}</p><p className="text-[11px] text-subtext">Need attention</p>
+        </button>
+        <button onClick={() => setStatModal("documents")} className="p-4 text-left hover:bg-white/5">
+          <p className="text-xl font-bold text-fg">{totalDocs}</p><p className="text-[11px] text-subtext">Documents</p>
+        </button>
       </div>
 
       <div className="flex items-center gap-5 border-b border-line mb-4">
@@ -110,6 +128,47 @@ export default function RoomsPage() {
           );
         })}
       </div>
+
+      {statModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setStatModal(null)}>
+          <div className="bg-card border border-line rounded-2xl w-full max-w-md max-h-[75vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-line flex-shrink-0">
+              <p className="font-bold text-fg text-[15px]">
+                {statModal === "equipment" ? `All equipment (${allEquipment.length})` : statModal === "attention" ? `Needs attention (${attentionRooms.length})` : `Documents (${totalDocs})`}
+              </p>
+              <button onClick={() => setStatModal(null)}><X size={16} className="text-subtext" /></button>
+            </div>
+            <div className="overflow-y-auto py-2">
+              {statModal === "equipment" && allEquipment.map((eq) => (
+                <button key={`${eq.room.id}-${eq.name}`} onClick={() => goToRoom(eq.room, `?eq=${encodeURIComponent(eq.name)}`)}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-white/5">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Wrench size={14} className="text-primary" /></div>
+                  <div className="flex-1 min-w-0"><p className="text-[12.5px] font-semibold text-fg truncate">{eq.name}</p><p className="text-[11px] text-subtext truncate">{eq.room.name}</p></div>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${eq.issueNote ? "bg-[var(--attention-wash)] text-[var(--attention-fg)]" : eq.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>
+                    {eq.issueNote ? "Issue reported" : eq.status}
+                  </span>
+                </button>
+              ))}
+              {statModal === "attention" && (attentionRooms.length === 0 ? (
+                <p className="text-[12.5px] text-subtext p-4 text-center">Nothing needs attention right now.</p>
+              ) : attentionRooms.map((r) => (
+                <button key={r.id} onClick={() => goToRoom(r)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-white/5">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--warn-bg)] flex items-center justify-center flex-shrink-0"><AlertTriangle size={14} className="text-[var(--warn-fg)]" /></div>
+                  <div className="flex-1 min-w-0"><p className="text-[12.5px] font-semibold text-fg truncate">{r.name}</p><p className="text-[11px] text-subtext truncate">{r.category}</p></div>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--warn-bg)] text-[var(--warn-fg)] flex-shrink-0">{r.badgeCount ?? 1} item{(r.badgeCount ?? 1) > 1 ? "s" : ""}</span>
+                </button>
+              )))}
+              {statModal === "documents" && documentRooms.map((r) => (
+                <button key={r.id} onClick={() => goToRoom(r, "?tab=Documents")} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-white/5">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><FileText size={14} className="text-primary" /></div>
+                  <div className="flex-1 min-w-0"><p className="text-[12.5px] font-semibold text-fg truncate">{r.name}</p><p className="text-[11px] text-subtext truncate">{r.category}</p></div>
+                  <span className="text-[11px] text-subtext flex-shrink-0">{r.documentsCount} doc{r.documentsCount > 1 ? "s" : ""}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -8,7 +8,8 @@ import { Supplier } from "@/lib/data";
 const BLANK = { name: "", category: "", phone: "", email: "", address: "", notes: "" };
 
 export default function SuppliersPage() {
-  const { suppliers, addSupplier, updateSupplier } = useStore();
+  const { session, suppliers, addSupplier, updateSupplier } = useStore();
+  const canEdit = session?.role !== "client";
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [adding, setAdding] = useState(false);
@@ -46,9 +47,11 @@ export default function SuppliersPage() {
     <div className="px-8 py-6 max-w-4xl">
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-bold text-fg">Suppliers & Technicians</h1>
-        <button onClick={startAdd} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
-          <Plus size={14} /> Add supplier
-        </button>
+        {canEdit && (
+          <button onClick={startAdd} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
+            <Plus size={14} /> Add supplier
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -58,7 +61,7 @@ export default function SuppliersPage() {
               <div className="w-9 h-9 rounded-full bg-primary/15 text-primary text-[12px] font-bold flex items-center justify-center flex-shrink-0">{s.initials}</div>
               <div className="flex-1 min-w-0"><p className="text-[13.5px] font-semibold text-fg truncate">{s.name}</p><p className="text-[11.5px] text-subtext truncate">{s.category}</p></div>
             </button>
-            <button onClick={() => startEdit(s)} className="text-subtext hover:text-fg flex-shrink-0" title="Edit"><Pencil size={13} /></button>
+            {canEdit && <button onClick={() => startEdit(s)} className="text-subtext hover:text-fg flex-shrink-0" title="Edit"><Pencil size={13} /></button>}
             <ChevronRight size={14} className="text-subtext flex-shrink-0" />
           </div>
         ))}
@@ -82,7 +85,7 @@ export default function SuppliersPage() {
             <p className="text-[12px] text-subtext mt-3 leading-relaxed">{open.notes}</p>
             <div className="flex items-center justify-between mt-3 pt-3 border-t border-line">
               <p className="text-[11px] text-subtext">{open.records} linked equipment records</p>
-              <button onClick={() => startEdit(open)} className="text-[12px] text-primary font-semibold flex items-center gap-1"><Pencil size={12} /> Edit</button>
+              {canEdit && <button onClick={() => startEdit(open)} className="text-[12px] text-primary font-semibold flex items-center gap-1"><Pencil size={12} /> Edit</button>}
             </div>
           </div>
         </div>

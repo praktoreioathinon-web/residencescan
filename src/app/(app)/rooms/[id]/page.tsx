@@ -5,7 +5,7 @@ import Link from "next/link";
 import { notFound, useSearchParams } from "next/navigation";
 import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon, Camera, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { EquipmentItem } from "@/lib/data";
+import { EquipmentItem, genericEquipmentTerm } from "@/lib/data";
 import { compressImageToWebp } from "@/lib/image";
 
 const EQUIP_ICONS = [Sparkles, Fan, Sun];
@@ -13,14 +13,23 @@ const TAB_KEYS = ["Equipment", "Documents", "Maintenance", "Photos"] as const;
 
 export default function RoomDetailPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
-  const { session, properties, selectedPropertyId, setEquipmentPhoto, reportEquipmentIssue, clearEquipmentIssue } = useStore();
+  const { session, properties, selectedPropertyId, setEquipmentPhoto, reportEquipmentIssue, clearEquipmentIssue, addEquipment } = useStore();
   const property = properties.find((p) => p.id === selectedPropertyId);
   const room = property?.rooms.find((r) => r.id === params.id);
   const [tab, setTab] = useState<(typeof TAB_KEYS)[number]>("Equipment");
   const [selectedEquipment, setSelectedEquipment] = useState<EquipmentItem | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportText, setReportText] = useState("");
+  const [showAddEquipment, setShowAddEquipment] = useState(false);
+  const [newEquipName, setNewEquipName] = useState("");
+  const [newEquipModel, setNewEquipModel] = useState("");
   const canEdit = session?.role !== "client";
+
+  // Suggest generic equipment types (TV, Pump, A/C, ...) seen anywhere across every
+  // property, not specific brands/models — and not ones this room already has.
+  const equipmentSuggestions = Array.from(new Set(
+    properties.flatMap((p) => p.rooms.flatMap((r) => r.equipment.map((e) => genericEquipmentTerm(e.name))))
+  )).filter((term) => !room?.equipment?.some((e) => genericEquipmentTerm(e.name) === term)).sort();
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -64,6 +73,15 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
     setReportText("");
   }
 
+  function submitAddEquipment(e: React.FormEvent) {
+    e.preventDefault();
+    if (!property || !room || !newEquipName.trim()) return;
+    addEquipment(property.id, room.id, { name: newEquipName.trim(), model: newEquipModel.trim() });
+    setShowAddEquipment(false);
+    setNewEquipName("");
+    setNewEquipModel("");
+  }
+
   const tabs = [
     { key: "Equipment" as const, count: room.equipmentCount },
     { key: "Documents" as const, count: room.documentsCount },
@@ -82,7 +100,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
           </div>
         </div>
         {canEdit && (
-          <button className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
+          <button onClick={() => setShowAddEquipment(true)} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
             <Plus size={14} /> Add equipment
           </button>
         )}
@@ -199,6 +217,37 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {showAddEquipment && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setShowAddEquipment(false)}>
+          <form onSubmit={submitAddEquipment} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-bold text-fg text-[15px]">Add equipment</p>
+              <button type="button" onClick={() => setShowAddEquipment(false)}><X size={16} className="text-subtext" /></button>
+            </div>
+            <div className="flex flex-col gap-2.5">
+              <input required autoFocus placeholder="Equipment name (e.g. Living Room TV)" value={newEquipName} onChange={(e) => setNewEquipName(e.target.value)}
+                className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
+              <input placeholder="Model / notes (optional)" value={newEquipModel} onChange={(e) => setNewEquipModel(e.target.value)}
+                className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
+              {equipmentSuggestions.length > 0 && (
+                <div>
+                  <p className="text-[10.5px] text-subtext mb-1.5">Common equipment in other rooms:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {equipmentSuggestions.map((term) => (
+                      <button key={term} type="button" onClick={() => setNewEquipName(term)}
+                        className="text-[11.5px] font-medium px-2.5 py-1 rounded-full border border-line text-subtext hover:border-primary/40 hover:text-fg">
+                        {term}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <button type="submit" className="mt-1 bg-primary text-primary-fg text-[13px] font-semibold rounded-full py-2.5">Create equipment</button>
+            </div>
+          </form>
         </div>
       )}
     </div>

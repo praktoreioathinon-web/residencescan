@@ -59,6 +59,13 @@ export default function RoomsPage() {
 
   const rooms = property.rooms;
   const filtered = tab === "All Rooms" ? rooms : rooms.filter((r) => r.category === tab);
+
+  // Suggest room names seen on other properties that this one doesn't have yet,
+  // keeping the category each name was originally seen with.
+  const existingNames = new Set(rooms.map((r) => r.name));
+  const roomSuggestions = Array.from(
+    new Map(properties.flatMap((p) => p.rooms.map((r) => [r.name, r.category] as const))).entries()
+  ).filter(([name]) => !existingNames.has(name));
   const allEquipment = rooms.flatMap((r) => r.equipment.map((eq) => ({ ...eq, room: r })));
   const totalEquipment = rooms.reduce((s, r) => s + r.equipmentCount, 0);
   const totalDocs = rooms.reduce((s, r) => s + r.documentsCount, 0);
@@ -198,6 +205,19 @@ export default function RoomsPage() {
                 className="rounded-lg border border-line px-3.5 py-2.5 text-[13px]">
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
+              {roomSuggestions.length > 0 && (
+                <div>
+                  <p className="text-[10.5px] text-subtext mb-1.5">Used on other properties:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {roomSuggestions.map(([name, category]) => (
+                      <button key={name} type="button" onClick={() => { setNewRoomName(name); setNewRoomCategory(category); }}
+                        className="text-[11.5px] font-medium px-2.5 py-1 rounded-full border border-line text-subtext hover:border-primary/40 hover:text-fg">
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <button type="submit" className="mt-1 bg-primary text-primary-fg text-[13px] font-semibold rounded-full py-2.5">Create room</button>
             </div>
           </form>

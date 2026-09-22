@@ -17,6 +17,7 @@ type Store = {
 
   addProperty: (p: { name: string; area: string; location: string }) => Property;
   addRoom: (propertyId: string, r: { name: string; category: Room["category"] }) => void;
+  addEquipment: (propertyId: string, roomId: string, e: { name: string; model: string }) => void;
   assignProperty: (propertyId: string, clientEmail: string) => void;
   setPropertyPhoto: (propertyId: string, photoUrl: string) => void;
   setEquipmentPhoto: (propertyId: string, roomId: string, equipmentName: string, photoUrl: string) => void;
@@ -187,6 +188,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   }
 
+  function addEquipment(propertyId: string, roomId: string, e: { name: string; model: string }) {
+    persistProperties(properties.map((p) => {
+      if (p.id !== propertyId) return p;
+      return {
+        ...p,
+        rooms: p.rooms.map((r) => {
+          if (r.id !== roomId) return r;
+          const equipment = [...r.equipment, { name: e.name, model: e.model || "Installed just now", status: "Good" as const }];
+          return { ...r, equipment, equipmentCount: equipment.length };
+        }),
+      };
+    }));
+  }
+
   function assignProperty(propertyId: string, clientEmail: string) {
     persistProperties(properties.map((p) => (p.id === propertyId ? { ...p, clientEmail } : p)));
   }
@@ -278,7 +293,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       value={{
         ready, session, login, logout,
         properties, clients, suppliers,
-        addProperty, addRoom, assignProperty, setPropertyPhoto, setEquipmentPhoto,
+        addProperty, addRoom, addEquipment, assignProperty, setPropertyPhoto, setEquipmentPhoto,
         reportEquipmentIssue, clearEquipmentIssue,
         addClient, updateClient,
         addSupplier, updateSupplier,

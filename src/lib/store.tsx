@@ -16,10 +16,11 @@ type Store = {
   suppliers: Supplier[];
 
   addProperty: (p: { name: string; area: string; location: string }) => Property;
-  addRoom: (propertyId: string, r: { name: string; category: Room["category"] }) => void;
-  addEquipment: (propertyId: string, roomId: string, e: { name: string; model: string }) => void;
+  addRoom: (propertyId: string, r: { name: string; category: Room["category"]; photoUrl?: string }) => void;
+  addEquipment: (propertyId: string, roomId: string, e: { name: string; model: string; photoUrl?: string }) => void;
   assignProperty: (propertyId: string, clientEmail: string) => void;
   setPropertyPhoto: (propertyId: string, photoUrl: string) => void;
+  setRoomPhoto: (propertyId: string, roomId: string, photoUrl: string) => void;
   setEquipmentPhoto: (propertyId: string, roomId: string, equipmentName: string, photoUrl: string) => void;
   reportEquipmentIssue: (propertyId: string, roomId: string, equipmentName: string, note: string) => void;
   clearEquipmentIssue: (propertyId: string, roomId: string, equipmentName: string) => void;
@@ -56,12 +57,15 @@ function mergeSeedProperties(cached: Property[]): Property[] {
     const existing = byId.get(seed.id);
     if (!existing) return seed;
     byId.delete(seed.id);
-    // Room/equipment structure always comes from the current seed (it's reference
-    // data, not user-editable), but any equipment photo the user uploaded is
-    // carried over onto the matching room+equipment if it still exists.
+    // The standard room/equipment structure always comes from the current seed
+    // (it's reference data, not user-editable), but anything the user added on top
+    // — a custom room, extra equipment, uploaded photos, a reported issue — has no
+    // seed counterpart and must be preserved by hand rather than dropped.
+    const seedRoomIds = new Set(seed.rooms.map((r) => r.id));
     const rooms = seed.rooms.map((seedRoom) => {
       const existingRoom = existing.rooms?.find((r) => r.id === seedRoom.id);
       if (!existingRoom) return seedRoom;
+      const seedEqNames = new Set(seedRoom.equipment.map((e) => e.name));
       const equipment = seedRoom.equipment.map((seedEq) => {
         const existingEq = existingRoom.equipment.find((e) => e.name === seedEq.name);
         if (!existingEq) return seedEq;
@@ -71,9 +75,11 @@ function mergeSeedProperties(cached: Property[]): Property[] {
           ...(existingEq.issueNote ? { issueNote: existingEq.issueNote, issueReportedAt: existingEq.issueReportedAt } : {}),
         };
       });
-      return { ...seedRoom, equipment };
+      const extraEquipment = existingRoom.equipment.filter((e) => !seedEqNames.has(e.name));
+      return { ...seedRoom, equipment: [...equipment, ...extraEquipment], photoUrl: existingRoom.photoUrl ?? seedRoom.photoUrl };
     });
-    return { ...seed, ...existing, rooms, maintenanceLog: seed.maintenanceLog, photoUrl: existing.photoUrl ?? seed.photoUrl };
+    const extraRooms = (existing.rooms ?? []).filter((r) => !seedRoomIds.has(r.id));
+    return { ...seed, ...existing, rooms: [...rooms, ...extraRooms], maintenanceLog: seed.maintenanceLog, photoUrl: existing.photoUrl ?? seed.photoUrl };
   });
   return [...merged, ...Array.from(byId.values())];
 }
@@ -173,7 +179,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return next;
   }
 
-  function addRoom(propertyId: string, r: { name: string; category: Room["category"] }) {
+  function addRoom(propertyId: string, r: { name: string; category: Room["category"]; photoUrl?: string }) {
     persistProperties(properties.map((p) => {
       if (p.id !== propertyId) return p;
       const slug = r.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -182,20 +188,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         number: String(p.rooms.length + 1).padStart(2, "0"),
         name: r.name, category: r.category, subtitle: "Added manually",
         equipmentCount: 0, documentsCount: 0, maintenanceCount: 0, photosCount: 0,
-        badge: "current", equipment: [],
+        badge: "current", equipment: [], photoUrl: r.photoUrl,
       };
       return { ...p, rooms: [...p.rooms, newRoom] };
     }));
   }
 
-  function addEquipment(propertyId: string, roomId: string, e: { name: string; model: string }) {
+  function addEquipment(propertyId: string, roomId: string, e: { name: string; model: string; photoUrl?: string }) {
     persistProperties(properties.map((p) => {
       if (p.id !== propertyId) return p;
       return {
         ...p,
         rooms: p.rooms.map((r) => {
           if (r.id !== roomId) return r;
-          const equipment = [...r.equipment, { name: e.name, model: e.model || "Installed just now", status: "Good" as const }];
+          const equipment = [...r.equipment, { name: e.name, model: e.model || "Installed just now", status: "Good" as const, photoUrl: e.photoUrl }];
           return { ...r, equipment, equipmentCount: equipment.length };
         }),
       };
@@ -208,6 +214,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   function setPropertyPhoto(propertyId: string, photoUrl: string) {
     persistProperties(properties.map((p) => (p.id === propertyId ? { ...p, photoUrl } : p)));
+  }
+
+  function setRoomPhoto(propertyId: string, roomId: string, photoUrl: string) {
+    persistProperties(properties.map((p) => {
+      if (p.id !== propertyId) return p;
+      return { ...p, rooms: p.rooms.map((r) => (r.id === roomId ? { ...r, photoUrl } : r)) };
+    }));
   }
 
   function setEquipmentPhoto(propertyId: string, roomId: string, equipmentName: string, photoUrl: string) {
@@ -293,7 +306,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       value={{
         ready, session, login, logout,
         properties, clients, suppliers,
-        addProperty, addRoom, addEquipment, assignProperty, setPropertyPhoto, setEquipmentPhoto,
+        addProperty, addRoom, addEquipment, assignProperty, setPropertyPhoto, setRoomPhoto, setEquipmentPhoto,
         reportEquipmentIssue, clearEquipmentIssue,
         addClient, updateClient,
         addSupplier, updateSupplier,

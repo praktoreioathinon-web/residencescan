@@ -13,7 +13,7 @@ const TAB_KEYS = ["Equipment", "Documents", "Maintenance", "Photos"] as const;
 
 export default function RoomDetailPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
-  const { session, properties, selectedPropertyId, setEquipmentPhoto, reportEquipmentIssue, clearEquipmentIssue, addEquipment } = useStore();
+  const { session, properties, selectedPropertyId, setEquipmentPhoto, setRoomPhoto, reportEquipmentIssue, clearEquipmentIssue, addEquipment } = useStore();
   const property = properties.find((p) => p.id === selectedPropertyId);
   const room = property?.rooms.find((r) => r.id === params.id);
   const [tab, setTab] = useState<(typeof TAB_KEYS)[number]>("Equipment");
@@ -23,6 +23,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   const [showAddEquipment, setShowAddEquipment] = useState(false);
   const [newEquipName, setNewEquipName] = useState("");
   const [newEquipModel, setNewEquipModel] = useState("");
+  const [newEquipPhoto, setNewEquipPhoto] = useState<string | undefined>(undefined);
   const canEdit = session?.role !== "client";
 
   // Suggest generic equipment types (TV, Pump, A/C, ...) seen anywhere across every
@@ -43,6 +44,12 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   }, [searchParams, room?.id]);
 
   if (!room) return notFound();
+
+  function handleRoomPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !property || !room) return;
+    compressImageToWebp(file).then((dataUrl) => setRoomPhoto(property.id, room.id, dataUrl));
+  }
 
   function handleEquipmentPhoto(e: React.ChangeEvent<HTMLInputElement>, equipmentName: string) {
     const file = e.target.files?.[0];
@@ -76,10 +83,22 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   function submitAddEquipment(e: React.FormEvent) {
     e.preventDefault();
     if (!property || !room || !newEquipName.trim()) return;
-    addEquipment(property.id, room.id, { name: newEquipName.trim(), model: newEquipModel.trim() });
+    addEquipment(property.id, room.id, { name: newEquipName.trim(), model: newEquipModel.trim(), photoUrl: newEquipPhoto });
     setShowAddEquipment(false);
     setNewEquipName("");
     setNewEquipModel("");
+    setNewEquipPhoto(undefined);
+  }
+
+  function handleNewEquipPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    compressImageToWebp(file).then(setNewEquipPhoto);
+  }
+
+  function closeAddEquipment() {
+    setShowAddEquipment(false);
+    setNewEquipPhoto(undefined);
   }
 
   const tabs = [
@@ -106,12 +125,27 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
         )}
       </div>
 
-      <div className="rounded-2xl border border-line p-6 mb-5" style={{ background: "linear-gradient(160deg, var(--primary-wash), transparent)" }}>
-        <p className="flex items-center gap-1.5 text-[11.5px] text-primary font-semibold mb-8">
+      <div className="rounded-2xl border border-line p-6 mb-5"
+        style={room.photoUrl
+          ? { backgroundImage: `linear-gradient(160deg, rgba(7,16,23,0.75), rgba(7,16,23,0.35)), url(${room.photoUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
+          : { background: "linear-gradient(160deg, var(--primary-wash), transparent)" }}>
+        <p className={`flex items-center gap-1.5 text-[11.5px] font-semibold mb-8 ${room.photoUrl ? "text-white" : "text-primary"}`}>
           <Sparkles size={13} /> {room.equipmentCount} equipment records
         </p>
-        <p className="text-xl font-bold text-fg">{room.name}</p>
-        <p className="text-[12px] text-subtext mt-0.5">{room.subtitle}</p>
+        <p className={`text-xl font-bold ${room.photoUrl ? "text-white" : "text-fg"}`}>{room.name}</p>
+        <p className={`text-[12px] mt-0.5 ${room.photoUrl ? "text-white/70" : "text-subtext"}`}>{room.subtitle}</p>
+        {canEdit && (
+          <div className="flex items-center gap-2 mt-3">
+            <label className={`flex items-center gap-1.5 text-[11.5px] font-semibold px-3 py-1.5 rounded-full w-fit cursor-pointer ${room.photoUrl ? "text-white bg-white/10" : "text-fg border border-line"}`}>
+              <ImageIcon size={13} /> {room.photoUrl ? "Change photo" : "Upload photo"}
+              <input type="file" accept="image/*" className="hidden" onChange={handleRoomPhoto} />
+            </label>
+            <label className={`flex items-center gap-1.5 text-[11.5px] font-semibold px-3 py-1.5 rounded-full w-fit cursor-pointer ${room.photoUrl ? "text-white bg-white/10" : "text-fg border border-line"}`}>
+              <Camera size={13} /> Take photo
+              <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleRoomPhoto} />
+            </label>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-5 border-b border-line mb-4">
@@ -221,17 +255,37 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
       )}
 
       {showAddEquipment && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setShowAddEquipment(false)}>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={closeAddEquipment}>
           <form onSubmit={submitAddEquipment} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-fg text-[15px]">Add equipment</p>
-              <button type="button" onClick={() => setShowAddEquipment(false)}><X size={16} className="text-subtext" /></button>
+              <button type="button" onClick={closeAddEquipment}><X size={16} className="text-subtext" /></button>
             </div>
             <div className="flex flex-col gap-2.5">
               <input required autoFocus placeholder="Equipment name (e.g. Living Room TV)" value={newEquipName} onChange={(e) => setNewEquipName(e.target.value)}
                 className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
               <input placeholder="Model / notes (optional)" value={newEquipModel} onChange={(e) => setNewEquipModel(e.target.value)}
                 className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
+
+              {newEquipPhoto && (
+                <div className="relative h-28 rounded-lg overflow-hidden">
+                  <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${newEquipPhoto})` }} />
+                  <button type="button" onClick={() => setNewEquipPhoto(undefined)} className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center">
+                    <X size={12} className="text-white" />
+                  </button>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <label className="flex-1 flex items-center justify-center gap-1.5 border border-line rounded-lg py-2 text-[12.5px] text-fg cursor-pointer hover:border-primary/40">
+                  <ImageIcon size={13} /> Upload photo
+                  <input type="file" accept="image/*" className="hidden" onChange={handleNewEquipPhoto} />
+                </label>
+                <label className="flex-1 flex items-center justify-center gap-1.5 border border-line rounded-lg py-2 text-[12.5px] text-fg cursor-pointer hover:border-primary/40">
+                  <Camera size={13} /> Take photo
+                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleNewEquipPhoto} />
+                </label>
+              </div>
+
               {equipmentSuggestions.length > 0 && (
                 <div>
                   <p className="text-[10.5px] text-subtext mb-1.5">Common equipment in other rooms:</p>

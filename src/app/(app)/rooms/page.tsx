@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, CheckCircle2, AlertTriangle, BedDouble, Home, ChefHat, Waves, Cog, Building2, ArrowLeftRight, Martini, Trees, Flame, Zap, X, Wrench, FileText } from "lucide-react";
+import { Plus, CheckCircle2, AlertTriangle, BedDouble, Home, ChefHat, Waves, Cog, Building2, ArrowLeftRight, Martini, Trees, Flame, Zap, X, Wrench, FileText, ImageIcon, Camera } from "lucide-react";
 import { useStore } from "@/lib/store";
 import PropertyPicker from "@/components/PropertyPicker";
 import { Room } from "@/lib/data";
+import { compressImageToWebp } from "@/lib/image";
 
 const ICON_BY_NAME: [string, typeof Home][] = [
   ["Living Room", Home], ["Bedroom", BedDouble], ["Kitchen", ChefHat], ["Guest House", Building2],
@@ -31,6 +32,7 @@ export default function RoomsPage() {
   const [showAddRoom, setShowAddRoom] = useState(false);
   const [newRoomName, setNewRoomName] = useState("");
   const [newRoomCategory, setNewRoomCategory] = useState<Room["category"]>("Indoor");
+  const [newRoomPhoto, setNewRoomPhoto] = useState<string | undefined>(undefined);
   const canEdit = session?.role !== "client";
 
   const clientEmail = session?.role === "client" ? session.email : selectedClientEmail;
@@ -80,10 +82,17 @@ export default function RoomsPage() {
   function submitAddRoom(e: React.FormEvent) {
     e.preventDefault();
     if (!newRoomName.trim()) return;
-    addRoom(property!.id, { name: newRoomName.trim(), category: newRoomCategory });
+    addRoom(property!.id, { name: newRoomName.trim(), category: newRoomCategory, photoUrl: newRoomPhoto });
     setShowAddRoom(false);
     setNewRoomName("");
     setNewRoomCategory("Indoor");
+    setNewRoomPhoto(undefined);
+  }
+
+  function handleNewRoomPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    compressImageToWebp(file).then(setNewRoomPhoto);
   }
 
   return (
@@ -136,7 +145,11 @@ export default function RoomsPage() {
             <Link key={r.id} href={`/rooms/${r.id}`} className="rounded-2xl border border-line p-4 block"
               style={{ background: `linear-gradient(160deg, ${TINT_BY_INDEX[i % TINT_BY_INDEX.length]}, transparent)` }}>
               <div className="flex items-start justify-between mb-6">
-                <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center"><Icon size={16} className="text-fg" /></div>
+                {r.photoUrl ? (
+                  <div className="w-9 h-9 rounded-lg bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url(${r.photoUrl})` }} />
+                ) : (
+                  <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center"><Icon size={16} className="text-fg" /></div>
+                )}
                 {r.badge === "current" ? (
                   <span className="flex items-center gap-1 text-[10px] font-semibold bg-[var(--ok-bg)] text-[var(--ok-fg)] px-2 py-0.5 rounded-full"><CheckCircle2 size={10} /> Current</span>
                 ) : (
@@ -192,11 +205,11 @@ export default function RoomsPage() {
       )}
 
       {showAddRoom && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setShowAddRoom(false)}>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => { setShowAddRoom(false); setNewRoomPhoto(undefined); }}>
           <form onSubmit={submitAddRoom} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-fg text-[15px]">Add room</p>
-              <button type="button" onClick={() => setShowAddRoom(false)}><X size={16} className="text-subtext" /></button>
+              <button type="button" onClick={() => { setShowAddRoom(false); setNewRoomPhoto(undefined); }}><X size={16} className="text-subtext" /></button>
             </div>
             <div className="flex flex-col gap-2.5">
               <input required autoFocus placeholder="Room name (e.g. Bedroom 3)" value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)}
@@ -205,6 +218,26 @@ export default function RoomsPage() {
                 className="rounded-lg border border-line px-3.5 py-2.5 text-[13px]">
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
+
+              {newRoomPhoto && (
+                <div className="relative h-28 rounded-lg overflow-hidden">
+                  <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${newRoomPhoto})` }} />
+                  <button type="button" onClick={() => setNewRoomPhoto(undefined)} className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center">
+                    <X size={12} className="text-white" />
+                  </button>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <label className="flex-1 flex items-center justify-center gap-1.5 border border-line rounded-lg py-2 text-[12.5px] text-fg cursor-pointer hover:border-primary/40">
+                  <ImageIcon size={13} /> Upload photo
+                  <input type="file" accept="image/*" className="hidden" onChange={handleNewRoomPhoto} />
+                </label>
+                <label className="flex-1 flex items-center justify-center gap-1.5 border border-line rounded-lg py-2 text-[12.5px] text-fg cursor-pointer hover:border-primary/40">
+                  <Camera size={13} /> Take photo
+                  <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleNewRoomPhoto} />
+                </label>
+              </div>
+
               {roomSuggestions.length > 0 && (
                 <div>
                   <p className="text-[10.5px] text-subtext mb-1.5">Used on other properties:</p>

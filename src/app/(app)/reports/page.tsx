@@ -8,12 +8,16 @@ import PropertyPicker from "@/components/PropertyPicker";
 export default function ReportsPage() {
   const { session, properties, clients, selectedClientEmail, selectedPropertyId, setSelectedPropertyId } = useStore();
 
-  const clientEmail = session?.role === "client" ? session.email : selectedClientEmail;
+  // Admin/support can jump straight to a specific property (e.g. one picked from
+  // the "Unassigned properties" list in Clients) without first choosing a client —
+  // an unassigned property has no client to choose in the first place.
+  const directProperty = session?.role === "client" ? undefined : properties.find((p) => p.id === selectedPropertyId);
+  const clientEmail = session?.role === "client" ? session.email : directProperty ? directProperty.clientEmail : selectedClientEmail;
   const myProperties = properties.filter((p) => p.clientEmail === clientEmail);
-  const property = myProperties.find((p) => p.id === selectedPropertyId);
+  const property = directProperty ?? myProperties.find((p) => p.id === selectedPropertyId);
   const client = clients.find((c) => c.email === clientEmail);
 
-  if (!clientEmail) {
+  if (!property && !clientEmail) {
     return (
       <div className="px-8 py-6 max-w-4xl">
         <h1 className="text-2xl font-bold text-fg mb-1">Reports</h1>

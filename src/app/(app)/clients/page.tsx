@@ -12,7 +12,7 @@ const PLANS: Plan[] = ["Start", "Care", "Plus", "Pro"];
 export default function ClientsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { clients, properties, addProperty, assignProperty, addClient, updateClient, selectedClientEmail, setSelectedClientEmail, setSelectedPropertyId } = useStore();
+  const { clients, properties, addProperty, assignProperty, addClient, updateClient, selectedClientEmail, setSelectedClientEmail, setSelectedPropertyId, selectClientAndProperty } = useStore();
 
   const [showAddProperty, setShowAddProperty] = useState(false);
   const [name, setName] = useState("");
@@ -159,8 +159,10 @@ export default function ClientsPage() {
             {unassigned.map((p) => (
               <div key={p.id} className="rounded-2xl border border-dashed border-line p-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0"><MapPin size={15} className="text-subtext" /></div>
-                  <div className="flex-1"><p className="text-[13.5px] font-semibold text-fg">{p.name}</p><p className="text-[11.5px] text-subtext">{p.location}</p></div>
+                  <button onClick={() => { selectClientAndProperty(null, p.id); router.push("/"); }} className="flex items-center gap-3 flex-1 text-left min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0"><MapPin size={15} className="text-subtext" /></div>
+                    <div className="flex-1 min-w-0"><p className="text-[13.5px] font-semibold text-fg">{p.name}</p><p className="text-[11.5px] text-subtext">{p.location}</p></div>
+                  </button>
                   {assigningId !== p.id && (
                     <button onClick={() => setAssigningId(p.id)} className="text-[12px] text-primary font-semibold flex-shrink-0">Assign to client</button>
                   )}

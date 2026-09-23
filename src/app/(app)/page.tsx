@@ -64,9 +64,15 @@ export default function OverviewPage() {
     compressImageToWebp(file).then((dataUrl) => setPropertyPhoto(propertyId, dataUrl));
   }
 
-  const clientEmail = session?.role === "client" ? session.email : selectedClientEmail;
+  // Admin/support can jump straight to a specific property (e.g. one picked from
+  // the "Unassigned properties" list in Clients) without first choosing a client —
+  // an unassigned property has no client to choose in the first place.
+  const directProperty = session?.role === "client" ? undefined : properties.find((p) => p.id === selectedPropertyId);
+  const clientEmail = session?.role === "client" ? session.email : directProperty ? directProperty.clientEmail : selectedClientEmail;
   const myProperties = properties.filter((p) => p.clientEmail === clientEmail);
-  const property = myProperties.find((p) => p.id === selectedPropertyId) ?? myProperties[0];
+  const property = directProperty
+    ?? myProperties.find((p) => p.id === selectedPropertyId)
+    ?? (session?.role === "client" ? myProperties[0] : undefined);
   const index = property ? myProperties.findIndex((p) => p.id === property.id) : -1;
 
   useEffect(() => {
@@ -74,7 +80,7 @@ export default function OverviewPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [property?.id]);
 
-  if (!clientEmail) {
+  if (!property && !clientEmail) {
     if (session?.role === "admin" || session?.role === "support") {
       return (
         <AllPropertiesOverview

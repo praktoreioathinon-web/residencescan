@@ -194,7 +194,6 @@ export type Property = {
   location: string;
   clientEmail: string | null;
   health: number;
-  itemsNeedAttention: number;
   systemsOnline: [number, number];
   maintenanceCurrent: [number, number];
   documentsCompletePct: number;
@@ -204,52 +203,63 @@ export type Property = {
   maintenanceLog: MaintenanceLogEntry[];
 };
 
+// Real, property-specific "needs attention" items — equipment flagged Due soon or
+// with a client-reported issue — used instead of generic copy that would otherwise
+// read the same on every property regardless of what's actually going on there.
+export function dueSoonEquipment(property: Property): { room: Room; equipment: EquipmentItem }[] {
+  return property.rooms.flatMap((room) =>
+    room.equipment
+      .filter((e) => e.status === "Due soon" || e.issueNote)
+      .map((equipment) => ({ room, equipment }))
+  );
+}
+
 export const SEED_PROPERTIES: Property[] = [
   {
     id: "villa-mykonos", name: "Villa Mykonos", area: "Mykonos", location: "Agios Stefanos, Mykonos",
-    clientEmail: "client@residencescan.com", health: 92, itemsNeedAttention: 2,
+    clientEmail: "client@residencescan.com", health: 92,
     systemsOnline: [24, 26], maintenanceCurrent: [18, 20], documentsCompletePct: 94, updated: "16 Sep 2026",
     rooms: makeRooms("vm"), photoUrl: "/properties/villa-mykonos.png",
     maintenanceLog: makeMaintenanceLog("vm"),
   },
   {
     id: "villa-fanari", name: "Villa Fanari", area: "Mykonos", location: "Fanari, Mykonos",
-    clientEmail: "client@residencescan.com", health: 88, itemsNeedAttention: 1,
+    clientEmail: "client@residencescan.com", health: 88,
     systemsOnline: [19, 20], maintenanceCurrent: [14, 15], documentsCompletePct: 90, updated: "12 Sep 2026",
     rooms: makeRooms("vf"), photoUrl: "/properties/villa-fanari.png",
     maintenanceLog: makeMaintenanceLog("vf"),
   },
   {
     id: "villa-elia", name: "Villa Elia", area: "Mykonos", location: "Elia, Mykonos",
-    clientEmail: "client@residencescan.com", health: 96, itemsNeedAttention: 0,
+    clientEmail: "client@residencescan.com", health: 96,
     systemsOnline: [22, 22], maintenanceCurrent: [16, 16], documentsCompletePct: 100, updated: "18 Sep 2026",
     rooms: makeRooms("ve"), photoUrl: "/properties/villa-elia.png",
     maintenanceLog: makeMaintenanceLog("ve"),
   },
   {
     id: "penthouse-kolonaki", name: "Penthouse Kolonaki", area: "Athens", location: "Kolonaki, Athens",
-    clientEmail: "client@residencescan.com", health: 81, itemsNeedAttention: 3,
+    clientEmail: "client@residencescan.com", health: 81,
     systemsOnline: [17, 20], maintenanceCurrent: [11, 14], documentsCompletePct: 85, updated: "10 Sep 2026",
     rooms: makeRooms("pk"), photoUrl: "/properties/penthouse-kolonaki.png",
     maintenanceLog: makeMaintenanceLog("pk"),
   },
   {
     id: "riviera-house", name: "Riviera House", area: "Athens", location: "Glyfada, Athens",
-    clientEmail: "client@residencescan.com", health: 90, itemsNeedAttention: 1,
+    clientEmail: "client@residencescan.com", health: 90,
     systemsOnline: [20, 21], maintenanceCurrent: [15, 16], documentsCompletePct: 92, updated: "14 Sep 2026",
     rooms: makeRooms("rh"), photoUrl: "/properties/riviera-house.png",
     maintenanceLog: makeMaintenanceLog("rh"),
   },
   {
     id: "villa-paros", name: "Villa Paros", area: "Paros", location: "Naoussa, Paros",
-    clientEmail: "nikos@example.com", health: 94, itemsNeedAttention: 0,
+    clientEmail: "nikos@example.com", health: 94,
     systemsOnline: [18, 18], maintenanceCurrent: [12, 12], documentsCompletePct: 97, updated: "15 Sep 2026",
     rooms: makeRooms("vp"), photoUrl: "/properties/villa-paros.png",
     maintenanceLog: makeMaintenanceLog("vp"),
   },
   {
     id: "villa-naxos", name: "Villa Naxos", area: "Naxos", location: "Agios Prokopios, Naxos",
-    clientEmail: "nikos@example.com", health: 85, itemsNeedAttention: 1,
+    clientEmail: "nikos@example.com", health: 85,
     systemsOnline: [16, 18], maintenanceCurrent: [10, 12], documentsCompletePct: 88, updated: "9 Sep 2026",
     rooms: makeRooms("vn"), photoUrl: "/properties/villa-naxos.png",
     maintenanceLog: makeMaintenanceLog("vn"),
@@ -263,13 +273,6 @@ export type ClientRecord = { email: string; name: string; plan: Plan };
 export const SEED_CLIENTS: ClientRecord[] = [
   { email: "client@residencescan.com", name: "Aegean Villas Ltd", plan: "Pro" },
   { email: "nikos@example.com", name: "Nikos Papadakis", plan: "Care" },
-];
-
-export const maintenanceItems = [
-  { date: "18", month: "SEP", title: "Pool filter inspection", subtitle: "Pool machinery", status: "Due soon" as const },
-  { date: "20", month: "SEP", title: "Replace water pre-filter", subtitle: "Main water supply", status: "Scheduled" as const },
-  { date: "28", month: "SEP", title: "Service Daikin A/C", subtitle: "Living Room", status: "Upcoming" as const },
-  { date: "12", month: "OCT", title: "Generator annual service", subtitle: "Technical room", status: "Upcoming" as const },
 ];
 
 export type Supplier = {

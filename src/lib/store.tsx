@@ -170,7 +170,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const id = p.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Math.random().toString(36).slice(2, 6);
     const next: Property = {
       id, name: p.name, area: p.area, location: p.location, clientEmail: null,
-      health: 100, itemsNeedAttention: 0, systemsOnline: [0, 0], maintenanceCurrent: [0, 0], documentsCompletePct: 0,
+      health: 100, systemsOnline: [0, 0], maintenanceCurrent: [0, 0], documentsCompletePct: 0,
       updated: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
       rooms: [],
       maintenanceLog: [],

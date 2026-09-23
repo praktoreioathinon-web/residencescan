@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Grid2x2, Cog, Waves, Store, Camera, Scan, ChevronRight, ImageIcon, ShieldCheck, AlertTriangle, CheckCircle2, Building2, Users, MapPin } from "lucide-react";
-import { maintenanceItems, Property, ClientRecord } from "@/lib/data";
+import { Grid2x2, Cog, Waves, Store, Camera, Scan, ChevronRight, ImageIcon, ShieldCheck, AlertTriangle, CheckCircle2, Building2, Users, MapPin, Wrench, X } from "lucide-react";
+import { dueSoonEquipment, Property, ClientRecord } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import { compressImageToWebp } from "@/lib/image";
 
@@ -16,12 +16,6 @@ const QUICK_ACCESS = [
   { href: "/maintenance", label: "Maintenance", sub: "upcoming", icon: Camera },
   { href: "/xray", label: "X-Ray", sub: "All systems", icon: Scan },
 ];
-
-const STATUS_STYLE: Record<string, string> = {
-  "Due soon": "bg-[var(--warn-bg)] text-[var(--warn-fg)]",
-  Scheduled: "bg-[var(--warn-bg)] text-[var(--warn-fg)]",
-  Upcoming: "bg-[var(--warn-bg)] text-[var(--warn-fg)]",
-};
 
 function HealthRing({ pct }: { pct: number }) {
   const r = 34;
@@ -56,12 +50,23 @@ function Bar({ label, value, max, pctLabel }: { label: string; value?: number; m
 
 export default function OverviewPage() {
   const router = useRouter();
-  const { session, properties, clients, selectedClientEmail, selectedPropertyId, setSelectedClientEmail, setSelectedPropertyId, selectClientAndProperty, setPropertyPhoto } = useStore();
+  const { session, properties, clients, selectedClientEmail, selectedPropertyId, setSelectedClientEmail, setSelectedPropertyId, selectClientAndProperty, setPropertyPhoto, assignProperty } = useStore();
+  const [showChangeClient, setShowChangeClient] = useState(false);
+  const [changeClientTo, setChangeClientTo] = useState("");
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>, propertyId: string) {
     const file = e.target.files?.[0];
     if (!file) return;
     compressImageToWebp(file).then((dataUrl) => setPropertyPhoto(propertyId, dataUrl));
+  }
+
+  function submitChangeClient(e: React.FormEvent, propertyId: string) {
+    e.preventDefault();
+    if (!changeClientTo) return;
+    assignProperty(propertyId, changeClientTo);
+    selectClientAndProperty(changeClientTo, propertyId);
+    setShowChangeClient(false);
+    setChangeClientTo("");
   }
 
   // Admin/support can jump straight to a specific property (e.g. one picked from
@@ -108,6 +113,9 @@ export default function OverviewPage() {
   }
 
   const totalRooms = property.rooms.length;
+  const upcoming = dueSoonEquipment(property);
+  const otherClients = clients.filter((c) => c.email !== property.clientEmail);
+  const latestCompleted = property.maintenanceLog[0];
 
   return (
     <div className="px-8 py-6 max-w-4xl">
@@ -118,10 +126,16 @@ export default function OverviewPage() {
       <div className="flex items-center justify-between mb-4 gap-3">
         <h1 className="text-2xl font-bold text-fg">{property.name}</h1>
         {(session?.role === "admin" || session?.role === "support") && (
-          <button onClick={() => setSelectedClientEmail(null)}
-            className="flex-shrink-0 flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3.5 py-1.5 rounded-full text-fg hover:border-primary/40">
-            <Building2 size={13} /> All properties
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={() => { setChangeClientTo(""); setShowChangeClient(true); }}
+              className="flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3.5 py-1.5 rounded-full text-fg hover:border-primary/40">
+              <Users size={13} /> Change client
+            </button>
+            <button onClick={() => setSelectedClientEmail(null)}
+              className="flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3.5 py-1.5 rounded-full text-fg hover:border-primary/40">
+              <Building2 size={13} /> All properties
+            </button>
+          </div>
         )}
       </div>
 
@@ -162,7 +176,7 @@ export default function OverviewPage() {
           <HealthRing pct={property.health} />
           <div>
             <p className="text-[10px] tracking-widest text-subtext font-semibold">RESIDENCE HEALTH</p>
-            <p className="text-[15px] font-bold text-fg mt-0.5">{property.itemsNeedAttention} items need attention</p>
+            <p className="text-[15px] font-bold text-fg mt-0.5">{upcoming.length} item{upcoming.length === 1 ? "" : "s"} need attention</p>
             <p className="text-[11.5px] text-subtext mt-0.5 max-w-xs">Based on {property.rooms.reduce((s, r) => s + r.equipmentCount, 0)} equipment records across {totalRooms} rooms.</p>
           </div>
         </div>
@@ -197,19 +211,23 @@ export default function OverviewPage() {
           <p className="text-[12.5px] text-subtext">No rooms added yet — maintenance will show up here once you add rooms and equipment.</p>
           <Link href="/rooms" className="inline-block text-[12px] text-primary font-semibold mt-2">Go to Rooms</Link>
         </div>
+      ) : upcoming.length === 0 ? (
+        <div className="rounded-2xl border border-line p-6 text-center">
+          <p className="text-[12.5px] text-subtext">Nothing due — every piece of equipment on record is in good shape.</p>
+        </div>
       ) : (
         <div className="rounded-2xl border border-line divide-y divide-line">
-          {maintenanceItems.map((m) => (
-            <div key={m.title} className="flex items-center gap-3 p-3.5">
-              <div className="text-center w-9 flex-shrink-0">
-                <p className="text-[13px] font-bold text-fg leading-none">{m.date}</p>
-                <p className="text-[9px] text-subtext mt-0.5">{m.month}</p>
-              </div>
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Camera size={14} className="text-primary" /></div>
-              <div className="flex-1"><p className="text-[13px] font-semibold text-fg">{m.title}</p><p className="text-[11px] text-subtext">{m.subtitle}</p></div>
-              <span className={`text-[10.5px] font-semibold px-2 py-1 rounded-full ${STATUS_STYLE[m.status]}`}>{m.status}</span>
-              <ChevronRight size={14} className="text-subtext" />
-            </div>
+          {upcoming.slice(0, 4).map(({ room, equipment }) => (
+            <button key={`${room.id}-${equipment.name}`}
+              onClick={() => router.push(`/rooms/${room.id}?eq=${encodeURIComponent(equipment.name)}`)}
+              className="w-full flex items-center gap-3 p-3.5 text-left hover:bg-white/5">
+              <div className="w-8 h-8 rounded-lg bg-[var(--warn-bg)] flex items-center justify-center flex-shrink-0"><Wrench size={14} className="text-[var(--warn-fg)]" /></div>
+              <div className="flex-1 min-w-0"><p className="text-[13px] font-semibold text-fg truncate">{equipment.name}</p><p className="text-[11px] text-subtext truncate">{room.name} · {equipment.model}</p></div>
+              <span className="text-[10.5px] font-semibold px-2 py-1 rounded-full bg-[var(--warn-bg)] text-[var(--warn-fg)] flex-shrink-0">
+                {equipment.issueNote ? "Issue reported" : "Due soon"}
+              </span>
+              <ChevronRight size={14} className="text-subtext flex-shrink-0" />
+            </button>
           ))}
         </div>
       )}
@@ -217,10 +235,10 @@ export default function OverviewPage() {
       <div className="grid grid-cols-3 gap-3 mt-5 mb-8">
         <div className="rounded-2xl border border-line p-4" style={{ background: "linear-gradient(160deg, var(--attention-wash), transparent)" }}>
           <div className="flex items-center gap-1.5 text-[10px] tracking-widest text-[var(--attention-fg)] font-semibold"><AlertTriangle size={11} /> ATTENTION</div>
-          {property.itemsNeedAttention > 0 ? (
+          {upcoming.length > 0 ? (
             <>
-              <p className="text-[14px] font-bold text-fg mt-2">{property.itemsNeedAttention} items need review</p>
-              <p className="text-[11px] text-subtext mt-1">Water pre-filter replacement and pump-room pressure check.</p>
+              <p className="text-[14px] font-bold text-fg mt-2">{upcoming.length} item{upcoming.length > 1 ? "s" : ""} need review</p>
+              <p className="text-[11px] text-subtext mt-1 truncate">{upcoming.slice(0, 2).map((u) => u.equipment.name).join(", ")}{upcoming.length > 2 ? `, +${upcoming.length - 2} more` : ""}</p>
               <Link href="/rooms" className="text-[12px] text-[var(--attention-fg)] font-semibold flex items-center gap-1 mt-2.5">Review now <ChevronRight size={12} /></Link>
             </>
           ) : (
@@ -236,16 +254,42 @@ export default function OverviewPage() {
         </div>
         <div className="rounded-2xl border border-line p-4">
           <div className="flex items-center gap-1.5 text-[10px] tracking-widest text-subtext font-semibold"><CheckCircle2 size={11} className="text-primary" /> RECENT UPDATE</div>
-          {property.rooms.length > 0 ? (
+          {latestCompleted ? (
             <>
-              <p className="text-[13.5px] font-bold text-fg mt-2">Pool pump record updated</p>
-              <p className="text-[11px] text-subtext mt-1">Today, 10:24 · by S. Charitopoulos</p>
+              <p className="text-[13.5px] font-bold text-fg mt-2">{latestCompleted.title}</p>
+              <p className="text-[11px] text-subtext mt-1">{latestCompleted.date} · {latestCompleted.room} · {latestCompleted.supplier}</p>
             </>
           ) : (
             <p className="text-[13px] text-subtext mt-2">No activity yet.</p>
           )}
         </div>
       </div>
+
+      {showChangeClient && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setShowChangeClient(false)}>
+          <form onSubmit={(e) => submitChangeClient(e, property.id)} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-bold text-fg text-[15px]">Change client</p>
+              <button type="button" onClick={() => setShowChangeClient(false)}><X size={16} className="text-subtext" /></button>
+            </div>
+            <div className="flex flex-col gap-2.5">
+              <p className="text-[12px] text-subtext">Move <span className="text-fg font-semibold">{property.name}</span> to a different client. Its rooms, equipment and history stay with it.</p>
+              {otherClients.length === 0 ? (
+                <p className="text-[12.5px] text-subtext">There are no other clients yet — add one from the Clients tab first.</p>
+              ) : (
+                <>
+                  <select required value={changeClientTo} onChange={(e) => setChangeClientTo(e.target.value)}
+                    className="rounded-lg border border-line px-3.5 py-2.5 text-[13px]">
+                    <option value="">Choose a client…</option>
+                    {otherClients.map((c) => <option key={c.email} value={c.email}>{c.name}</option>)}
+                  </select>
+                  <button type="submit" className="mt-1 bg-primary text-primary-fg text-[13px] font-semibold rounded-full py-2.5">Move property</button>
+                </>
+              )}
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
@@ -253,7 +297,7 @@ export default function OverviewPage() {
 function AllPropertiesOverview({
   properties, clients, onOpen,
 }: { properties: Property[]; clients: ClientRecord[]; onOpen: (p: Property) => void }) {
-  const totalAttention = properties.reduce((s, p) => s + p.itemsNeedAttention, 0);
+  const totalAttention = properties.reduce((s, p) => s + dueSoonEquipment(p).length, 0);
   const avgHealth = properties.length ? Math.round(properties.reduce((s, p) => s + p.health, 0) / properties.length) : 0;
   const clientName = (email: string | null) => clients.find((c) => c.email === email)?.name ?? "Unassigned";
 
@@ -270,7 +314,9 @@ function AllPropertiesOverview({
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {properties.map((p) => (
+        {properties.map((p) => {
+          const pAttention = dueSoonEquipment(p).length;
+          return (
           <button key={p.id} onClick={() => onOpen(p)}
             className="relative rounded-2xl overflow-hidden border border-line h-40 flex flex-col justify-between p-4 text-left hover:border-primary/40"
             style={p.photoUrl
@@ -278,8 +324,8 @@ function AllPropertiesOverview({
               : { background: "linear-gradient(135deg, #14242E, #0C1821)" }}>
             <div className="flex items-center justify-between">
               <div className="w-9 h-9 rounded-lg bg-black/40 backdrop-blur flex items-center justify-center flex-shrink-0"><MapPin size={16} className="text-primary" /></div>
-              {p.itemsNeedAttention > 0 ? (
-                <span className="flex items-center gap-1 text-[10px] font-semibold text-white bg-black/40 backdrop-blur px-2 py-0.5 rounded-full"><AlertTriangle size={10} /> {p.itemsNeedAttention} attention</span>
+              {pAttention > 0 ? (
+                <span className="flex items-center gap-1 text-[10px] font-semibold text-white bg-black/40 backdrop-blur px-2 py-0.5 rounded-full"><AlertTriangle size={10} /> {pAttention} attention</span>
               ) : (
                 <span className="flex items-center gap-1 text-[10px] font-semibold text-white bg-black/40 backdrop-blur px-2 py-0.5 rounded-full"><CheckCircle2 size={10} /> Current</span>
               )}
@@ -290,7 +336,8 @@ function AllPropertiesOverview({
               <p className="text-[11px] text-primary font-semibold mt-1.5">{p.health}% health</p>
             </div>
           </button>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useStore } from "@/lib/store";
-import { ACCOUNTS, Plan } from "@/lib/data";
+import { ACCOUNTS, Plan, activeProperties } from "@/lib/data";
 import { ShieldCheck, Wrench, Users } from "lucide-react";
 
 const PLANS: Plan[] = ["Start", "Care", "Plus", "Pro"];
@@ -68,7 +68,7 @@ export default function SettingsPage() {
             </div>
             <div className="flex flex-col gap-3">
               {clients.map((c) => {
-                const count = properties.filter((p) => p.clientEmail === c.email).length;
+                const count = activeProperties(properties).filter((p) => p.clientEmail === c.email).length;
                 return (
                   <div key={c.email} className="flex items-center gap-3 border-t border-line pt-3 first:border-t-0 first:pt-0">
                     <div className="flex-1 min-w-0">

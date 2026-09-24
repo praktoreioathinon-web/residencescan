@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowLeftRight, Building2, CheckCircle2, Download, MapPin, ShieldCheck, Wrench, Zap } from "lucide-react";
 import { useStore } from "@/lib/store";
 import PropertyPicker from "@/components/PropertyPicker";
-import { healthScore } from "@/lib/data";
+import { healthScore, activeProperties } from "@/lib/data";
 
 export default function ReportsPage() {
   const { session, properties, clients, selectedClientEmail, selectedPropertyId, setSelectedPropertyId } = useStore();
@@ -14,7 +14,7 @@ export default function ReportsPage() {
   // an unassigned property has no client to choose in the first place.
   const directProperty = session?.role === "client" ? undefined : properties.find((p) => p.id === selectedPropertyId);
   const clientEmail = session?.role === "client" ? session.email : directProperty ? directProperty.clientEmail : selectedClientEmail;
-  const myProperties = properties.filter((p) => p.clientEmail === clientEmail);
+  const myProperties = activeProperties(properties).filter((p) => p.clientEmail === clientEmail);
   const property = directProperty ?? myProperties.find((p) => p.id === selectedPropertyId);
   const client = clients.find((c) => c.email === clientEmail);
 

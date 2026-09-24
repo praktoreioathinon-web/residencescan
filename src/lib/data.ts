@@ -495,7 +495,18 @@ export type Property = {
   rooms: Room[];
   photoUrl?: string;
   maintenanceLog: MaintenanceLogEntry[];
+  archived?: boolean;
 };
+
+// Excludes archived properties from a list — used everywhere a client, or an
+// admin/support member's day-to-day view, browses "the properties," so a
+// property put away (e.g. a demo property once real ones exist, or a sold
+// property) stops appearing without being deleted. Archived properties stay
+// fully intact and reachable directly (e.g. from the Clients page's "Show
+// archived" view) — this only hides them from the default browsing lists.
+export function activeProperties(properties: Property[]): Property[] {
+  return properties.filter((p) => !p.archived);
+}
 
 // Real, property-specific "needs attention" items — equipment flagged Due soon or
 // with a client-reported issue — used instead of generic copy that would otherwise

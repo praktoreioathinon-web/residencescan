@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, ChevronRight, X, Users, MapPin, Pencil } from "lucide-react";
+import { Plus, ChevronRight, X, Users, MapPin, Pencil, ArchiveRestore } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { Plan, ClientRecord } from "@/lib/data";
 import PropertyPicker from "@/components/PropertyPicker";
@@ -12,8 +12,9 @@ const PLANS: Plan[] = ["Start", "Care", "Plus", "Pro"];
 export default function ClientsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { clients, properties, addProperty, assignProperty, addClient, updateClient, selectedClientEmail, setSelectedClientEmail, setSelectedPropertyId, selectClientAndProperty } = useStore();
+  const { clients, properties, addProperty, assignProperty, setPropertyArchived, addClient, updateClient, selectedClientEmail, setSelectedClientEmail, setSelectedPropertyId, selectClientAndProperty } = useStore();
 
+  const [showArchived, setShowArchived] = useState(false);
   const [showAddProperty, setShowAddProperty] = useState(false);
   const [name, setName] = useState("");
   const [area, setArea] = useState("");
@@ -36,9 +37,11 @@ export default function ClientsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const unassigned = properties.filter((p) => p.clientEmail === null);
+  const unassigned = properties.filter((p) => p.clientEmail === null && !p.archived);
+  const archivedProperties = properties.filter((p) => p.archived);
   const activeClient = clients.find((c) => c.email === selectedClientEmail);
-  const activeClientProperties = activeClient ? properties.filter((p) => p.clientEmail === activeClient.email) : [];
+  const activeClientProperties = activeClient ? properties.filter((p) => p.clientEmail === activeClient.email && !p.archived) : [];
+  const activeClientArchived = activeClient ? properties.filter((p) => p.clientEmail === activeClient.email && p.archived) : [];
 
   function submitAddProperty(e: React.FormEvent) {
     e.preventDefault();
@@ -105,6 +108,27 @@ export default function ClientsPage() {
           properties={activeClientProperties}
           onSelect={(id) => { setSelectedPropertyId(id); router.push("/"); }}
         />
+
+        {activeClientArchived.length > 0 && (
+          <div className="mt-5">
+            <button onClick={() => setShowArchived((v) => !v)} className="text-[12px] text-subtext font-semibold mb-2">
+              {showArchived ? "Hide" : "Show"} {activeClientArchived.length} archived {activeClientArchived.length === 1 ? "property" : "properties"}
+            </button>
+            {showArchived && (
+              <div className="flex flex-col gap-2.5">
+                {activeClientArchived.map((p) => (
+                  <div key={p.id} className="flex items-center gap-3 rounded-2xl border border-dashed border-line p-4 opacity-70">
+                    <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0"><MapPin size={15} className="text-subtext" /></div>
+                    <div className="flex-1 min-w-0"><p className="text-[13.5px] font-semibold text-fg truncate">{p.name}</p><p className="text-[11.5px] text-subtext truncate">{p.location}</p></div>
+                    <button onClick={() => setPropertyArchived(p.id, false)} className="flex items-center gap-1.5 text-[12px] text-primary font-semibold flex-shrink-0">
+                      <ArchiveRestore size={13} /> Unarchive
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         {showClientForm && (
           <ClientFormModal
             title={editingClient ? "Edit client" : "New client"}
@@ -134,7 +158,7 @@ export default function ClientsPage() {
 
       <div className="flex flex-col gap-2.5 mb-8">
         {clients.map((c) => {
-          const count = properties.filter((p) => p.clientEmail === c.email).length;
+          const count = properties.filter((p) => p.clientEmail === c.email && !p.archived).length;
           return (
             <div key={c.email} className="w-full flex items-center gap-3 rounded-2xl border border-line p-4">
               <button onClick={() => setSelectedClientEmail(c.email)} className="flex items-center gap-3 flex-1 text-left min-w-0">
@@ -181,6 +205,30 @@ export default function ClientsPage() {
             ))}
           </div>
         </>
+      )}
+
+      {archivedProperties.length > 0 && (
+        <div className="mt-8">
+          <button onClick={() => setShowArchived((v) => !v)} className="text-[12px] text-subtext font-semibold mb-2">
+            {showArchived ? "Hide" : "Show"} {archivedProperties.length} archived {archivedProperties.length === 1 ? "property" : "properties"}
+          </button>
+          {showArchived && (
+            <div className="flex flex-col gap-2.5">
+              {archivedProperties.map((p) => {
+                const owner = clients.find((c) => c.email === p.clientEmail)?.name ?? "Unassigned";
+                return (
+                  <div key={p.id} className="flex items-center gap-3 rounded-2xl border border-dashed border-line p-4 opacity-70">
+                    <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0"><MapPin size={15} className="text-subtext" /></div>
+                    <div className="flex-1 min-w-0"><p className="text-[13.5px] font-semibold text-fg truncate">{p.name}</p><p className="text-[11.5px] text-subtext truncate">{p.location} · {owner}</p></div>
+                    <button onClick={() => setPropertyArchived(p.id, false)} className="flex items-center gap-1.5 text-[12px] text-primary font-semibold flex-shrink-0">
+                      <ArchiveRestore size={13} /> Unarchive
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       )}
 
       {showAddProperty && (

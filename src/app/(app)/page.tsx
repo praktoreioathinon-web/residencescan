@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Grid2x2, Cog, Waves, Store, Camera, Scan, ChevronRight, ImageIcon, ShieldCheck, AlertTriangle, CheckCircle2, Building2, Users, MapPin, Wrench, X } from "lucide-react";
-import { dueSoonEquipment, healthScore, systemsOnline, maintenanceCurrent, photoCoveragePct, Property, ClientRecord } from "@/lib/data";
+import { Grid2x2, Cog, Waves, Store, Camera, Scan, ChevronRight, ImageIcon, ShieldCheck, AlertTriangle, CheckCircle2, Building2, Users, MapPin, Wrench, X, Archive, ArchiveRestore } from "lucide-react";
+import { dueSoonEquipment, healthScore, systemsOnline, maintenanceCurrent, photoCoveragePct, activeProperties, Property, ClientRecord } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import { compressImageToWebp } from "@/lib/image";
 
@@ -50,7 +50,7 @@ function Bar({ label, value, max, pctLabel }: { label: string; value?: number; m
 
 export default function OverviewPage() {
   const router = useRouter();
-  const { session, properties, clients, selectedClientEmail, selectedPropertyId, setSelectedClientEmail, setSelectedPropertyId, selectClientAndProperty, setPropertyPhoto, assignProperty } = useStore();
+  const { session, properties, clients, selectedClientEmail, selectedPropertyId, setSelectedClientEmail, setSelectedPropertyId, selectClientAndProperty, setPropertyPhoto, assignProperty, setPropertyArchived } = useStore();
   const [showChangeClient, setShowChangeClient] = useState(false);
   const [changeClientTo, setChangeClientTo] = useState("");
 
@@ -74,7 +74,7 @@ export default function OverviewPage() {
   // an unassigned property has no client to choose in the first place.
   const directProperty = session?.role === "client" ? undefined : properties.find((p) => p.id === selectedPropertyId);
   const clientEmail = session?.role === "client" ? session.email : directProperty ? directProperty.clientEmail : selectedClientEmail;
-  const myProperties = properties.filter((p) => p.clientEmail === clientEmail);
+  const myProperties = activeProperties(properties).filter((p) => p.clientEmail === clientEmail);
   const property = directProperty
     ?? myProperties.find((p) => p.id === selectedPropertyId)
     ?? (session?.role === "client" ? myProperties[0] : undefined);
@@ -89,7 +89,7 @@ export default function OverviewPage() {
     if (session?.role === "admin" || session?.role === "support") {
       return (
         <AllPropertiesOverview
-          properties={properties} clients={clients}
+          properties={activeProperties(properties)} clients={clients}
           onOpen={(p) => selectClientAndProperty(p.clientEmail, p.id)}
         />
       );
@@ -124,12 +124,26 @@ export default function OverviewPage() {
         {myProperties.length > 1 && <span className="text-[11px] text-subtext">{index + 1} / {myProperties.length}</span>}
       </div>
       <div className="flex items-center justify-between mb-4 gap-3">
-        <h1 className="text-2xl font-bold text-fg">{property.name}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-fg">{property.name}</h1>
+          {property.archived && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--warn-bg)] text-[var(--warn-fg)] flex-shrink-0">Archived</span>
+          )}
+        </div>
         {(session?.role === "admin" || session?.role === "support") && (
           <div className="flex items-center gap-2 flex-shrink-0">
             <button onClick={() => { setChangeClientTo(""); setShowChangeClient(true); }}
               className="flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3.5 py-1.5 rounded-full text-fg hover:border-primary/40">
               <Users size={13} /> Change client
+            </button>
+            <button
+              onClick={() => {
+                const archiving = !property.archived;
+                setPropertyArchived(property.id, archiving);
+                if (archiving) setSelectedClientEmail(null);
+              }}
+              className="flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3.5 py-1.5 rounded-full text-fg hover:border-primary/40">
+              {property.archived ? <ArchiveRestore size={13} /> : <Archive size={13} />} {property.archived ? "Unarchive" : "Archive"}
             </button>
             <button onClick={() => setSelectedClientEmail(null)}
               className="flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3.5 py-1.5 rounded-full text-fg hover:border-primary/40">

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, Bell, Zap, AlertTriangle, Building2, DoorOpen, Wrench, Store, LogOut, Settings, X } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useStore } from "@/lib/store";
-import { Property, Room, EquipmentItem, roomAttentionCount } from "@/lib/data";
+import { Property, Room, EquipmentItem, roomAttentionCount, activeProperties } from "@/lib/data";
 
 export default function TopBar() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export default function TopBar() {
   // Admin/support with no client picked yet can search across every property;
   // everyone else (or once a client is in view) searches within their own scope.
   const clientEmailCtx = session?.role === "client" ? session.email : selectedClientEmail;
-  const searchScope = clientEmailCtx ? properties.filter((p) => p.clientEmail === clientEmailCtx) : properties;
+  const searchScope = clientEmailCtx ? activeProperties(properties).filter((p) => p.clientEmail === clientEmailCtx) : activeProperties(properties);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -98,7 +98,7 @@ export default function TopBar() {
   // has turned notifications off in Settings.
   const notifications = useMemo(() => {
     if (!notificationsEnabled) return [];
-    const scope = session?.role === "client" ? properties.filter((p) => p.clientEmail === session.email) : properties;
+    const scope = session?.role === "client" ? activeProperties(properties).filter((p) => p.clientEmail === session.email) : activeProperties(properties);
     const items: { property: Property; room: Room }[] = [];
     for (const p of scope) {
       for (const r of p.rooms) {

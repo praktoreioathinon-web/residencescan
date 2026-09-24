@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, ChevronRight, Wrench, Activity, CheckCircle2, X } from "lucide-react";
-import { dueSoonEquipment } from "@/lib/data";
+import { dueSoonEquipment, activeProperties } from "@/lib/data";
 import { useStore } from "@/lib/store";
 
 export default function MaintenancePage() {
@@ -18,7 +18,7 @@ export default function MaintenancePage() {
   const [notes, setNotes] = useState("");
   const clientEmail = session?.role === "client" ? session.email : selectedClientEmail;
   const property = properties.find((p) => p.clientEmail === clientEmail && p.id === selectedPropertyId)
-    ?? properties.find((p) => p.clientEmail === clientEmail);
+    ?? activeProperties(properties).find((p) => p.clientEmail === clientEmail);
 
   if (!property) {
     return (

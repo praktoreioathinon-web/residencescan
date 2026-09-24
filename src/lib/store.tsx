@@ -30,6 +30,7 @@ type Store = {
   addEquipment: (propertyId: string, roomId: string, e: { name: string; model: string; photoUrl?: string }) => void;
   addMaintenanceLogEntry: (propertyId: string, e: { title: string; room: string; supplier: string; notes: string }) => void;
   assignProperty: (propertyId: string, clientEmail: string) => void;
+  setPropertyArchived: (propertyId: string, archived: boolean) => void;
   setPropertyPhoto: (propertyId: string, photoUrl: string) => void;
   setRoomPhoto: (propertyId: string, roomId: string, photoUrl: string) => void;
   setEquipmentPhoto: (propertyId: string, roomId: string, equipmentName: string, photoUrl: string) => void;
@@ -242,6 +243,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     patchProperty({ ...p, clientEmail }, `${p.name} — change client`);
   }
 
+  function setPropertyArchived(propertyId: string, archived: boolean) {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    patchProperty({ ...p, archived }, `${p.name} — ${archived ? "archive" : "unarchive"}`);
+  }
+
   function setPropertyPhoto(propertyId: string, photoUrl: string) {
     const p = properties.find((p) => p.id === propertyId);
     if (!p) return;
@@ -351,7 +358,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         ready, session, login, logout,
         properties, clients, suppliers,
         saveErrors, retrySave, retryAllSaves,
-        addProperty, addRoom, addEquipment, addMaintenanceLogEntry, assignProperty, setPropertyPhoto, setRoomPhoto, setEquipmentPhoto,
+        addProperty, addRoom, addEquipment, addMaintenanceLogEntry, assignProperty, setPropertyArchived, setPropertyPhoto, setRoomPhoto, setEquipmentPhoto,
         reportEquipmentIssue, clearEquipmentIssue,
         addClient, updateClient,
         addSupplier, updateSupplier,

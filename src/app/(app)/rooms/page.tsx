@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, CheckCircle2, AlertTriangle, BedDouble, Home, ChefHat, Waves, Cog, Building2, ArrowLeftRight, Martini, Trees, Flame, Zap, X, Wrench, ImageIcon, Camera } from "lucide-react";
 import { useStore } from "@/lib/store";
 import PropertyPicker from "@/components/PropertyPicker";
-import { Room, roomAttentionCount, roomPhotoCount } from "@/lib/data";
+import { Room, roomAttentionCount, roomPhotoCount, activeProperties } from "@/lib/data";
 import { compressImageToWebp } from "@/lib/image";
 
 const ICON_BY_NAME: [string, typeof Home][] = [
@@ -46,7 +46,7 @@ export default function RoomsPage() {
   // an unassigned property has no client to choose in the first place.
   const directProperty = session?.role === "client" ? undefined : properties.find((p) => p.id === selectedPropertyId);
   const clientEmail = session?.role === "client" ? session.email : directProperty ? directProperty.clientEmail : selectedClientEmail;
-  const myProperties = properties.filter((p) => p.clientEmail === clientEmail);
+  const myProperties = activeProperties(properties).filter((p) => p.clientEmail === clientEmail);
   const property = directProperty ?? myProperties.find((p) => p.id === selectedPropertyId);
 
   if (!property && !clientEmail) {

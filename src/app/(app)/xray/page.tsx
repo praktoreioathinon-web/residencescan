@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, AlertTriangle, CheckCircle2, Wrench } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { roomAttentionCount } from "@/lib/data";
+import { roomAttentionCount, activeProperties } from "@/lib/data";
 
 const TABS = ["All Rooms", "Indoor", "Outdoor", "Technical"] as const;
 
@@ -13,7 +13,7 @@ export default function XRayPage() {
   const { session, properties, selectedClientEmail, selectedPropertyId } = useStore();
   const clientEmail = session?.role === "client" ? session.email : selectedClientEmail;
   const property = properties.find((p) => p.clientEmail === clientEmail && p.id === selectedPropertyId)
-    ?? properties.find((p) => p.clientEmail === clientEmail);
+    ?? activeProperties(properties).find((p) => p.clientEmail === clientEmail);
 
   if (!property) {
     return (

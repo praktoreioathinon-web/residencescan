@@ -5,7 +5,7 @@ import Link from "next/link";
 import { notFound, useSearchParams } from "next/navigation";
 import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon, Camera, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { EquipmentItem, genericEquipmentTerm } from "@/lib/data";
+import { EquipmentItem, genericEquipmentTerm, roomMaintenanceEntries } from "@/lib/data";
 import { compressImageToWebp } from "@/lib/image";
 
 const EQUIP_ICONS = [Sparkles, Fan, Sun];
@@ -101,11 +101,17 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
     setNewEquipPhoto(undefined);
   }
 
+  const maintenanceEntries = property ? roomMaintenanceEntries(property, room) : [];
+  const photoItems = [
+    ...(room.photoUrl ? [{ label: room.name, photoUrl: room.photoUrl }] : []),
+    ...room.equipment.filter((e) => e.photoUrl).map((e) => ({ label: e.name, photoUrl: e.photoUrl as string })),
+  ];
+
   const tabs = [
-    { key: "Equipment" as const, count: room.equipmentCount },
-    { key: "Documents" as const, count: room.documentsCount },
-    { key: "Maintenance" as const, count: room.maintenanceCount },
-    { key: "Photos" as const, count: room.photosCount },
+    { key: "Equipment" as const, count: room.equipment.length },
+    { key: "Documents" as const, count: 0 },
+    { key: "Maintenance" as const, count: maintenanceEntries.length },
+    { key: "Photos" as const, count: photoItems.length },
   ];
 
   return (
@@ -178,8 +184,32 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
             );
           })}
         </div>
+      ) : tab === "Maintenance" ? (
+        maintenanceEntries.length === 0 ? (
+          <p className="text-[12.5px] text-subtext py-8 text-center">No maintenance recorded for this room yet.</p>
+        ) : (
+          <div className="flex flex-col gap-2.5">
+            {maintenanceEntries.map((m) => (
+              <div key={m.id} className="rounded-2xl border border-line p-3.5">
+                <p className="text-[11px] text-subtext mb-1">{m.date} · {m.supplier}</p>
+                <p className="text-[13.5px] font-semibold text-fg">{m.title}</p>
+                <p className="text-[11.5px] text-subtext mt-1">{m.notes}</p>
+              </div>
+            ))}
+          </div>
+        )
+      ) : tab === "Photos" ? (
+        photoItems.length === 0 ? (
+          <p className="text-[12.5px] text-subtext py-8 text-center">No photos uploaded yet.</p>
+        ) : (
+          <div className="grid grid-cols-3 gap-2.5">
+            {photoItems.map((p, i) => (
+              <div key={i} title={p.label} className="rounded-xl overflow-hidden bg-cover bg-center" style={{ aspectRatio: "1 / 1", backgroundImage: `url(${p.photoUrl})` }} />
+            ))}
+          </div>
+        )
       ) : (
-        <p className="text-[12.5px] text-subtext py-8 text-center">No {tab.toLowerCase()} recorded for this demo yet.</p>
+        <p className="text-[12.5px] text-subtext py-8 text-center">No documents uploaded yet.</p>
       )}
 
       {selectedEquipment && (

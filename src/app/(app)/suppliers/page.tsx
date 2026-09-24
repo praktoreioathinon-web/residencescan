@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { Plus, ChevronRight, X, Phone, Mail, MapPin, Pencil } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { Supplier } from "@/lib/data";
+import { Supplier, supplierRecordCount } from "@/lib/data";
 
 const BLANK = { name: "", category: "", phone: "", email: "", address: "", notes: "" };
 
 export default function SuppliersPage() {
-  const { session, suppliers, addSupplier, updateSupplier } = useStore();
+  const { session, properties, suppliers, addSupplier, updateSupplier } = useStore();
   const canEdit = session?.role !== "client";
   const [openId, setOpenId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Supplier | null>(null);
@@ -84,7 +84,7 @@ export default function SuppliersPage() {
             </div>
             <p className="text-[12px] text-subtext mt-3 leading-relaxed">{open.notes}</p>
             <div className="flex items-center justify-between mt-3 pt-3 border-t border-line">
-              <p className="text-[11px] text-subtext">{open.records} linked equipment records</p>
+              <p className="text-[11px] text-subtext">{supplierRecordCount(open, properties)} linked equipment records</p>
               {canEdit && <button onClick={() => startEdit(open)} className="text-[12px] text-primary font-semibold flex items-center gap-1"><Pencil size={12} /> Edit</button>}
             </div>
           </div>

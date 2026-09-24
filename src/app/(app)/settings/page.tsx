@@ -1,18 +1,22 @@
 "use client";
 
 import { useStore } from "@/lib/store";
-import { Plan } from "@/lib/data";
+import { ACCOUNTS, Plan } from "@/lib/data";
 import { ShieldCheck, Wrench, Users } from "lucide-react";
 
 const PLANS: Plan[] = ["Start", "Care", "Plus", "Pro"];
 
-const STAFF = [
-  { name: "Admin", email: "admin@residencescan.com", role: "Admin", permissions: "Full access — all clients, properties, suppliers and settings.", icon: ShieldCheck },
-  { name: "Support Team", email: "support@residencescan.com", role: "Support", permissions: "Full access — all clients and properties, equipment and maintenance focus.", icon: Wrench },
-];
+// Permissions copy per role, applied to whoever is actually in ACCOUNTS —
+// keeps this list from drifting out of sync with the real accounts.
+const ROLE_INFO: Record<string, { permissions: string; icon: typeof ShieldCheck }> = {
+  admin: { permissions: "Full access — all clients, properties, suppliers and settings.", icon: ShieldCheck },
+  support: { permissions: "Full access — all clients and properties, equipment and maintenance focus.", icon: Wrench },
+};
+
+const STAFF = ACCOUNTS.filter((a) => a.role !== "client");
 
 export default function SettingsPage() {
-  const { session, logout, clients, properties, updateClient } = useStore();
+  const { session, logout, clients, properties, updateClient, notificationsEnabled, setNotificationsEnabled } = useStore();
   const isAdmin = session?.role === "admin";
 
   return (
@@ -38,19 +42,22 @@ export default function SettingsPage() {
           <div className="rounded-2xl border border-line p-5 mb-4">
             <p className="text-[10px] tracking-widest text-subtext font-semibold mb-3">STAFF ACCOUNTS & PERMISSIONS</p>
             <div className="flex flex-col gap-3">
-              {STAFF.map((s) => (
-                <div key={s.email} className="flex items-start gap-3 border-t border-line pt-3 first:border-t-0 first:pt-0">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><s.icon size={14} className="text-primary" /></div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-[13px] font-semibold text-fg">{s.name}</p>
-                      <span className="text-[9.5px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary uppercase">{s.role}</span>
+              {STAFF.map((s) => {
+                const info = ROLE_INFO[s.role];
+                return (
+                  <div key={s.email} className="flex items-start gap-3 border-t border-line pt-3 first:border-t-0 first:pt-0">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><info.icon size={14} className="text-primary" /></div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[13px] font-semibold text-fg">{s.name}</p>
+                        <span className="text-[9.5px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary uppercase">{s.role}</span>
+                      </div>
+                      <p className="text-[11px] text-subtext">{s.email}</p>
+                      <p className="text-[11.5px] text-subtext mt-1">{info.permissions}</p>
                     </div>
-                    <p className="text-[11px] text-subtext">{s.email}</p>
-                    <p className="text-[11.5px] text-subtext mt-1">{s.permissions}</p>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -84,8 +91,19 @@ export default function SettingsPage() {
       )}
 
       <div className="rounded-2xl border border-line p-5 mb-4">
-        <p className="text-[10px] tracking-widest text-subtext font-semibold mb-2">NOTIFICATIONS</p>
-        <p className="text-[12.5px] text-subtext">Maintenance reminders and attention alerts are on by default in this demo.</p>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[10px] tracking-widest text-subtext font-semibold mb-2">NOTIFICATIONS</p>
+            <p className="text-[12.5px] text-subtext">Show attention alerts in the notification bell.</p>
+          </div>
+          <button
+            onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+            aria-pressed={notificationsEnabled}
+            className={`relative w-10 h-6 rounded-full flex-shrink-0 transition-colors ${notificationsEnabled ? "bg-primary" : "bg-line"}`}
+          >
+            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${notificationsEnabled ? "translate-x-[18px]" : "translate-x-0.5"}`} />
+          </button>
+        </div>
       </div>
 
       <button onClick={logout} className="text-[12.5px] text-[var(--attention-fg)] font-semibold">Sign out</button>

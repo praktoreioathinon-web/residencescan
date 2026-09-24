@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, CheckCircle2, AlertTriangle, BedDouble, Home, ChefHat, Waves, Cog, Building2, ArrowLeftRight, Martini, Trees, Flame, Zap, X, Wrench, FileText, ImageIcon, Camera } from "lucide-react";
+import { Plus, CheckCircle2, AlertTriangle, BedDouble, Home, ChefHat, Waves, Cog, Building2, ArrowLeftRight, Martini, Trees, Flame, Zap, X, Wrench, ImageIcon, Camera } from "lucide-react";
 import { useStore } from "@/lib/store";
 import PropertyPicker from "@/components/PropertyPicker";
-import { Room } from "@/lib/data";
+import { Room, roomAttentionCount, roomPhotoCount } from "@/lib/data";
 import { compressImageToWebp } from "@/lib/image";
 
 const ICON_BY_NAME: [string, typeof Home][] = [
@@ -28,7 +28,7 @@ export default function RoomsPage() {
   const router = useRouter();
   const { session, properties, selectedClientEmail, selectedPropertyId, setSelectedPropertyId, addRoom } = useStore();
   const [tab, setTab] = useState<(typeof TABS)[number]>("All Rooms");
-  const [statModal, setStatModal] = useState<"equipment" | "attention" | "documents" | null>(null);
+  const [statModal, setStatModal] = useState<"equipment" | "attention" | "photos" | null>(null);
   const [showAddRoom, setShowAddRoom] = useState(false);
   const [newRoomName, setNewRoomName] = useState("");
   const [newRoomCategory, setNewRoomCategory] = useState<Room["category"]>("Indoor");
@@ -74,9 +74,9 @@ export default function RoomsPage() {
   ).filter(([name]) => !existingNames.has(name));
   const allEquipment = rooms.flatMap((r) => r.equipment.map((eq) => ({ ...eq, room: r })));
   const totalEquipment = rooms.reduce((s, r) => s + r.equipmentCount, 0);
-  const totalDocs = rooms.reduce((s, r) => s + r.documentsCount, 0);
-  const attentionRooms = rooms.filter((r) => r.badge === "attention");
-  const documentRooms = rooms.filter((r) => r.documentsCount > 0);
+  const totalPhotos = rooms.reduce((s, r) => s + roomPhotoCount(r), 0);
+  const attentionRooms = rooms.filter((r) => roomAttentionCount(r) > 0);
+  const photoRooms = rooms.filter((r) => roomPhotoCount(r) > 0);
 
   function goToRoom(r: Room, extraQuery?: string) {
     setStatModal(null);
@@ -128,8 +128,8 @@ export default function RoomsPage() {
         <button onClick={() => setStatModal("attention")} className="p-4 text-left hover:bg-white/5">
           <p className="text-xl font-bold text-fg">{attentionRooms.length}</p><p className="text-[11px] text-subtext">Need attention</p>
         </button>
-        <button onClick={() => setStatModal("documents")} className="p-4 text-left hover:bg-white/5">
-          <p className="text-xl font-bold text-fg">{totalDocs}</p><p className="text-[11px] text-subtext">Documents</p>
+        <button onClick={() => setStatModal("photos")} className="p-4 text-left hover:bg-white/5">
+          <p className="text-xl font-bold text-fg">{totalPhotos}</p><p className="text-[11px] text-subtext">Photos</p>
         </button>
       </div>
 
@@ -154,10 +154,10 @@ export default function RoomsPage() {
                 ) : (
                   <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center"><Icon size={16} className="text-fg" /></div>
                 )}
-                {r.badge === "current" ? (
+                {roomAttentionCount(r) === 0 ? (
                   <span className="flex items-center gap-1 text-[10px] font-semibold bg-[var(--ok-bg)] text-[var(--ok-fg)] px-2 py-0.5 rounded-full"><CheckCircle2 size={10} /> Current</span>
                 ) : (
-                  <span className="flex items-center gap-1 text-[10px] font-semibold bg-[var(--warn-bg)] text-[var(--warn-fg)] px-2 py-0.5 rounded-full"><AlertTriangle size={10} /> {r.badgeCount} attention</span>
+                  <span className="flex items-center gap-1 text-[10px] font-semibold bg-[var(--warn-bg)] text-[var(--warn-fg)] px-2 py-0.5 rounded-full"><AlertTriangle size={10} /> {roomAttentionCount(r)} attention</span>
                 )}
               </div>
               <p className="text-[14px] font-bold text-fg">{r.name}</p>
@@ -172,7 +172,7 @@ export default function RoomsPage() {
           <div className="bg-card border border-line rounded-2xl w-full max-w-md max-h-[75vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-line flex-shrink-0">
               <p className="font-bold text-fg text-[15px]">
-                {statModal === "equipment" ? `All equipment (${allEquipment.length})` : statModal === "attention" ? `Needs attention (${attentionRooms.length})` : `Documents (${totalDocs})`}
+                {statModal === "equipment" ? `All equipment (${allEquipment.length})` : statModal === "attention" ? `Needs attention (${attentionRooms.length})` : `Photos (${totalPhotos})`}
               </p>
               <button onClick={() => setStatModal(null)}><X size={16} className="text-subtext" /></button>
             </div>
@@ -193,16 +193,18 @@ export default function RoomsPage() {
                 <button key={r.id} onClick={() => goToRoom(r)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-white/5">
                   <div className="w-8 h-8 rounded-lg bg-[var(--warn-bg)] flex items-center justify-center flex-shrink-0"><AlertTriangle size={14} className="text-[var(--warn-fg)]" /></div>
                   <div className="flex-1 min-w-0"><p className="text-[12.5px] font-semibold text-fg truncate">{r.name}</p><p className="text-[11px] text-subtext truncate">{r.category}</p></div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--warn-bg)] text-[var(--warn-fg)] flex-shrink-0">{r.badgeCount ?? 1} item{(r.badgeCount ?? 1) > 1 ? "s" : ""}</span>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--warn-bg)] text-[var(--warn-fg)] flex-shrink-0">{roomAttentionCount(r)} item{roomAttentionCount(r) > 1 ? "s" : ""}</span>
                 </button>
               )))}
-              {statModal === "documents" && documentRooms.map((r) => (
-                <button key={r.id} onClick={() => goToRoom(r, "?tab=Documents")} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-white/5">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><FileText size={14} className="text-primary" /></div>
+              {statModal === "photos" && (photoRooms.length === 0 ? (
+                <p className="text-[12.5px] text-subtext p-4 text-center">No photos uploaded yet.</p>
+              ) : photoRooms.map((r) => (
+                <button key={r.id} onClick={() => goToRoom(r, "?tab=Photos")} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-white/5">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><ImageIcon size={14} className="text-primary" /></div>
                   <div className="flex-1 min-w-0"><p className="text-[12.5px] font-semibold text-fg truncate">{r.name}</p><p className="text-[11px] text-subtext truncate">{r.category}</p></div>
-                  <span className="text-[11px] text-subtext flex-shrink-0">{r.documentsCount} doc{r.documentsCount > 1 ? "s" : ""}</span>
+                  <span className="text-[11px] text-subtext flex-shrink-0">{roomPhotoCount(r)} photo{roomPhotoCount(r) > 1 ? "s" : ""}</span>
                 </button>
-              ))}
+              )))}
             </div>
           </div>
         </div>

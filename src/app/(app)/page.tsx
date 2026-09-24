@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Grid2x2, Cog, Waves, Store, Camera, Scan, ChevronRight, ImageIcon, ShieldCheck, AlertTriangle, CheckCircle2, Building2, Users, MapPin, Wrench, X } from "lucide-react";
-import { dueSoonEquipment, Property, ClientRecord } from "@/lib/data";
+import { dueSoonEquipment, healthScore, systemsOnline, maintenanceCurrent, photoCoveragePct, Property, ClientRecord } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import { compressImageToWebp } from "@/lib/image";
 
@@ -173,7 +173,7 @@ export default function OverviewPage() {
 
       <div className="rounded-2xl border border-line p-5 mt-5 flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
-          <HealthRing pct={property.health} />
+          <HealthRing pct={healthScore(property)} />
           <div>
             <p className="text-[10px] tracking-widest text-subtext font-semibold">RESIDENCE HEALTH</p>
             <p className="text-[15px] font-bold text-fg mt-0.5">{upcoming.length} item{upcoming.length === 1 ? "" : "s"} need attention</p>
@@ -181,9 +181,9 @@ export default function OverviewPage() {
           </div>
         </div>
         <div className="border-l border-line pl-6">
-          <Bar label="Systems online" value={property.systemsOnline[0]} max={property.systemsOnline[1]} />
-          <Bar label="Maintenance current" value={property.maintenanceCurrent[0]} max={property.maintenanceCurrent[1]} />
-          <Bar label="Documents complete" pctLabel={`${property.documentsCompletePct}%`} />
+          <Bar label="Systems online" value={systemsOnline(property)[0]} max={systemsOnline(property)[1]} />
+          <Bar label="Maintenance current" value={maintenanceCurrent(property)[0]} max={maintenanceCurrent(property)[1]} />
+          <Bar label="Photo coverage" pctLabel={`${photoCoveragePct(property)}%`} />
         </div>
       </div>
 
@@ -298,7 +298,7 @@ function AllPropertiesOverview({
   properties, clients, onOpen,
 }: { properties: Property[]; clients: ClientRecord[]; onOpen: (p: Property) => void }) {
   const totalAttention = properties.reduce((s, p) => s + dueSoonEquipment(p).length, 0);
-  const avgHealth = properties.length ? Math.round(properties.reduce((s, p) => s + p.health, 0) / properties.length) : 0;
+  const avgHealth = properties.length ? Math.round(properties.reduce((s, p) => s + healthScore(p), 0) / properties.length) : 0;
   const clientName = (email: string | null) => clients.find((c) => c.email === email)?.name ?? "Unassigned";
 
   return (
@@ -333,7 +333,7 @@ function AllPropertiesOverview({
             <div>
               <p className="text-[15px] font-bold text-white">{p.name}</p>
               <p className="text-[11px] text-white/70 mt-0.5">{p.area} · {clientName(p.clientEmail)}</p>
-              <p className="text-[11px] text-primary font-semibold mt-1.5">{p.health}% health</p>
+              <p className="text-[11px] text-primary font-semibold mt-1.5">{healthScore(p)}% health</p>
             </div>
           </button>
           );

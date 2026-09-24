@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
+import SaveStatusBanner from "@/components/SaveStatusBanner";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <TopBar />
         {children}
       </div>
+      <SaveStatusBanner />
     </div>
   );
 }

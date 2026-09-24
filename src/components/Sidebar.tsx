@@ -5,12 +5,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Grid2x2, Scan, Camera, Store, Users, Settings, Plus, ChevronRight, LogOut, Menu, X, Zap, FileText } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { dueSoonEquipment } from "@/lib/data";
 
 const BASE_NAV = [
   { href: "/", label: "Overview", icon: Home },
   { href: "/rooms", label: "Rooms", icon: Grid2x2 },
   { href: "/xray", label: "X-Ray", icon: Scan },
-  { href: "/maintenance", label: "Maintenance", icon: Camera, badge: 3 },
+  { href: "/maintenance", label: "Maintenance", icon: Camera },
   { href: "/suppliers", label: "Suppliers", icon: Store },
 ];
 
@@ -28,6 +29,7 @@ export default function Sidebar() {
   ];
 
   const selectedProperty = properties.find((p) => p.id === selectedPropertyId);
+  const maintenanceBadge = selectedProperty ? dueSoonEquipment(selectedProperty).length : 0;
 
   return (
     <>
@@ -56,8 +58,9 @@ export default function Sidebar() {
 
         <p className="text-[10px] font-semibold tracking-widest text-subtext px-2 mb-2">PROPERTY</p>
         <nav className="flex flex-col gap-1">
-          {nav.map(({ href, label, icon: Icon, badge }) => {
+          {nav.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || (href !== "/" && pathname.startsWith(href));
+            const badge = href === "/maintenance" ? maintenanceBadge : 0;
             return (
               <Link
                 key={href} href={href} onClick={() => setOpen(false)}
@@ -65,7 +68,7 @@ export default function Sidebar() {
               >
                 <Icon size={16} />
                 <span className="flex-1">{label}</span>
-                {badge && (
+                {badge > 0 && (
                   <span className="w-4.5 h-4.5 flex items-center justify-center rounded-full bg-[var(--attention-fg)] text-[9px] font-bold text-[#2A0E0A] px-1.5 py-0.5">{badge}</span>
                 )}
               </Link>
@@ -86,8 +89,8 @@ export default function Sidebar() {
               <Scan size={15} className="text-primary" />
             </div>
             <p className="text-[13px] font-semibold text-fg">Property Scan</p>
-            <p className="text-[11px] text-subtext mt-2">Last full scan</p>
-            <p className="text-[11px] text-subtext">16 Sep 2026</p>
+            <p className="text-[11px] text-subtext mt-2">Last updated</p>
+            <p className="text-[11px] text-subtext">{selectedProperty?.updated ?? "—"}</p>
             <Link href="/xray" onClick={() => setOpen(false)} className="flex items-center gap-1 text-[12px] text-primary font-semibold mt-2.5">
               View X-Ray <ChevronRight size={12} />
             </Link>

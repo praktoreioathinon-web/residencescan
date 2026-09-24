@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeftRight, Building2, CheckCircle2, Download, MapPin, ShieldCheck, Wrench, Zap } from "lucide-react";
 import { useStore } from "@/lib/store";
 import PropertyPicker from "@/components/PropertyPicker";
+import { healthScore } from "@/lib/data";
 
 export default function ReportsPage() {
   const { session, properties, clients, selectedClientEmail, selectedPropertyId, setSelectedPropertyId } = useStore();
@@ -86,7 +87,7 @@ export default function ReportsPage() {
         </div>
 
         <div className="grid grid-cols-4 rounded-xl border border-line divide-x divide-line mt-5">
-          <div className="p-3.5 text-center"><p className="text-lg font-bold text-fg">{property.health}%</p><p className="text-[10.5px] text-subtext">Health score</p></div>
+          <div className="p-3.5 text-center"><p className="text-lg font-bold text-fg">{healthScore(property)}%</p><p className="text-[10.5px] text-subtext">Health score</p></div>
           <div className="p-3.5 text-center"><p className="text-lg font-bold text-fg">{property.rooms.length}</p><p className="text-[10.5px] text-subtext">Rooms</p></div>
           <div className="p-3.5 text-center"><p className="text-lg font-bold text-fg">{totalEquipment}</p><p className="text-[10.5px] text-subtext">Equipment records</p></div>
           <div className="p-3.5 text-center"><p className="text-lg font-bold text-fg">{property.maintenanceLog.length}</p><p className="text-[10.5px] text-subtext">Completed services</p></div>

@@ -1,9 +1,15 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { ACCOUNTS, SEED_PROPERTIES, SEED_CLIENTS, SEED_SUPPLIERS, SEED_VERSION, Property, ClientRecord, Supplier, Plan, Role, Room } from "./data";
+import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
+import { ACCOUNTS, Property, ClientRecord, Supplier, Plan, Role, Room } from "./data";
 
 export type Session = { email: string; role: Role; name: string };
+
+// A save that failed to reach the database — still showing on screen from the
+// optimistic update, but not actually durable yet. Surfaced so the person
+// editing it knows to retry before walking away, instead of the failure just
+// living silently in the console.
+export type SaveError = { id: string; description: string };
 
 type Store = {
   ready: boolean;
@@ -15,9 +21,14 @@ type Store = {
   clients: ClientRecord[];
   suppliers: Supplier[];
 
-  addProperty: (p: { name: string; area: string; location: string }) => Property;
+  saveErrors: SaveError[];
+  retrySave: (id: string) => void;
+  retryAllSaves: () => void;
+
+  addProperty: (p: { name: string; area: string; location: string }) => void;
   addRoom: (propertyId: string, r: { name: string; category: Room["category"]; photoUrl?: string }) => void;
   addEquipment: (propertyId: string, roomId: string, e: { name: string; model: string; photoUrl?: string }) => void;
+  addMaintenanceLogEntry: (propertyId: string, e: { title: string; room: string; supplier: string; notes: string }) => void;
   assignProperty: (propertyId: string, clientEmail: string) => void;
   setPropertyPhoto: (propertyId: string, photoUrl: string) => void;
   setRoomPhoto: (propertyId: string, roomId: string, photoUrl: string) => void;
@@ -28,8 +39,11 @@ type Store = {
   addClient: (c: { name: string; email: string; plan: Plan }) => void;
   updateClient: (email: string, updates: Partial<Omit<ClientRecord, "email">>) => void;
 
-  addSupplier: (s: Omit<Supplier, "id" | "records">) => void;
+  addSupplier: (s: Omit<Supplier, "id">) => void;
   updateSupplier: (id: string, updates: Partial<Supplier>) => void;
+
+  notificationsEnabled: boolean;
+  setNotificationsEnabled: (enabled: boolean) => void;
 
   selectedClientEmail: string | null;
   setSelectedClientEmail: (email: string | null) => void;
@@ -40,108 +54,115 @@ type Store = {
 
 const StoreContext = createContext<Store | null>(null);
 
+// Session, "what's currently selected," and notification preference are per
+// device UI state — not shared data — so they stay in localStorage. Everything
+// else (properties, rooms, equipment, clients, suppliers) lives in the
+// database via the /api routes, so it survives across devices/browsers.
 const LS_SESSION = "rs_session";
-const LS_PROPERTIES = "rs_properties";
-const LS_CLIENTS = "rs_clients";
-const LS_SUPPLIERS = "rs_suppliers";
 const LS_SELECTED = "rs_selected";
-const LS_SEED_VERSION = "rs_seed_version";
+const LS_NOTIFICATIONS = "rs_notifications_enabled";
 
-// Brings a browser's cached properties up to date with newer seed data (e.g. added
-// photos) without discarding anything the user changed locally: any field the user
-// customized (photo upload, client assignment, etc.) is kept as-is, seed-only fields
-// are filled in when missing, and properties the user added themselves pass through.
-function mergeSeedProperties(cached: Property[]): Property[] {
-  const byId = new Map(cached.map((p) => [p.id, p]));
-  const merged = SEED_PROPERTIES.map((seed) => {
-    const existing = byId.get(seed.id);
-    if (!existing) return seed;
-    byId.delete(seed.id);
-    // The standard room/equipment structure always comes from the current seed
-    // (it's reference data, not user-editable), but anything the user added on top
-    // — a custom room, extra equipment, uploaded photos, a reported issue — has no
-    // seed counterpart and must be preserved by hand rather than dropped.
-    const seedRoomIds = new Set(seed.rooms.map((r) => r.id));
-    const rooms = seed.rooms.map((seedRoom) => {
-      const existingRoom = existing.rooms?.find((r) => r.id === seedRoom.id);
-      if (!existingRoom) return seedRoom;
-      const seedEqNames = new Set(seedRoom.equipment.map((e) => e.name));
-      const equipment = seedRoom.equipment.map((seedEq) => {
-        const existingEq = existingRoom.equipment.find((e) => e.name === seedEq.name);
-        if (!existingEq) return seedEq;
-        return {
-          ...seedEq,
-          ...(existingEq.photoUrl ? { photoUrl: existingEq.photoUrl } : {}),
-          ...(existingEq.issueNote ? { issueNote: existingEq.issueNote, issueReportedAt: existingEq.issueReportedAt } : {}),
-        };
-      });
-      const extraEquipment = existingRoom.equipment.filter((e) => !seedEqNames.has(e.name));
-      return { ...seedRoom, equipment: [...equipment, ...extraEquipment], photoUrl: existingRoom.photoUrl ?? seedRoom.photoUrl };
-    });
-    const extraRooms = (existing.rooms ?? []).filter((r) => !seedRoomIds.has(r.id));
-    return { ...seed, ...existing, rooms: [...rooms, ...extraRooms], maintenanceLog: seed.maintenanceLog, photoUrl: existing.photoUrl ?? seed.photoUrl };
-  });
-  return [...merged, ...Array.from(byId.values())];
+function randomId(name: string) {
+  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Math.random().toString(36).slice(2, 6);
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
-  const [properties, setProperties] = useState<Property[]>(SEED_PROPERTIES);
-  const [clients, setClients] = useState<ClientRecord[]>(SEED_CLIENTS);
-  const [suppliers, setSuppliers] = useState<Supplier[]>(SEED_SUPPLIERS);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [clients, setClients] = useState<ClientRecord[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedClientEmail, setSelectedClientEmailState] = useState<string | null>(null);
   const [selectedPropertyId, setSelectedPropertyIdState] = useState<string | null>(null);
+  const [notificationsEnabled, setNotificationsEnabledState] = useState(true);
+  const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
+  const retryFns = useRef(new Map<string, () => void>());
+
+  // Every mutation below applies its change to local state immediately (the
+  // UI never waits on the network) and saves it in the background through
+  // this one path. A failure shows up in `saveErrors` — keyed so a second
+  // edit to the same thing before the first save lands just replaces the
+  // pending retry with the newer (superset) data — and clears itself the
+  // moment a retry succeeds.
+  const runSave = useCallback((id: string, description: string, exec: () => Promise<Response>) => {
+    async function attempt() {
+      try {
+        const res = await exec();
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        retryFns.current.delete(id);
+        setSaveErrors((prev) => prev.filter((e) => e.id !== id));
+      } catch (err) {
+        console.error(`Save failed: ${description}`, err);
+        retryFns.current.set(id, attempt);
+        setSaveErrors((prev) => (prev.some((e) => e.id === id) ? prev : [...prev, { id, description }]));
+      }
+    }
+    attempt();
+  }, []);
+
+  const retrySave = useCallback((id: string) => {
+    retryFns.current.get(id)?.();
+  }, []);
+
+  const retryAllSaves = useCallback(() => {
+    retryFns.current.forEach((fn) => fn());
+  }, []);
 
   useEffect(() => {
     try {
       const s = localStorage.getItem(LS_SESSION);
       if (s) setSession(JSON.parse(s));
-
-      const storedVersion = Number(localStorage.getItem(LS_SEED_VERSION) ?? "0");
-      const isStale = storedVersion < SEED_VERSION;
-
-      const p = localStorage.getItem(LS_PROPERTIES);
-      if (p) {
-        const cached = JSON.parse(p) as Property[];
-        const next = isStale ? mergeSeedProperties(cached) : cached;
-        setProperties(next);
-        if (isStale) localStorage.setItem(LS_PROPERTIES, JSON.stringify(next));
-      }
-      if (isStale) localStorage.setItem(LS_SEED_VERSION, String(SEED_VERSION));
-
-      const c = localStorage.getItem(LS_CLIENTS);
-      if (c) setClients(JSON.parse(c));
-      const sup = localStorage.getItem(LS_SUPPLIERS);
-      if (sup) setSuppliers(JSON.parse(sup));
       const sel = localStorage.getItem(LS_SELECTED);
       if (sel) {
         const parsed = JSON.parse(sel);
         setSelectedClientEmailState(parsed.clientEmail ?? null);
         setSelectedPropertyIdState(parsed.propertyId ?? null);
       }
+      const notif = localStorage.getItem(LS_NOTIFICATIONS);
+      if (notif) setNotificationsEnabledState(notif === "true");
     } catch {}
-    setReady(true);
-  }, []);
 
-  const persistProperties = useCallback((next: Property[]) => {
-    setProperties(next);
-    try { localStorage.setItem(LS_PROPERTIES, JSON.stringify(next)); } catch {}
-  }, []);
+    fetch("/api/state")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`GET /api/state failed: ${res.status}`))))
+      .then((data: { properties: Property[]; clients: ClientRecord[]; suppliers: Supplier[] }) => {
+        setProperties(data.properties);
+        setClients(data.clients);
+        setSuppliers(data.suppliers);
+      })
+      .catch((err) => console.error("Failed to load data from the database", err))
+      .finally(() => setReady(true));
 
-  const persistClients = useCallback((next: ClientRecord[]) => {
-    setClients(next);
-    try { localStorage.setItem(LS_CLIENTS, JSON.stringify(next)); } catch {}
-  }, []);
-
-  const persistSuppliers = useCallback((next: Supplier[]) => {
-    setSuppliers(next);
-    try { localStorage.setItem(LS_SUPPLIERS, JSON.stringify(next)); } catch {}
-  }, []);
+    // A save that failed while offline (or mid wifi drop at a villa) retries
+    // itself the moment the connection comes back, instead of waiting for
+    // someone to notice and press retry.
+    window.addEventListener("online", retryAllSaves);
+    return () => window.removeEventListener("online", retryAllSaves);
+  }, [retryAllSaves]);
 
   const persistSelected = useCallback((clientEmail: string | null, propertyId: string | null) => {
     try { localStorage.setItem(LS_SELECTED, JSON.stringify({ clientEmail, propertyId })); } catch {}
   }, []);
+
+  function patchProperty(next: Property, description: string) {
+    setProperties((prev) => prev.map((p) => (p.id === next.id ? next : p)));
+    runSave(`property-${next.id}`, description, () =>
+      fetch(`/api/properties/${next.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) })
+    );
+  }
+
+  function patchClient(email: string, updates: Partial<Omit<ClientRecord, "email">>) {
+    setClients((prev) => prev.map((c) => (c.email === email ? { ...c, ...updates } : c)));
+    runSave(`client-${email}`, `Update ${email}`, () =>
+      fetch(`/api/clients/${encodeURIComponent(email)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) })
+    );
+  }
+
+  function patchSupplier(id: string, updates: Partial<Supplier>) {
+    setSuppliers((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+    runSave(`supplier-${id}`, `Update supplier`, () =>
+      fetch(`/api/suppliers/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) })
+    );
+  }
 
   function login(email: string, password: string) {
     const account = ACCOUNTS.find((a) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === password);
@@ -166,118 +187,141 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }
 
-  function addProperty(p: { name: string; area: string; location: string }): Property {
-    const id = p.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Math.random().toString(36).slice(2, 6);
-    const next: Property = {
-      id, name: p.name, area: p.area, location: p.location, clientEmail: null,
-      health: 100, systemsOnline: [0, 0], maintenanceCurrent: [0, 0], documentsCompletePct: 0,
+  function addProperty(p: { name: string; area: string; location: string }) {
+    const property: Property = {
+      id: randomId(p.name), name: p.name, area: p.area, location: p.location, clientEmail: null,
       updated: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
       rooms: [],
       maintenanceLog: [],
     };
-    persistProperties([...properties, next]);
-    return next;
+    setProperties((prev) => [...prev, property]);
+    // The id is generated here (not by the server) so a retry after a lost
+    // response — the write actually succeeded, only the confirmation didn't
+    // arrive — re-sends the exact same row instead of creating a duplicate.
+    runSave(`property-${property.id}`, `New property "${p.name}"`, () =>
+      fetch("/api/properties", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(property) })
+    );
   }
 
   function addRoom(propertyId: string, r: { name: string; category: Room["category"]; photoUrl?: string }) {
-    persistProperties(properties.map((p) => {
-      if (p.id !== propertyId) return p;
-      const slug = r.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-      const newRoom: Room = {
-        id: `${p.id}-${slug}-${Math.random().toString(36).slice(2, 6)}`,
-        number: String(p.rooms.length + 1).padStart(2, "0"),
-        name: r.name, category: r.category, subtitle: "Added manually",
-        equipmentCount: 0, documentsCount: 0, maintenanceCount: 0, photosCount: 0,
-        badge: "current", equipment: [], photoUrl: r.photoUrl,
-      };
-      return { ...p, rooms: [...p.rooms, newRoom] };
-    }));
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    const slug = r.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const newRoom: Room = {
+      id: `${p.id}-${slug}-${Math.random().toString(36).slice(2, 6)}`,
+      number: String(p.rooms.length + 1).padStart(2, "0"),
+      name: r.name, category: r.category, subtitle: "Added manually",
+      equipmentCount: 0, equipment: [], photoUrl: r.photoUrl,
+    };
+    patchProperty({ ...p, rooms: [...p.rooms, newRoom] }, `${p.name} — add room "${r.name}"`);
   }
 
   function addEquipment(propertyId: string, roomId: string, e: { name: string; model: string; photoUrl?: string }) {
-    persistProperties(properties.map((p) => {
-      if (p.id !== propertyId) return p;
-      return {
-        ...p,
-        rooms: p.rooms.map((r) => {
-          if (r.id !== roomId) return r;
-          const equipment = [...r.equipment, { name: e.name, model: e.model || "Installed just now", status: "Good" as const, photoUrl: e.photoUrl }];
-          return { ...r, equipment, equipmentCount: equipment.length };
-        }),
-      };
-    }));
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    const room = p.rooms.find((r) => r.id === roomId);
+    const rooms = p.rooms.map((r) => {
+      if (r.id !== roomId) return r;
+      const equipment = [...r.equipment, { name: e.name, model: e.model || "Installed just now", status: "Good" as const, photoUrl: e.photoUrl }];
+      return { ...r, equipment, equipmentCount: equipment.length };
+    });
+    patchProperty({ ...p, rooms }, `${p.name} — add equipment "${e.name}"${room ? ` (${room.name})` : ""}`);
+  }
+
+  function addMaintenanceLogEntry(propertyId: string, e: { title: string; room: string; supplier: string; notes: string }) {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    const date = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    const entry = { id: `${propertyId}-log-${Math.random().toString(36).slice(2, 8)}`, date, ...e };
+    patchProperty({ ...p, maintenanceLog: [entry, ...p.maintenanceLog] }, `${p.name} — log "${e.title}"`);
   }
 
   function assignProperty(propertyId: string, clientEmail: string) {
-    persistProperties(properties.map((p) => (p.id === propertyId ? { ...p, clientEmail } : p)));
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    patchProperty({ ...p, clientEmail }, `${p.name} — change client`);
   }
 
   function setPropertyPhoto(propertyId: string, photoUrl: string) {
-    persistProperties(properties.map((p) => (p.id === propertyId ? { ...p, photoUrl } : p)));
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    patchProperty({ ...p, photoUrl }, `${p.name} — property photo`);
   }
 
   function setRoomPhoto(propertyId: string, roomId: string, photoUrl: string) {
-    persistProperties(properties.map((p) => {
-      if (p.id !== propertyId) return p;
-      return { ...p, rooms: p.rooms.map((r) => (r.id === roomId ? { ...r, photoUrl } : r)) };
-    }));
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    const room = p.rooms.find((r) => r.id === roomId);
+    patchProperty(
+      { ...p, rooms: p.rooms.map((r) => (r.id === roomId ? { ...r, photoUrl } : r)) },
+      `${p.name} — ${room?.name ?? "room"} photo`
+    );
   }
 
   function setEquipmentPhoto(propertyId: string, roomId: string, equipmentName: string, photoUrl: string) {
-    persistProperties(properties.map((p) => {
-      if (p.id !== propertyId) return p;
-      return {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    patchProperty(
+      {
         ...p,
-        rooms: p.rooms.map((r) => {
-          if (r.id !== roomId) return r;
-          return { ...r, equipment: r.equipment.map((e) => (e.name === equipmentName ? { ...e, photoUrl } : e)) };
-        }),
-      };
-    }));
+        rooms: p.rooms.map((r) => (r.id !== roomId ? r : { ...r, equipment: r.equipment.map((e) => (e.name === equipmentName ? { ...e, photoUrl } : e)) })),
+      },
+      `${p.name} — ${equipmentName} photo`
+    );
   }
 
   function reportEquipmentIssue(propertyId: string, roomId: string, equipmentName: string, note: string) {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
     const reportedAt = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-    persistProperties(properties.map((p) => {
-      if (p.id !== propertyId) return p;
-      return {
+    patchProperty(
+      {
         ...p,
-        rooms: p.rooms.map((r) => {
-          if (r.id !== roomId) return r;
-          return { ...r, equipment: r.equipment.map((e) => (e.name === equipmentName ? { ...e, issueNote: note, issueReportedAt: reportedAt } : e)) };
-        }),
-      };
-    }));
+        rooms: p.rooms.map((r) => (r.id !== roomId ? r : { ...r, equipment: r.equipment.map((e) => (e.name === equipmentName ? { ...e, issueNote: note, issueReportedAt: reportedAt } : e)) })),
+      },
+      `${p.name} — report issue on ${equipmentName}`
+    );
   }
 
   function clearEquipmentIssue(propertyId: string, roomId: string, equipmentName: string) {
-    persistProperties(properties.map((p) => {
-      if (p.id !== propertyId) return p;
-      return {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    patchProperty(
+      {
         ...p,
-        rooms: p.rooms.map((r) => {
-          if (r.id !== roomId) return r;
-          return { ...r, equipment: r.equipment.map((e) => (e.name === equipmentName ? { ...e, issueNote: undefined, issueReportedAt: undefined } : e)) };
-        }),
-      };
-    }));
+        rooms: p.rooms.map((r) => (r.id !== roomId ? r : { ...r, equipment: r.equipment.map((e) => (e.name === equipmentName ? { ...e, issueNote: undefined, issueReportedAt: undefined } : e)) })),
+      },
+      `${p.name} — resolve issue on ${equipmentName}`
+    );
   }
 
   function addClient(c: { name: string; email: string; plan: Plan }) {
-    persistClients([...clients, { name: c.name, email: c.email.trim().toLowerCase(), plan: c.plan }]);
+    const client: ClientRecord = { name: c.name, email: c.email.trim().toLowerCase(), plan: c.plan };
+    setClients((prev) => [...prev, client]);
+    runSave(`client-${client.email}`, `New client "${c.name}"`, () =>
+      fetch("/api/clients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(client) })
+    );
   }
 
   function updateClient(email: string, updates: Partial<Omit<ClientRecord, "email">>) {
-    persistClients(clients.map((c) => (c.email === email ? { ...c, ...updates } : c)));
+    patchClient(email, updates);
   }
 
-  function addSupplier(s: Omit<Supplier, "id" | "records">) {
-    const id = s.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + Math.random().toString(36).slice(2, 6);
-    persistSuppliers([...suppliers, { ...s, id, records: 0 }]);
+  function addSupplier(s: Omit<Supplier, "id">) {
+    const supplier: Supplier = { ...s, id: randomId(s.name) };
+    setSuppliers((prev) => [...prev, supplier]);
+    runSave(`supplier-${supplier.id}`, `New supplier "${s.name}"`, () =>
+      fetch("/api/suppliers", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(supplier) })
+    );
   }
 
   function updateSupplier(id: string, updates: Partial<Supplier>) {
-    persistSuppliers(suppliers.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+    patchSupplier(id, updates);
+  }
+
+  function setNotificationsEnabled(enabled: boolean) {
+    setNotificationsEnabledState(enabled);
+    try { localStorage.setItem(LS_NOTIFICATIONS, String(enabled)); } catch {}
   }
 
   function setSelectedClientEmail(email: string | null) {
@@ -306,10 +350,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       value={{
         ready, session, login, logout,
         properties, clients, suppliers,
-        addProperty, addRoom, addEquipment, assignProperty, setPropertyPhoto, setRoomPhoto, setEquipmentPhoto,
+        saveErrors, retrySave, retryAllSaves,
+        addProperty, addRoom, addEquipment, addMaintenanceLogEntry, assignProperty, setPropertyPhoto, setRoomPhoto, setEquipmentPhoto,
         reportEquipmentIssue, clearEquipmentIssue,
         addClient, updateClient,
         addSupplier, updateSupplier,
+        notificationsEnabled, setNotificationsEnabled,
         selectedClientEmail, setSelectedClientEmail,
         selectedPropertyId, setSelectedPropertyId,
         selectClientAndProperty,

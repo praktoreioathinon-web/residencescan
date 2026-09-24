@@ -1,15 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, ChevronRight, Wrench, Activity, CheckCircle2 } from "lucide-react";
+import { Plus, ChevronRight, Wrench, Activity, CheckCircle2, X } from "lucide-react";
 import { dueSoonEquipment } from "@/lib/data";
 import { useStore } from "@/lib/store";
 
 export default function MaintenancePage() {
   const router = useRouter();
-  const { session, properties, selectedClientEmail, selectedPropertyId } = useStore();
+  const { session, properties, suppliers, selectedClientEmail, selectedPropertyId, addMaintenanceLogEntry } = useStore();
   const canEdit = session?.role !== "client";
+  const [showAdd, setShowAdd] = useState(false);
+  const [title, setTitle] = useState("");
+  const [room, setRoom] = useState("");
+  const [supplier, setSupplier] = useState("");
+  const [notes, setNotes] = useState("");
   const clientEmail = session?.role === "client" ? session.email : selectedClientEmail;
   const property = properties.find((p) => p.clientEmail === clientEmail && p.id === selectedPropertyId)
     ?? properties.find((p) => p.clientEmail === clientEmail);
@@ -26,6 +32,17 @@ export default function MaintenancePage() {
 
   const upcoming = dueSoonEquipment(property);
 
+  function submitAdd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!property || !title.trim() || !room || !supplier) return;
+    addMaintenanceLogEntry(property.id, { title: title.trim(), room, supplier, notes: notes.trim() });
+    setShowAdd(false);
+    setTitle("");
+    setRoom("");
+    setSupplier("");
+    setNotes("");
+  }
+
   return (
     <div className="px-8 py-6 max-w-4xl">
       <div className="flex items-center justify-between mb-5">
@@ -34,7 +51,7 @@ export default function MaintenancePage() {
           <h1 className="text-2xl font-bold text-fg">Maintenance</h1>
         </div>
         {canEdit && (
-          <button className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
+          <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
             <Plus size={14} /> Add maintenance
           </button>
         )}
@@ -91,6 +108,32 @@ export default function MaintenancePage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {showAdd && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setShowAdd(false)}>
+          <form onSubmit={submitAdd} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-bold text-fg text-[15px]">Add maintenance</p>
+              <button type="button" onClick={() => setShowAdd(false)}><X size={16} className="text-subtext" /></button>
+            </div>
+            <div className="flex flex-col gap-2.5">
+              <input required autoFocus placeholder="What was done (e.g. Pool filter cleaned)" value={title} onChange={(e) => setTitle(e.target.value)}
+                className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
+              <select required value={room} onChange={(e) => setRoom(e.target.value)} className="rounded-lg border border-line px-3.5 py-2.5 text-[13px]">
+                <option value="">Choose a room…</option>
+                {property.rooms.map((r) => <option key={r.id} value={r.name}>{r.name}</option>)}
+              </select>
+              <select required value={supplier} onChange={(e) => setSupplier(e.target.value)} className="rounded-lg border border-line px-3.5 py-2.5 text-[13px]">
+                <option value="">Choose a supplier…</option>
+                {suppliers.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
+              </select>
+              <textarea placeholder="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)}
+                className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" style={{ height: 70 }} />
+              <button type="submit" className="mt-1 bg-primary text-primary-fg text-[13px] font-semibold rounded-full py-2.5">Log maintenance</button>
+            </div>
+          </form>
         </div>
       )}
     </div>

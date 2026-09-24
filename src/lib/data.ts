@@ -1,6 +1,6 @@
 // Bump this whenever SEED_PROPERTIES/SEED_CLIENTS/SEED_SUPPLIERS change in a way
 // that should reach browsers with older cached data (e.g. new seed photos).
-export const SEED_VERSION = 5;
+export const SEED_VERSION = 6;
 
 export type Role = "admin" | "client" | "support";
 
@@ -33,22 +33,35 @@ export type Room = {
   category: "Indoor" | "Outdoor" | "Technical";
   subtitle: string;
   equipmentCount: number;
-  documentsCount: number;
-  maintenanceCount: number;
-  photosCount: number;
-  badge: "current" | "attention";
-  badgeCount?: number;
   equipment: EquipmentItem[];
   photoUrl?: string;
 };
+
+// Real per-room "needs attention" count — equipment that's due soon or has a
+// reported issue — instead of a badge seeded once and never recomputed.
+export function roomAttentionCount(room: Room): number {
+  return room.equipment.filter((e) => e.status === "Due soon" || e.issueNote).length;
+}
+
+// Real photo count for a room: its own cover photo plus every piece of
+// equipment that has one — there is no separate "photos" data model, this
+// counts the photos that actually exist.
+export function roomPhotoCount(room: Room): number {
+  return (room.photoUrl ? 1 : 0) + room.equipment.filter((e) => e.photoUrl).length;
+}
+
+// Completed maintenance history for one room, pulled from the property's real
+// maintenance log instead of a static per-room count.
+export function roomMaintenanceEntries(property: Property, room: Room): MaintenanceLogEntry[] {
+  return property.maintenanceLog.filter((m) => m.room === room.name);
+}
 
 function makeRooms(prefix: string): Room[] {
   const rooms: Omit<Room, "number">[] = [
     // Indoor
     {
       id: `${prefix}-living-room`, name: "Living Room", category: "Indoor",
-      subtitle: "Main residence · Ground floor", equipmentCount: 3, documentsCount: 8, maintenanceCount: 4, photosCount: 18,
-      badge: "attention", badgeCount: 1,
+      subtitle: "Main residence · Ground floor", equipmentCount: 3,
       equipment: [
         { name: "Samsung Frame TV", model: "QE65LS03B · Installed 2024", status: "Good" },
         { name: "Daikin A/C", model: "FTXM50R · Service due 28 Sep", status: "Due soon" },
@@ -57,8 +70,7 @@ function makeRooms(prefix: string): Room[] {
     },
     {
       id: `${prefix}-bedroom-1`, name: "Bedroom 1", category: "Indoor",
-      subtitle: "Main residence · First floor", equipmentCount: 2, documentsCount: 5, maintenanceCount: 2, photosCount: 11,
-      badge: "current",
+      subtitle: "Main residence · First floor", equipmentCount: 2,
       equipment: [
         { name: "Mitsubishi A/C", model: "MSZ-LN35 · Installed 2023", status: "Good" },
         { name: "Smart Blinds", model: "Somfy io · Installed 2024", status: "Good" },
@@ -66,8 +78,7 @@ function makeRooms(prefix: string): Room[] {
     },
     {
       id: `${prefix}-bedroom-2`, name: "Bedroom 2", category: "Indoor",
-      subtitle: "Main residence · First floor", equipmentCount: 2, documentsCount: 3, maintenanceCount: 1, photosCount: 9,
-      badge: "current",
+      subtitle: "Main residence · First floor", equipmentCount: 2,
       equipment: [
         { name: "Daikin A/C", model: "FTXS25 · Installed 2023", status: "Good" },
         { name: "Smart Blinds", model: "Somfy io · Installed 2024", status: "Good" },
@@ -75,8 +86,7 @@ function makeRooms(prefix: string): Room[] {
     },
     {
       id: `${prefix}-kitchen`, name: "Kitchen", category: "Indoor",
-      subtitle: "Main residence · Ground floor", equipmentCount: 2, documentsCount: 6, maintenanceCount: 5, photosCount: 9,
-      badge: "attention", badgeCount: 1,
+      subtitle: "Main residence · Ground floor", equipmentCount: 2,
       equipment: [
         { name: "Miele Oven", model: "H7264BP · Installed 2022", status: "Good" },
         { name: "Water Filter", model: "BWT Under-sink · Filter due", status: "Due soon" },
@@ -84,8 +94,7 @@ function makeRooms(prefix: string): Room[] {
     },
     {
       id: `${prefix}-guest-house`, name: "Guest House", category: "Indoor",
-      subtitle: "Secondary building", equipmentCount: 2, documentsCount: 3, maintenanceCount: 2, photosCount: 14,
-      badge: "current",
+      subtitle: "Secondary building", equipmentCount: 2,
       equipment: [
         { name: "LG A/C", model: "S12ET · Installed 2024", status: "Good" },
         { name: "Water Heater", model: "Ariston 80L · Installed 2023", status: "Good" },
@@ -94,8 +103,7 @@ function makeRooms(prefix: string): Room[] {
     // Outdoor
     {
       id: `${prefix}-pool-area`, name: "Pool Area", category: "Outdoor",
-      subtitle: "Outdoor · Poolside", equipmentCount: 2, documentsCount: 4, maintenanceCount: 6, photosCount: 22,
-      badge: "current",
+      subtitle: "Outdoor · Poolside", equipmentCount: 2,
       equipment: [
         { name: "Pool Heat Pump", model: "Zodiac Z300 · Installed 2023", status: "Good" },
         { name: "Salt Chlorinator", model: "AutoPilot RC52 · Installed 2023", status: "Good" },
@@ -103,8 +111,7 @@ function makeRooms(prefix: string): Room[] {
     },
     {
       id: `${prefix}-pool-bar`, name: "Pool Bar", category: "Outdoor",
-      subtitle: "Outdoor · Poolside", equipmentCount: 2, documentsCount: 2, maintenanceCount: 1, photosCount: 7,
-      badge: "current",
+      subtitle: "Outdoor · Poolside", equipmentCount: 2,
       equipment: [
         { name: "Outdoor Fridge", model: "Dometic N30S · Installed 2023", status: "Good" },
         { name: "Bar Lighting", model: "Somfy io · Installed 2024", status: "Good" },
@@ -112,8 +119,7 @@ function makeRooms(prefix: string): Room[] {
     },
     {
       id: `${prefix}-garden`, name: "Garden", category: "Outdoor",
-      subtitle: "Outdoor · Grounds", equipmentCount: 2, documentsCount: 2, maintenanceCount: 3, photosCount: 10,
-      badge: "attention", badgeCount: 1,
+      subtitle: "Outdoor · Grounds", equipmentCount: 2,
       equipment: [
         { name: "Irrigation System", model: "Hunter Pro-C · Service due", status: "Due soon" },
         { name: "Garden Lighting", model: "Somfy io · Installed 2023", status: "Good" },
@@ -122,8 +128,7 @@ function makeRooms(prefix: string): Room[] {
     // Technical
     {
       id: `${prefix}-pump-room`, name: "Pump Room", category: "Technical",
-      subtitle: "Technical room · Basement", equipmentCount: 3, documentsCount: 10, maintenanceCount: 7, photosCount: 6,
-      badge: "attention", badgeCount: 2,
+      subtitle: "Technical room · Basement", equipmentCount: 3,
       equipment: [
         { name: "Pool Filter Pump", model: "Pentair Whisperflo · Inspection due", status: "Due soon" },
         { name: "Water Pre-Filter", model: "Main supply · Replacement due", status: "Due soon" },
@@ -132,8 +137,7 @@ function makeRooms(prefix: string): Room[] {
     },
     {
       id: `${prefix}-boiler-room`, name: "Boiler Room", category: "Technical",
-      subtitle: "Technical room · Basement", equipmentCount: 2, documentsCount: 5, maintenanceCount: 3, photosCount: 4,
-      badge: "current",
+      subtitle: "Technical room · Basement", equipmentCount: 2,
       equipment: [
         { name: "Gas Boiler", model: "Vaillant ecoTEC · Installed 2022", status: "Good" },
         { name: "Pressure Tank", model: "Reflex NG25 · Installed 2022", status: "Good" },
@@ -141,24 +145,21 @@ function makeRooms(prefix: string): Room[] {
     },
     {
       id: `${prefix}-electrical-panel-1`, name: "Electrical Panel 1", category: "Technical",
-      subtitle: "Technical · Main distribution", equipmentCount: 1, documentsCount: 4, maintenanceCount: 1, photosCount: 3,
-      badge: "current",
+      subtitle: "Technical · Main distribution", equipmentCount: 1,
       equipment: [
         { name: "Main Distribution Board", model: "Schneider Resi9 · Installed 2022", status: "Good" },
       ],
     },
     {
       id: `${prefix}-electrical-panel-2`, name: "Electrical Panel 2", category: "Technical",
-      subtitle: "Technical · Pool circuit", equipmentCount: 1, documentsCount: 2, maintenanceCount: 1, photosCount: 2,
-      badge: "current",
+      subtitle: "Technical · Pool circuit", equipmentCount: 1,
       equipment: [
         { name: "Pool Equipment Board", model: "Schneider Resi9 · Installed 2023", status: "Good" },
       ],
     },
     {
       id: `${prefix}-electrical-panel-3`, name: "Electrical Panel 3", category: "Technical",
-      subtitle: "Technical · Guest house circuit", equipmentCount: 1, documentsCount: 2, maintenanceCount: 1, photosCount: 2,
-      badge: "attention", badgeCount: 1,
+      subtitle: "Technical · Guest house circuit", equipmentCount: 1,
       equipment: [
         { name: "Guest House Board", model: "Schneider Resi9 · Inspection due", status: "Due soon" },
       ],
@@ -193,10 +194,6 @@ export type Property = {
   area: string;
   location: string;
   clientEmail: string | null;
-  health: number;
-  systemsOnline: [number, number];
-  maintenanceCurrent: [number, number];
-  documentsCompletePct: number;
   updated: string;
   rooms: Room[];
   photoUrl?: string;
@@ -214,53 +211,89 @@ export function dueSoonEquipment(property: Property): { room: Room; equipment: E
   );
 }
 
+function equipmentTotals(property: Property) {
+  const all = property.rooms.flatMap((r) => r.equipment);
+  return {
+    total: all.length,
+    dueSoon: all.filter((e) => e.status === "Due soon").length,
+    issues: all.filter((e) => e.issueNote).length,
+    good: all.filter((e) => e.status === "Good" && !e.issueNote).length,
+  };
+}
+
+// Overall health score derived from the real equipment records: the share that
+// isn't currently due for service or flagged with an issue.
+export function healthScore(property: Property): number {
+  const { total, good } = equipmentTotals(property);
+  return total === 0 ? 100 : Math.round((good / total) * 100);
+}
+
+// Equipment with no open issue report, out of the total — replaces a static
+// seeded tuple that never reflected the property's real equipment.
+export function systemsOnline(property: Property): [number, number] {
+  const { total, issues } = equipmentTotals(property);
+  return [total - issues, total];
+}
+
+// Equipment not currently due for service, out of the total.
+export function maintenanceCurrent(property: Property): [number, number] {
+  const { total, dueSoon } = equipmentTotals(property);
+  return [total - dueSoon, total];
+}
+
+// Share of rooms + equipment that have an actual uploaded photo — the closest
+// real signal to "how documented is this property" given there's no separate
+// documents feature.
+export function photoCoveragePct(property: Property): number {
+  const roomSlots = property.rooms.length;
+  const eqSlots = property.rooms.reduce((s, r) => s + r.equipment.length, 0);
+  const total = roomSlots + eqSlots;
+  if (total === 0) return 0;
+  const withPhoto = property.rooms.filter((r) => r.photoUrl).length
+    + property.rooms.reduce((s, r) => s + r.equipment.filter((e) => e.photoUrl).length, 0);
+  return Math.round((withPhoto / total) * 100);
+}
+
 export const SEED_PROPERTIES: Property[] = [
   {
     id: "villa-mykonos", name: "Villa Mykonos", area: "Mykonos", location: "Agios Stefanos, Mykonos",
-    clientEmail: "client@residencescan.com", health: 92,
-    systemsOnline: [24, 26], maintenanceCurrent: [18, 20], documentsCompletePct: 94, updated: "16 Sep 2026",
+    clientEmail: "client@residencescan.com", updated: "16 Sep 2026",
     rooms: makeRooms("vm"), photoUrl: "/properties/villa-mykonos.png",
     maintenanceLog: makeMaintenanceLog("vm"),
   },
   {
     id: "villa-fanari", name: "Villa Fanari", area: "Mykonos", location: "Fanari, Mykonos",
-    clientEmail: "client@residencescan.com", health: 88,
-    systemsOnline: [19, 20], maintenanceCurrent: [14, 15], documentsCompletePct: 90, updated: "12 Sep 2026",
+    clientEmail: "client@residencescan.com", updated: "12 Sep 2026",
     rooms: makeRooms("vf"), photoUrl: "/properties/villa-fanari.png",
     maintenanceLog: makeMaintenanceLog("vf"),
   },
   {
     id: "villa-elia", name: "Villa Elia", area: "Mykonos", location: "Elia, Mykonos",
-    clientEmail: "client@residencescan.com", health: 96,
-    systemsOnline: [22, 22], maintenanceCurrent: [16, 16], documentsCompletePct: 100, updated: "18 Sep 2026",
+    clientEmail: "client@residencescan.com", updated: "18 Sep 2026",
     rooms: makeRooms("ve"), photoUrl: "/properties/villa-elia.png",
     maintenanceLog: makeMaintenanceLog("ve"),
   },
   {
     id: "penthouse-kolonaki", name: "Penthouse Kolonaki", area: "Athens", location: "Kolonaki, Athens",
-    clientEmail: "client@residencescan.com", health: 81,
-    systemsOnline: [17, 20], maintenanceCurrent: [11, 14], documentsCompletePct: 85, updated: "10 Sep 2026",
+    clientEmail: "client@residencescan.com", updated: "10 Sep 2026",
     rooms: makeRooms("pk"), photoUrl: "/properties/penthouse-kolonaki.png",
     maintenanceLog: makeMaintenanceLog("pk"),
   },
   {
     id: "riviera-house", name: "Riviera House", area: "Athens", location: "Glyfada, Athens",
-    clientEmail: "client@residencescan.com", health: 90,
-    systemsOnline: [20, 21], maintenanceCurrent: [15, 16], documentsCompletePct: 92, updated: "14 Sep 2026",
+    clientEmail: "client@residencescan.com", updated: "14 Sep 2026",
     rooms: makeRooms("rh"), photoUrl: "/properties/riviera-house.png",
     maintenanceLog: makeMaintenanceLog("rh"),
   },
   {
     id: "villa-paros", name: "Villa Paros", area: "Paros", location: "Naoussa, Paros",
-    clientEmail: "nikos@example.com", health: 94,
-    systemsOnline: [18, 18], maintenanceCurrent: [12, 12], documentsCompletePct: 97, updated: "15 Sep 2026",
+    clientEmail: "nikos@example.com", updated: "15 Sep 2026",
     rooms: makeRooms("vp"), photoUrl: "/properties/villa-paros.png",
     maintenanceLog: makeMaintenanceLog("vp"),
   },
   {
     id: "villa-naxos", name: "Villa Naxos", area: "Naxos", location: "Agios Prokopios, Naxos",
-    clientEmail: "nikos@example.com", health: 85,
-    systemsOnline: [16, 18], maintenanceCurrent: [10, 12], documentsCompletePct: 88, updated: "9 Sep 2026",
+    clientEmail: "nikos@example.com", updated: "9 Sep 2026",
     rooms: makeRooms("vn"), photoUrl: "/properties/villa-naxos.png",
     maintenanceLog: makeMaintenanceLog("vn"),
   },
@@ -276,23 +309,19 @@ export const SEED_CLIENTS: ClientRecord[] = [
 ];
 
 export type Supplier = {
-  id: string; initials: string; name: string; category: string; records: number;
+  id: string; initials: string; name: string; category: string;
   phone: string; email: string; address: string; notes: string;
 };
 
 export const SEED_SUPPLIERS: Supplier[] = [
-  { id: "vitalis-pools", initials: "VP", name: "Vitalis Pools", category: "Pool maintenance", records: 12, phone: "+30 694 000 1122", email: "info@vitalispools.gr", address: "Ornos, Mykonos", notes: "Weekly pool service across all Mykonos properties. Response time under 24h." },
-  { id: "daikin-service-mykonos", initials: "DS", name: "Daikin Service Mykonos", category: "Air conditioning", records: 6, phone: "+30 694 222 3344", email: "service@daikin-mykonos.gr", address: "Mykonos Town", notes: "Authorized Daikin technician. Handles annual servicing and warranty claims." },
-  { id: "sideris-water-systems", initials: "SW", name: "Sideris Water Systems", category: "Water systems", records: 9, phone: "+30 694 555 6677", email: "sideris@watersystems.gr", address: "Ano Mera, Mykonos", notes: "Well pumps, pressure tanks, and filtration systems." },
-  { id: "mykonos-electrical-support", initials: "ME", name: "Mykonos Electrical Support", category: "Electrical systems", records: 15, phone: "+30 694 888 9900", email: "support@mykonoselectrical.gr", address: "Tourlos, Mykonos", notes: "24/7 emergency electrical callout for all managed properties." },
+  { id: "vitalis-pools", initials: "VP", name: "Vitalis Pools", category: "Pool maintenance", phone: "+30 694 000 1122", email: "info@vitalispools.gr", address: "Ornos, Mykonos", notes: "Weekly pool service across all Mykonos properties. Response time under 24h." },
+  { id: "daikin-service-mykonos", initials: "DS", name: "Daikin Service Mykonos", category: "Air conditioning", phone: "+30 694 222 3344", email: "service@daikin-mykonos.gr", address: "Mykonos Town", notes: "Authorized Daikin technician. Handles annual servicing and warranty claims." },
+  { id: "sideris-water-systems", initials: "SW", name: "Sideris Water Systems", category: "Water systems", phone: "+30 694 555 6677", email: "sideris@watersystems.gr", address: "Ano Mera, Mykonos", notes: "Well pumps, pressure tanks, and filtration systems." },
+  { id: "mykonos-electrical-support", initials: "ME", name: "Mykonos Electrical Support", category: "Electrical systems", phone: "+30 694 888 9900", email: "support@mykonoselectrical.gr", address: "Tourlos, Mykonos", notes: "24/7 emergency electrical callout for all managed properties." },
 ];
 
-export const xrayCategories = ["Water", "Electrical", "Pool", "HVAC", "Security", "Network", "Lighting"];
-
-export const xrayRooms = [
-  { name: "Living Room", count: 19, points: "20,320 260,220 380,260 260,420 40,420" },
-  { name: "Kitchen", count: 14, points: "390,220 540,220 540,340 390,340" },
-  { name: "Pool", count: 31, points: "550,220 700,220 700,320 550,320" },
-  { name: "Pump Room", count: 18, points: "390,350 540,350 540,440 390,440" },
-  { name: "Bedrooms", count: 31, points: "460,450 760,470 760,510 460,510" },
-];
+// Real link between a supplier and completed work: every maintenance log entry
+// across every property whose supplier name matches this one.
+export function supplierRecordCount(supplier: Supplier, properties: Property[]): number {
+  return properties.reduce((s, p) => s + p.maintenanceLog.filter((m) => m.supplier === supplier.name).length, 0);
+}

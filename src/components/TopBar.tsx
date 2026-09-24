@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { Search, Bell, Zap, AlertTriangle, Building2, DoorOpen, Wrench, Store, LogOut, Settings, X } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useStore } from "@/lib/store";
-import { Property, Room, EquipmentItem } from "@/lib/data";
+import { Property, Room, EquipmentItem, roomAttentionCount } from "@/lib/data";
 
 export default function TopBar() {
   const router = useRouter();
-  const { session, properties, suppliers, selectedClientEmail, logout, selectClientAndProperty } = useStore();
+  const { session, properties, suppliers, selectedClientEmail, logout, selectClientAndProperty, notificationsEnabled } = useStore();
 
   const [query, setQuery] = useState("");
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -93,17 +93,20 @@ export default function TopBar() {
     closeSearch();
   }
 
-  // Notifications: every room flagged for attention across whatever this account can see.
+  // Notifications: every room with equipment that's due soon or has a reported
+  // issue, across whatever this account can see — off entirely when the user
+  // has turned notifications off in Settings.
   const notifications = useMemo(() => {
+    if (!notificationsEnabled) return [];
     const scope = session?.role === "client" ? properties.filter((p) => p.clientEmail === session.email) : properties;
     const items: { property: Property; room: Room }[] = [];
     for (const p of scope) {
       for (const r of p.rooms) {
-        if (r.badge === "attention") items.push({ property: p, room: r });
+        if (roomAttentionCount(r) > 0) items.push({ property: p, room: r });
       }
     }
     return items;
-  }, [properties, session]);
+  }, [properties, session, notificationsEnabled]);
 
   const initials = (session?.name ?? "?").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
@@ -190,20 +193,25 @@ export default function TopBar() {
           {openPanel === "notif" && (
             <div className="absolute top-full right-0 mt-2 w-72 bg-card border border-line rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto">
               <p className="text-[11px] tracking-widest text-subtext font-semibold px-4 pt-3.5 pb-2">NEEDS ATTENTION ({notifications.length})</p>
-              {notifications.length === 0 ? (
+              {!notificationsEnabled ? (
+                <p className="text-[12.5px] text-subtext p-4 pt-0 pb-4 text-center">Notifications are turned off in Settings.</p>
+              ) : notifications.length === 0 ? (
                 <p className="text-[12.5px] text-subtext p-4 pt-0 pb-4 text-center">All caught up — nothing needs attention.</p>
               ) : (
                 <div className="pb-2">
-                  {notifications.map(({ property, room }) => (
-                    <button key={room.id} onClick={() => { goToRoom(property, room); setOpenPanel(null); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2 text-left hover:bg-white/5">
-                      <div className="w-8 h-8 rounded-lg bg-[var(--warn-bg)] flex items-center justify-center flex-shrink-0"><AlertTriangle size={14} className="text-[var(--warn-fg)]" /></div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12.5px] font-semibold text-fg truncate">{room.name}</p>
-                        <p className="text-[11px] text-subtext truncate">{property.name}{room.badgeCount ? ` · ${room.badgeCount} item${room.badgeCount > 1 ? "s" : ""}` : ""}</p>
-                      </div>
-                    </button>
-                  ))}
+                  {notifications.map(({ property, room }) => {
+                    const count = roomAttentionCount(room);
+                    return (
+                      <button key={room.id} onClick={() => { goToRoom(property, room); setOpenPanel(null); }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2 text-left hover:bg-white/5">
+                        <div className="w-8 h-8 rounded-lg bg-[var(--warn-bg)] flex items-center justify-center flex-shrink-0"><AlertTriangle size={14} className="text-[var(--warn-fg)]" /></div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12.5px] font-semibold text-fg truncate">{room.name}</p>
+                          <p className="text-[11px] text-subtext truncate">{property.name} · {count} item{count > 1 ? "s" : ""}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

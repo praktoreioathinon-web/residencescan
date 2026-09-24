@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, CheckCircle2, AlertTriangle, BedDouble, Home, ChefHat, Waves, Cog, Building2, ArrowLeftRight, Martini, Trees, Flame, Zap, X, Wrench, ImageIcon, Camera } from "lucide-react";
 import { useStore } from "@/lib/store";
 import PropertyPicker from "@/components/PropertyPicker";
@@ -20,14 +20,20 @@ function roomIcon(name: string) {
   return ICON_BY_NAME.find(([key]) => name.includes(key))?.[1] ?? Cog;
 }
 
-const TABS = ["All Rooms", "Indoor", "Outdoor", "Technical"] as const;
+const TABS = ["All Rooms", "Indoor", "Outdoor", "Technical", "Pools"] as const;
 
 const CATEGORIES: Room["category"][] = ["Indoor", "Outdoor", "Technical"];
 
 export default function RoomsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { session, properties, selectedClientEmail, selectedPropertyId, setSelectedPropertyId, addRoom } = useStore();
   const [tab, setTab] = useState<(typeof TABS)[number]>("All Rooms");
+
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t && (TABS as readonly string[]).includes(t)) setTab(t as (typeof TABS)[number]);
+  }, [searchParams]);
   const [statModal, setStatModal] = useState<"equipment" | "attention" | "photos" | null>(null);
   const [showAddRoom, setShowAddRoom] = useState(false);
   const [newRoomName, setNewRoomName] = useState("");
@@ -64,7 +70,9 @@ export default function RoomsPage() {
   }
 
   const rooms = property.rooms;
-  const filtered = tab === "All Rooms" ? rooms : rooms.filter((r) => r.category === tab);
+  const filtered = tab === "All Rooms" ? rooms
+    : tab === "Pools" ? rooms.filter((r) => r.name.toLowerCase().includes("pool"))
+    : rooms.filter((r) => r.category === tab);
 
   // Suggest room names seen on other properties that this one doesn't have yet,
   // keeping the category each name was originally seen with.

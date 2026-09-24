@@ -10,8 +10,8 @@ import { compressImageToWebp } from "@/lib/image";
 
 const QUICK_ACCESS = [
   { href: "/rooms", label: "All Rooms", sub: "rooms", icon: Grid2x2 },
-  { href: "/rooms", label: "Machinery", sub: "systems", icon: Cog },
-  { href: "/rooms", label: "Pools", sub: "systems", icon: Waves },
+  { href: "/rooms?tab=Technical", label: "Machinery", sub: "systems", icon: Cog },
+  { href: "/rooms?tab=Pools", label: "Pools", sub: "systems", icon: Waves },
   { href: "/suppliers", label: "Suppliers", sub: "contacts", icon: Store },
   { href: "/maintenance", label: "Maintenance", sub: "upcoming", icon: Camera },
   { href: "/xray", label: "X-Ray", sub: "All systems", icon: Scan },

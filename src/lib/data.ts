@@ -4,14 +4,6 @@ export const SEED_VERSION = 6;
 
 export type Role = "admin" | "client" | "support";
 
-export type Account = { email: string; password: string; role: Role; name: string };
-
-export const ACCOUNTS: Account[] = [
-  { email: "admin@residencescan.com", password: "admin123", role: "admin", name: "Admin" },
-  { email: "client@residencescan.com", password: "client123", role: "client", name: "Aegean Villas Ltd" },
-  { email: "support@residencescan.com", password: "support123", role: "support", name: "Support Team" },
-];
-
 export type EquipmentItem = {
   name: string; model: string; status: "Good" | "Due soon"; photoUrl?: string;
   issueNote?: string; issueReportedAt?: string;

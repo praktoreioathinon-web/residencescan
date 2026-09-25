@@ -50,14 +50,14 @@ function Bar({ label, value, max, pctLabel }: { label: string; value?: number; m
 
 export default function OverviewPage() {
   const router = useRouter();
-  const { session, properties, clients, selectedClientEmail, selectedPropertyId, setSelectedClientEmail, setSelectedPropertyId, selectClientAndProperty, setPropertyPhoto, assignProperty, setPropertyArchived } = useStore();
+  const { session, properties, clients, selectedClientEmail, selectedPropertyId, setSelectedClientEmail, setSelectedPropertyId, selectClientAndProperty, setPropertyPhoto, assignProperty, setPropertyArchived, getAccessToken } = useStore();
   const [showChangeClient, setShowChangeClient] = useState(false);
   const [changeClientTo, setChangeClientTo] = useState("");
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>, propertyId: string) {
     const file = e.target.files?.[0];
     if (!file) return;
-    uploadPhoto(file).then((dataUrl) => setPropertyPhoto(propertyId, dataUrl)).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
+    uploadPhoto(file, getAccessToken()).then((dataUrl) => setPropertyPhoto(propertyId, dataUrl)).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
   }
 
   function submitChangeClient(e: React.FormEvent, propertyId: string) {
@@ -166,16 +166,18 @@ export default function OverviewPage() {
         <div>
           <p className="text-[12px] text-white/60">{property.location}</p>
           <p className="text-xl font-bold text-white mt-0.5">{property.name}</p>
-          <div className="flex items-center gap-2 mt-2">
-            <label className="flex items-center gap-1.5 text-[11.5px] text-white bg-white/10 px-3 py-1.5 rounded-full w-fit cursor-pointer">
-              <ImageIcon size={13} /> {property.photoUrl ? "Change photo" : "Upload photo"}
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoChange(e, property.id)} />
-            </label>
-            <label className="flex items-center gap-1.5 text-[11.5px] text-white bg-white/10 px-3 py-1.5 rounded-full w-fit cursor-pointer">
-              <Camera size={13} /> Take photo
-              <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handlePhotoChange(e, property.id)} />
-            </label>
-          </div>
+          {session?.role !== "client" && (
+            <div className="flex items-center gap-2 mt-2">
+              <label className="flex items-center gap-1.5 text-[11.5px] text-white bg-white/10 px-3 py-1.5 rounded-full w-fit cursor-pointer">
+                <ImageIcon size={13} /> {property.photoUrl ? "Change photo" : "Upload photo"}
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoChange(e, property.id)} />
+              </label>
+              <label className="flex items-center gap-1.5 text-[11.5px] text-white bg-white/10 px-3 py-1.5 rounded-full w-fit cursor-pointer">
+                <Camera size={13} /> Take photo
+                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handlePhotoChange(e, property.id)} />
+              </label>
+            </div>
+          )}
         </div>
       </div>
       {myProperties.length > 1 && (

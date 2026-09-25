@@ -11,19 +11,28 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (ready && session) router.replace("/");
   }, [ready, session, router]);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!login(email, password)) {
-      setError("Invalid email or password.");
-      return;
+    setSubmitting(true);
+    try {
+      const ok = await login(email, password);
+      if (!ok) {
+        setError("Invalid email or password.");
+        return;
+      }
+      router.replace("/");
+    } catch {
+      setError("Couldn't reach the server — check your connection and try again.");
+    } finally {
+      setSubmitting(false);
     }
-    router.replace("/");
   }
 
   return (
@@ -50,17 +59,10 @@ export default function LoginPage() {
             className="rounded-lg border border-line px-3.5 py-2.5 text-[13.5px] outline-none focus:border-primary/50"
           />
           {error && <p className="text-[12px] text-[var(--attention-fg)]">{error}</p>}
-          <button type="submit" className="mt-2 bg-primary text-primary-fg text-[13.5px] font-semibold rounded-full py-2.5">
-            Sign in
+          <button type="submit" disabled={submitting} className="mt-2 bg-primary text-primary-fg text-[13.5px] font-semibold rounded-full py-2.5 disabled:opacity-60">
+            {submitting ? "Signing in…" : "Sign in"}
           </button>
         </form>
-
-        <div className="mt-6 pt-5 border-t border-line text-[11.5px] text-subtext leading-relaxed">
-          <p className="font-semibold text-fg mb-1.5">Demo accounts</p>
-          <p>admin@residencescan.com / admin123</p>
-          <p>client@residencescan.com / client123</p>
-          <p>support@residencescan.com / support123</p>
-        </div>
       </div>
     </div>
   );

@@ -69,11 +69,15 @@ export async function compressImageToWebp(file: File, maxDimension = 1600, quali
 // re-send every one of them on every single edit, and eventually exceed the
 // hosting platform's request-size limit outright regardless of how well any
 // one photo compresses.
-export async function uploadPhoto(file: File): Promise<string> {
+export async function uploadPhoto(file: File, accessToken: string | null): Promise<string> {
   const blob = await compressImageToWebp(file);
   const formData = new FormData();
   formData.append("file", blob, "photo.webp");
-  const res = await fetch("/api/upload", { method: "POST", body: formData });
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+    body: formData,
+  });
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     throw new Error(body?.error ?? `Upload failed (${res.status})`);

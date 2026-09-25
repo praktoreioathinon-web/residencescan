@@ -13,7 +13,7 @@ const TAB_KEYS = ["Equipment", "Documents", "Maintenance", "Photos"] as const;
 
 export default function RoomDetailPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
-  const { session, properties, selectedPropertyId, setEquipmentPhoto, setRoomPhoto, reportEquipmentIssue, clearEquipmentIssue, addEquipment } = useStore();
+  const { session, properties, selectedPropertyId, setEquipmentPhoto, setRoomPhoto, reportEquipmentIssue, clearEquipmentIssue, addEquipment, getAccessToken } = useStore();
   const property = properties.find((p) => p.id === selectedPropertyId);
   const room = property?.rooms.find((r) => r.id === params.id);
   const [tab, setTab] = useState<(typeof TAB_KEYS)[number]>("Equipment");
@@ -48,13 +48,13 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   function handleRoomPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !property || !room) return;
-    uploadPhoto(file).then((dataUrl) => setRoomPhoto(property.id, room.id, dataUrl)).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
+    uploadPhoto(file, getAccessToken()).then((dataUrl) => setRoomPhoto(property.id, room.id, dataUrl)).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
   }
 
   function handleEquipmentPhoto(e: React.ChangeEvent<HTMLInputElement>, equipmentName: string) {
     const file = e.target.files?.[0];
     if (!file || !property || !room) return;
-    uploadPhoto(file).then((dataUrl) => {
+    uploadPhoto(file, getAccessToken()).then((dataUrl) => {
       setEquipmentPhoto(property.id, room.id, equipmentName, dataUrl);
       setSelectedEquipment((prev) => (prev && prev.name === equipmentName ? { ...prev, photoUrl: dataUrl } : prev));
     }).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
@@ -93,7 +93,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   function handleNewEquipPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    uploadPhoto(file).then(setNewEquipPhoto).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
+    uploadPhoto(file, getAccessToken()).then(setNewEquipPhoto).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
   }
 
   function closeAddEquipment() {

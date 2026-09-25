@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
+import { requireUser, unauthorized, forbidden } from "@/lib/auth-server";
 import { Property } from "@/lib/data";
 
 // The client generates the id and sends the full property, and this upserts
@@ -7,6 +8,10 @@ import { Property } from "@/lib/data";
 // actually landed, only the confirmation didn't) re-sends the identical row
 // and is a harmless no-op instead of a duplicate-key error.
 export async function POST(req: Request) {
+  const user = await requireUser(req);
+  if (!user) return unauthorized();
+  if (user.role === "client") return forbidden();
+
   const property = await req.json() as Property;
   const db = supabaseServer();
   const { error } = await db

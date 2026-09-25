@@ -1,23 +1,33 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
-import { ACCOUNTS, Plan, activeProperties } from "@/lib/data";
+import { Plan, activeProperties } from "@/lib/data";
 import { ShieldCheck, Wrench, Users } from "lucide-react";
 
 const PLANS: Plan[] = ["Start", "Care", "Plus", "Pro"];
 
-// Permissions copy per role, applied to whoever is actually in ACCOUNTS —
-// keeps this list from drifting out of sync with the real accounts.
+// Permissions copy per role, applied to whoever /api/staff actually returns —
+// keeps this list from drifting out of sync with who can really sign in.
 const ROLE_INFO: Record<string, { permissions: string; icon: typeof ShieldCheck }> = {
   admin: { permissions: "Full access — all clients, properties, suppliers and settings.", icon: ShieldCheck },
   support: { permissions: "Full access — all clients and properties, equipment and maintenance focus.", icon: Wrench },
 };
 
-const STAFF = ACCOUNTS.filter((a) => a.role !== "client");
+type StaffMember = { email: string; name: string; role: string };
 
 export default function SettingsPage() {
-  const { session, logout, clients, properties, updateClient, notificationsEnabled, setNotificationsEnabled } = useStore();
+  const { session, logout, clients, properties, updateClient, notificationsEnabled, setNotificationsEnabled, getAccessToken } = useStore();
   const isAdmin = session?.role === "admin";
+  const [staff, setStaff] = useState<StaffMember[]>([]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetch("/api/staff", { headers: { Authorization: `Bearer ${getAccessToken()}` } })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+      .then((data: { staff: StaffMember[] }) => setStaff(data.staff))
+      .catch((err) => console.error("Failed to load staff accounts", err));
+  }, [isAdmin, getAccessToken]);
 
   return (
     <div className="px-8 py-6 max-w-2xl">
@@ -42,7 +52,7 @@ export default function SettingsPage() {
           <div className="rounded-2xl border border-line p-5 mb-4">
             <p className="text-[10px] tracking-widest text-subtext font-semibold mb-3">STAFF ACCOUNTS & PERMISSIONS</p>
             <div className="flex flex-col gap-3">
-              {STAFF.map((s) => {
+              {staff.map((s) => {
                 const info = ROLE_INFO[s.role];
                 return (
                   <div key={s.email} className="flex items-start gap-3 border-t border-line pt-3 first:border-t-0 first:pt-0">

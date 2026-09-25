@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
+import { requireUser, unauthorized, forbidden } from "@/lib/auth-server";
 
 const MAX_BYTES = 5_000_000;
 
@@ -11,6 +12,10 @@ const MAX_BYTES = 5_000_000;
 // photoUrl the app ever stores is a short link, regardless of how many
 // photos a property ends up with.
 export async function POST(req: Request) {
+  const user = await requireUser(req);
+  if (!user) return unauthorized();
+  if (user.role === "client") return forbidden();
+
   const formData = await req.formData();
   const file = formData.get("file");
   if (!(file instanceof File)) {

@@ -27,7 +27,7 @@ const CATEGORIES: Room["category"][] = ["Indoor", "Outdoor", "Technical"];
 export default function RoomsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { session, properties, selectedClientEmail, selectedPropertyId, setSelectedPropertyId, addRoom } = useStore();
+  const { session, properties, selectedClientEmail, selectedPropertyId, setSelectedPropertyId, addRoom, getAccessToken } = useStore();
   const [tab, setTab] = useState<(typeof TABS)[number]>("All Rooms");
 
   useEffect(() => {
@@ -104,7 +104,7 @@ export default function RoomsPage() {
   function handleNewRoomPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    uploadPhoto(file).then(setNewRoomPhoto).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
+    uploadPhoto(file, getAccessToken()).then(setNewRoomPhoto).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
   }
 
   return (

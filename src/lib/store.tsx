@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
-import { ACCOUNTS, Property, ClientRecord, Supplier, Plan, Role, Room } from "./data";
+import { Property, ClientRecord, Supplier, Plan, Role, Room } from "./data";
 
 export type Session = { email: string; role: Role; name: string };
 
@@ -14,8 +14,9 @@ export type SaveError = { id: string; description: string };
 type Store = {
   ready: boolean;
   session: Session | null;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  getAccessToken: () => string | null;
 
   properties: Property[];
   clients: ClientRecord[];
@@ -55,11 +56,11 @@ type Store = {
 
 const StoreContext = createContext<Store | null>(null);
 
-// Session, "what's currently selected," and notification preference are per
-// device UI state — not shared data — so they stay in localStorage. Everything
-// else (properties, rooms, equipment, clients, suppliers) lives in the
-// database via the /api routes, so it survives across devices/browsers.
-const LS_SESSION = "rs_session";
+// "What's currently selected" and notification preference are per-device UI
+// state — not shared data — so they stay in localStorage. Everything else
+// (properties, rooms, equipment, clients, suppliers) lives in the database
+// via the /api routes, authenticated on every request.
+const LS_TOKENS = "rs_tokens";
 const LS_SELECTED = "rs_selected";
 const LS_NOTIFICATIONS = "rs_notifications_enabled";
 
@@ -78,6 +79,57 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [notificationsEnabled, setNotificationsEnabledState] = useState(true);
   const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
   const retryFns = useRef(new Map<string, () => Promise<void>>());
+  const tokens = useRef<{ accessToken: string; refreshToken: string } | null>(null);
+
+  const getAccessToken = useCallback(() => tokens.current?.accessToken ?? null, []);
+
+  const persistTokens = useCallback((next: { accessToken: string; refreshToken: string } | null) => {
+    tokens.current = next;
+    try {
+      if (next) localStorage.setItem(LS_TOKENS, JSON.stringify(next));
+      else localStorage.removeItem(LS_TOKENS);
+    } catch {}
+  }, []);
+
+  function clearSession() {
+    setSession(null);
+    persistTokens(null);
+    setSelectedClientEmailState(null);
+    setSelectedPropertyIdState(null);
+    try { localStorage.removeItem(LS_SELECTED); } catch {}
+  }
+
+  // Every request to our own API goes through this: attaches the access
+  // token, and if it comes back 401 (the token expired — they're short-lived
+  // by design), tries one silent refresh and retries once before giving up
+  // and signing the person out. Without this, a token expiring mid-visit at
+  // a villa would look exactly like every other save failure, when it's
+  // really "you need to sign in again."
+  const authedFetch = useCallback(async (url: string, init?: RequestInit): Promise<Response> => {
+    async function attempt(): Promise<Response> {
+      const headers = new Headers(init?.headers);
+      if (tokens.current) headers.set("Authorization", `Bearer ${tokens.current.accessToken}`);
+      return fetch(url, { ...init, headers });
+    }
+
+    let res = await attempt();
+    if (res.status === 401 && tokens.current) {
+      const refreshed = await fetch("/api/auth/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: tokens.current.refreshToken }),
+      }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+
+      if (refreshed) {
+        persistTokens({ accessToken: refreshed.accessToken, refreshToken: refreshed.refreshToken });
+        res = await attempt();
+      } else {
+        clearSession();
+      }
+    }
+    return res;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [persistTokens]);
 
   // Every mutation below applies its change to local state immediately (the
   // UI never waits on the network) and saves it in the background through
@@ -115,35 +167,51 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    try {
-      const s = localStorage.getItem(LS_SESSION);
-      if (s) setSession(JSON.parse(s));
-      const sel = localStorage.getItem(LS_SELECTED);
-      if (sel) {
-        const parsed = JSON.parse(sel);
-        setSelectedClientEmailState(parsed.clientEmail ?? null);
-        setSelectedPropertyIdState(parsed.propertyId ?? null);
-      }
-      const notif = localStorage.getItem(LS_NOTIFICATIONS);
-      if (notif) setNotificationsEnabledState(notif === "true");
-    } catch {}
+    let cancelled = false;
 
-    fetch("/api/state")
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`GET /api/state failed: ${res.status}`))))
-      .then((data: { properties: Property[]; clients: ClientRecord[]; suppliers: Supplier[] }) => {
+    async function boot() {
+      try {
+        const sel = localStorage.getItem(LS_SELECTED);
+        if (sel) {
+          const parsed = JSON.parse(sel);
+          setSelectedClientEmailState(parsed.clientEmail ?? null);
+          setSelectedPropertyIdState(parsed.propertyId ?? null);
+        }
+        const notif = localStorage.getItem(LS_NOTIFICATIONS);
+        if (notif) setNotificationsEnabledState(notif === "true");
+
+        const storedTokens = localStorage.getItem(LS_TOKENS);
+        if (!storedTokens) { setReady(true); return; }
+        tokens.current = JSON.parse(storedTokens);
+      } catch {}
+
+      try {
+        const res = await authedFetch("/api/state");
+        if (!res.ok) throw new Error(`GET /api/state failed: ${res.status}`);
+        const data = await res.json() as { properties: Property[]; clients: ClientRecord[]; suppliers: Supplier[] };
+        if (cancelled) return;
         setProperties(data.properties);
         setClients(data.clients);
         setSuppliers(data.suppliers);
-      })
-      .catch((err) => console.error("Failed to load data from the database", err))
-      .finally(() => setReady(true));
+        // Tokens were valid (or got refreshed) — we're signed in. The actual
+        // name/role came from login and was never needed again until now.
+        const raw = localStorage.getItem("rs_session_user");
+        if (raw) setSession(JSON.parse(raw));
+      } catch (err) {
+        console.error("Failed to load data from the database", err);
+      } finally {
+        if (!cancelled) setReady(true);
+      }
+    }
+    boot();
 
     // A save that failed while offline (or mid wifi drop at a villa) retries
     // itself the moment the connection comes back, instead of waiting for
     // someone to notice and press retry.
     window.addEventListener("online", retryAllSaves);
-    return () => window.removeEventListener("online", retryAllSaves);
-  }, [retryAllSaves]);
+    return () => { cancelled = true; window.removeEventListener("online", retryAllSaves); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const persistSelected = useCallback((clientEmail: string | null, propertyId: string | null) => {
     try { localStorage.setItem(LS_SELECTED, JSON.stringify({ clientEmail, propertyId })); } catch {}
@@ -152,45 +220,55 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   function patchProperty(next: Property, description: string) {
     setProperties((prev) => prev.map((p) => (p.id === next.id ? next : p)));
     runSave(`property-${next.id}`, description, () =>
-      fetch(`/api/properties/${next.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) })
+      authedFetch(`/api/properties/${next.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) })
     );
   }
 
   function patchClient(email: string, updates: Partial<Omit<ClientRecord, "email">>) {
     setClients((prev) => prev.map((c) => (c.email === email ? { ...c, ...updates } : c)));
     runSave(`client-${email}`, `Update ${email}`, () =>
-      fetch(`/api/clients/${encodeURIComponent(email)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) })
+      authedFetch(`/api/clients/${encodeURIComponent(email)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) })
     );
   }
 
   function patchSupplier(id: string, updates: Partial<Supplier>) {
     setSuppliers((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
     runSave(`supplier-${id}`, `Update supplier`, () =>
-      fetch(`/api/suppliers/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) })
+      authedFetch(`/api/suppliers/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(updates) })
     );
   }
 
-  function login(email: string, password: string) {
-    const account = ACCOUNTS.find((a) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === password);
-    if (!account) return false;
-    const s: Session = { email: account.email, role: account.role, name: account.name };
-    setSession(s);
-    try { localStorage.setItem(LS_SESSION, JSON.stringify(s)); } catch {}
-    if (account.role === "client") {
-      setSelectedClientEmailState(account.email);
-      persistSelected(account.email, null);
+  async function login(email: string, password: string): Promise<boolean> {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json() as { accessToken: string; refreshToken: string; user: Session };
+
+    persistTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
+    setSession(data.user);
+    try { localStorage.setItem("rs_session_user", JSON.stringify(data.user)); } catch {}
+
+    if (data.user.role === "client") {
+      setSelectedClientEmailState(data.user.email);
+      persistSelected(data.user.email, null);
+    }
+
+    const stateRes = await authedFetch("/api/state");
+    if (stateRes.ok) {
+      const stateData = await stateRes.json() as { properties: Property[]; clients: ClientRecord[]; suppliers: Supplier[] };
+      setProperties(stateData.properties);
+      setClients(stateData.clients);
+      setSuppliers(stateData.suppliers);
     }
     return true;
   }
 
   function logout() {
-    setSession(null);
-    setSelectedClientEmailState(null);
-    setSelectedPropertyIdState(null);
-    try {
-      localStorage.removeItem(LS_SESSION);
-      localStorage.removeItem(LS_SELECTED);
-    } catch {}
+    clearSession();
+    try { localStorage.removeItem("rs_session_user"); } catch {}
   }
 
   function addProperty(p: { name: string; area: string; location: string }) {
@@ -205,7 +283,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     // response — the write actually succeeded, only the confirmation didn't
     // arrive — re-sends the exact same row instead of creating a duplicate.
     runSave(`property-${property.id}`, `New property "${p.name}"`, () =>
-      fetch("/api/properties", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(property) })
+      authedFetch("/api/properties", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(property) })
     );
   }
 
@@ -311,7 +389,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const client: ClientRecord = { name: c.name, email: c.email.trim().toLowerCase(), plan: c.plan };
     setClients((prev) => [...prev, client]);
     runSave(`client-${client.email}`, `New client "${c.name}"`, () =>
-      fetch("/api/clients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(client) })
+      authedFetch("/api/clients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(client) })
     );
   }
 
@@ -323,7 +401,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const supplier: Supplier = { ...s, id: randomId(s.name) };
     setSuppliers((prev) => [...prev, supplier]);
     runSave(`supplier-${supplier.id}`, `New supplier "${s.name}"`, () =>
-      fetch("/api/suppliers", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(supplier) })
+      authedFetch("/api/suppliers", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(supplier) })
     );
   }
 
@@ -360,7 +438,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   return (
     <StoreContext.Provider
       value={{
-        ready, session, login, logout,
+        ready, session, login, logout, getAccessToken,
         properties, clients, suppliers,
         saveErrors, retrySave, retryAllSaves,
         addProperty, addRoom, addEquipment, addMaintenanceLogEntry, assignProperty, setPropertyArchived, setPropertyPhoto, setRoomPhoto, setEquipmentPhoto,

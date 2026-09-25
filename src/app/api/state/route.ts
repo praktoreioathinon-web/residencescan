@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
-import { SEED_PROPERTIES, SEED_CLIENTS, SEED_SUPPLIERS } from "@/lib/data";
+import { requireUser, unauthorized } from "@/lib/auth-server";
+import { SEED_PROPERTIES, SEED_CLIENTS, SEED_SUPPLIERS, Property, ClientRecord } from "@/lib/data";
 
 // This reads live data (and needs env vars only present at runtime), so it
 // must never be statically prerendered at build time or cached.
@@ -17,7 +18,10 @@ export const revalidate = 0;
 // a plain insert would 500 on a duplicate key if it ever fired twice. Upsert
 // makes seeding idempotent — safe to attempt on every request that finds
 // nothing yet, and a harmless no-op once the data already exists.
-export async function GET() {
+export async function GET(req: Request) {
+  const user = await requireUser(req);
+  if (!user) return unauthorized();
+
   const db = supabaseServer();
 
   const { data: existingClients, error: clientsErr } = await db.from("clients").select("email").limit(1);
@@ -46,9 +50,18 @@ export async function GET() {
   if (suppliersErr) return NextResponse.json({ error: suppliersErr.message }, { status: 500 });
   if (propertiesErr) return NextResponse.json({ error: propertiesErr.message }, { status: 500 });
 
-  return NextResponse.json({
-    clients,
-    suppliers,
-    properties: (propertyRows ?? []).map((r) => r.data),
-  });
+  const allProperties = (propertyRows ?? []).map((r) => r.data as Property);
+
+  // A client only ever gets their own properties and their own client
+  // record — not everyone else's. Admin/support see everything, matching
+  // what the UI has always shown them.
+  if (user.role === "client") {
+    return NextResponse.json({
+      clients: (clients ?? []).filter((c: ClientRecord) => c.email === user.email),
+      suppliers,
+      properties: allProperties.filter((p) => p.clientEmail === user.email),
+    });
+  }
+
+  return NextResponse.json({ clients, suppliers, properties: allProperties });
 }

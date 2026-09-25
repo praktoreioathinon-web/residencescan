@@ -6,7 +6,7 @@ import { notFound, useSearchParams } from "next/navigation";
 import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon, Camera, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { EquipmentItem, genericEquipmentTerm, roomMaintenanceEntries } from "@/lib/data";
-import { compressImageToWebp } from "@/lib/image";
+import { uploadPhoto } from "@/lib/image";
 
 const EQUIP_ICONS = [Sparkles, Fan, Sun];
 const TAB_KEYS = ["Equipment", "Documents", "Maintenance", "Photos"] as const;
@@ -48,13 +48,13 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   function handleRoomPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !property || !room) return;
-    compressImageToWebp(file).then((dataUrl) => setRoomPhoto(property.id, room.id, dataUrl)).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
+    uploadPhoto(file).then((dataUrl) => setRoomPhoto(property.id, room.id, dataUrl)).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
   }
 
   function handleEquipmentPhoto(e: React.ChangeEvent<HTMLInputElement>, equipmentName: string) {
     const file = e.target.files?.[0];
     if (!file || !property || !room) return;
-    compressImageToWebp(file).then((dataUrl) => {
+    uploadPhoto(file).then((dataUrl) => {
       setEquipmentPhoto(property.id, room.id, equipmentName, dataUrl);
       setSelectedEquipment((prev) => (prev && prev.name === equipmentName ? { ...prev, photoUrl: dataUrl } : prev));
     }).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
@@ -93,7 +93,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   function handleNewEquipPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    compressImageToWebp(file).then(setNewEquipPhoto).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
+    uploadPhoto(file).then(setNewEquipPhoto).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
   }
 
   function closeAddEquipment() {

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Grid2x2, Cog, Waves, Store, Camera, Scan, ChevronRight, ImageIcon, ShieldCheck, AlertTriangle, CheckCircle2, Building2, Users, MapPin, Wrench, X, Archive, ArchiveRestore } from "lucide-react";
 import { dueSoonEquipment, healthScore, systemsOnline, maintenanceCurrent, photoCoveragePct, activeProperties, Property, ClientRecord } from "@/lib/data";
 import { useStore } from "@/lib/store";
-import { compressImageToWebp } from "@/lib/image";
+import { uploadPhoto } from "@/lib/image";
 
 const QUICK_ACCESS = [
   { href: "/rooms", label: "All Rooms", sub: "rooms", icon: Grid2x2 },
@@ -57,7 +57,7 @@ export default function OverviewPage() {
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>, propertyId: string) {
     const file = e.target.files?.[0];
     if (!file) return;
-    compressImageToWebp(file).then((dataUrl) => setPropertyPhoto(propertyId, dataUrl)).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
+    uploadPhoto(file).then((dataUrl) => setPropertyPhoto(propertyId, dataUrl)).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
   }
 
   function submitChangeClient(e: React.FormEvent, propertyId: string) {

@@ -7,7 +7,7 @@ import { Plus, CheckCircle2, AlertTriangle, BedDouble, Home, ChefHat, Waves, Cog
 import { useStore } from "@/lib/store";
 import PropertyPicker from "@/components/PropertyPicker";
 import { Room, roomAttentionCount, roomPhotoCount, activeProperties } from "@/lib/data";
-import { compressImageToWebp } from "@/lib/image";
+import { uploadPhoto } from "@/lib/image";
 
 const ICON_BY_NAME: [string, typeof Home][] = [
   ["Living Room", Home], ["Bedroom", BedDouble], ["Kitchen", ChefHat], ["Guest House", Building2],
@@ -104,7 +104,7 @@ export default function RoomsPage() {
   function handleNewRoomPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    compressImageToWebp(file).then(setNewRoomPhoto).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
+    uploadPhoto(file).then(setNewRoomPhoto).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
   }
 
   return (

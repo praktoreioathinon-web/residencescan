@@ -48,7 +48,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   function handleRoomPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !property || !room) return;
-    compressImageToWebp(file).then((dataUrl) => setRoomPhoto(property.id, room.id, dataUrl));
+    compressImageToWebp(file).then((dataUrl) => setRoomPhoto(property.id, room.id, dataUrl)).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
   }
 
   function handleEquipmentPhoto(e: React.ChangeEvent<HTMLInputElement>, equipmentName: string) {
@@ -57,7 +57,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
     compressImageToWebp(file).then((dataUrl) => {
       setEquipmentPhoto(property.id, room.id, equipmentName, dataUrl);
       setSelectedEquipment((prev) => (prev && prev.name === equipmentName ? { ...prev, photoUrl: dataUrl } : prev));
-    });
+    }).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
   }
 
   function submitIssue(equipmentName: string) {
@@ -93,7 +93,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   function handleNewEquipPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    compressImageToWebp(file).then(setNewEquipPhoto);
+    compressImageToWebp(file).then(setNewEquipPhoto).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
   }
 
   function closeAddEquipment() {

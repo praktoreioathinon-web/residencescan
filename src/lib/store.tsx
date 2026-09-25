@@ -22,8 +22,8 @@ type Store = {
   suppliers: Supplier[];
 
   saveErrors: SaveError[];
-  retrySave: (id: string) => void;
-  retryAllSaves: () => void;
+  retrySave: (id: string) => Promise<void>;
+  retryAllSaves: () => Promise<void>;
 
   addProperty: (p: { name: string; area: string; location: string }) => void;
   addRoom: (propertyId: string, r: { name: string; category: Room["category"]; photoUrl?: string }) => void;
@@ -77,7 +77,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [selectedPropertyId, setSelectedPropertyIdState] = useState<string | null>(null);
   const [notificationsEnabled, setNotificationsEnabledState] = useState(true);
   const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
-  const retryFns = useRef(new Map<string, () => void>());
+  const retryFns = useRef(new Map<string, () => Promise<void>>());
 
   // Every mutation below applies its change to local state immediately (the
   // UI never waits on the network) and saves it in the background through
@@ -96,17 +96,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         console.error(`Save failed: ${description}`, err);
         retryFns.current.set(id, attempt);
         setSaveErrors((prev) => (prev.some((e) => e.id === id) ? prev : [...prev, { id, description }]));
+        throw err;
       }
     }
-    attempt();
+    attempt().catch(() => {});
   }, []);
 
-  const retrySave = useCallback((id: string) => {
-    retryFns.current.get(id)?.();
+  // Both return a promise so the UI can show "retrying" while one is in
+  // flight — a retry that fails the exact same way every time (e.g. a photo
+  // too large for the server to accept) previously looked identical to the
+  // button doing nothing at all.
+  const retrySave = useCallback(async (id: string) => {
+    await retryFns.current.get(id)?.().catch(() => {});
   }, []);
 
-  const retryAllSaves = useCallback(() => {
-    retryFns.current.forEach((fn) => fn());
+  const retryAllSaves = useCallback(async () => {
+    await Promise.all(Array.from(retryFns.current.values()).map((fn) => fn().catch(() => {})));
   }, []);
 
   useEffect(() => {

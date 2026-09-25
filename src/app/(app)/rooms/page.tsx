@@ -104,7 +104,7 @@ export default function RoomsPage() {
   function handleNewRoomPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    compressImageToWebp(file).then(setNewRoomPhoto);
+    compressImageToWebp(file).then(setNewRoomPhoto).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
   }
 
   return (

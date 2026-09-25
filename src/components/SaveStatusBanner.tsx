@@ -11,8 +11,20 @@ import { useStore } from "@/lib/store";
 export default function SaveStatusBanner() {
   const { saveErrors, retrySave, retryAllSaves } = useStore();
   const [expanded, setExpanded] = useState(false);
+  const [retryingAll, setRetryingAll] = useState(false);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
 
   if (saveErrors.length === 0) return null;
+
+  async function handleRetryAll() {
+    setRetryingAll(true);
+    try { await retryAllSaves(); } finally { setRetryingAll(false); }
+  }
+
+  async function handleRetryOne(id: string) {
+    setRetryingId(id);
+    try { await retrySave(id); } finally { setRetryingId(null); }
+  }
 
   return (
     <div className="no-print fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] w-[calc(100%-2rem)] max-w-md">
@@ -22,8 +34,8 @@ export default function SaveStatusBanner() {
           <p className="flex-1 text-[12.5px] font-semibold text-fg">
             {saveErrors.length} change{saveErrors.length > 1 ? "s" : ""} not saved yet
           </p>
-          <button onClick={retryAllSaves} className="flex items-center gap-1 text-[12px] font-semibold text-primary flex-shrink-0">
-            <RotateCw size={12} /> Retry
+          <button onClick={handleRetryAll} disabled={retryingAll} className="flex items-center gap-1 text-[12px] font-semibold text-primary flex-shrink-0 disabled:opacity-50">
+            <RotateCw size={12} className={retryingAll ? "animate-spin" : ""} /> {retryingAll ? "Retrying…" : "Retry"}
           </button>
           {saveErrors.length > 1 && (
             <button onClick={() => setExpanded((v) => !v)} className="text-subtext flex-shrink-0" aria-label={expanded ? "Collapse" : "Expand"}>
@@ -36,7 +48,9 @@ export default function SaveStatusBanner() {
             {saveErrors.map((e) => (
               <div key={e.id} className="flex items-center gap-2.5 px-4 py-2">
                 <p className="flex-1 min-w-0 text-[11.5px] text-subtext truncate">{e.description}</p>
-                <button onClick={() => retrySave(e.id)} className="text-[11px] font-semibold text-primary flex-shrink-0">Retry</button>
+                <button onClick={() => handleRetryOne(e.id)} disabled={retryingId === e.id} className="text-[11px] font-semibold text-primary flex-shrink-0 disabled:opacity-50">
+                  {retryingId === e.id ? "Retrying…" : "Retry"}
+                </button>
               </div>
             ))}
           </div>

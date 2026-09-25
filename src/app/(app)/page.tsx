@@ -57,7 +57,7 @@ export default function OverviewPage() {
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>, propertyId: string) {
     const file = e.target.files?.[0];
     if (!file) return;
-    compressImageToWebp(file).then((dataUrl) => setPropertyPhoto(propertyId, dataUrl));
+    compressImageToWebp(file).then((dataUrl) => setPropertyPhoto(propertyId, dataUrl)).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
   }
 
   function submitChangeClient(e: React.FormEvent, propertyId: string) {

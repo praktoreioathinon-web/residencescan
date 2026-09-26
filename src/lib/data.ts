@@ -26,15 +26,6 @@ export function todayISO(): string {
   return new Date().toLocaleDateString("en-CA");
 }
 
-// Reduces a specific equipment name (e.g. "Samsung Frame TV", "Daikin A/C") down to
-// its generic kind ("TV", "A/C") for suggesting equipment types elsewhere without
-// suggesting someone else's brand/model. Just takes the last word — good enough for
-// names in this app, which are consistently "[Brand] [Type]" or "[Descriptor] [Type]".
-export function genericEquipmentTerm(name: string): string {
-  const words = name.trim().split(/\s+/);
-  return words[words.length - 1];
-}
-
 export type Room = {
   id: string;
   number: string;

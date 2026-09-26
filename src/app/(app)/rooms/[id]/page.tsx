@@ -5,7 +5,7 @@ import Link from "next/link";
 import { notFound, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon, Camera, AlertTriangle, CheckCircle2, Pencil, Trash2 } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { EquipmentItem, Room, genericEquipmentTerm, roomMaintenanceEntries, formatDate, todayISO } from "@/lib/data";
+import { EquipmentItem, Room, roomMaintenanceEntries, formatDate, todayISO } from "@/lib/data";
 import { uploadPhoto } from "@/lib/image";
 
 const EQUIP_ICONS = [Sparkles, Fan, Sun];
@@ -42,11 +42,12 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   const canEdit = session?.role !== "client";
   const deletingRef = useRef(false);
 
-  // Suggest generic equipment types (TV, Pump, A/C, ...) seen anywhere across every
-  // property, not specific brands/models — and not ones this room already has.
+  // Suggest full equipment names already used anywhere across every property
+  // (e.g. "Wall mounted basin mixer", not just "mixer") — and not ones this
+  // room already has.
   const equipmentSuggestions = Array.from(new Set(
-    properties.flatMap((p) => p.rooms.flatMap((r) => r.equipment.map((e) => genericEquipmentTerm(e.name))))
-  )).filter((term) => !room?.equipment?.some((e) => genericEquipmentTerm(e.name) === term)).sort();
+    properties.flatMap((p) => p.rooms.flatMap((r) => r.equipment.map((e) => e.name)))
+  )).filter((name) => !room?.equipment?.some((e) => e.name === name)).sort();
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");

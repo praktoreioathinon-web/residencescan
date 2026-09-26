@@ -5,6 +5,79 @@ import { useStore } from "@/lib/store";
 import { Plan, activeProperties } from "@/lib/data";
 import { ShieldCheck, Wrench, Users } from "lucide-react";
 
+function ChangePasswordForm() {
+  const { changePassword } = useStore();
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  async function submit() {
+    setError(null);
+    if (password.length < 8) return setError("Password must be at least 8 characters.");
+    if (password !== confirm) return setError("Passwords don't match.");
+
+    setSubmitting(true);
+    const result = await changePassword(password);
+    setSubmitting(false);
+    if (!result.ok) return setError(result.error ?? "Failed to change password.");
+
+    setSuccess(true);
+    setPassword("");
+    setConfirm("");
+    setTimeout(() => { setOpen(false); setSuccess(false); }, 1500);
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="text-[12.5px] font-semibold text-primary"
+      >
+        Change password
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2 max-w-xs">
+      <input
+        type="password"
+        placeholder="New password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="rounded-lg border border-line px-2.5 py-1.5 text-[12.5px]"
+      />
+      <input
+        type="password"
+        placeholder="Confirm new password"
+        value={confirm}
+        onChange={(e) => setConfirm(e.target.value)}
+        className="rounded-lg border border-line px-2.5 py-1.5 text-[12.5px]"
+      />
+      {error && <p className="text-[11.5px] text-[var(--attention-fg)]">{error}</p>}
+      {success && <p className="text-[11.5px] text-primary">Password changed.</p>}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={submit}
+          disabled={submitting}
+          className="text-[12.5px] font-semibold text-primary disabled:opacity-50"
+        >
+          {submitting ? "Saving…" : "Save"}
+        </button>
+        <button
+          onClick={() => { setOpen(false); setError(null); setPassword(""); setConfirm(""); }}
+          className="text-[12.5px] text-subtext"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const PLANS: Plan[] = ["Start", "Care", "Plus", "Pro"];
 
 // Permissions copy per role, applied to whoever /api/staff actually returns —
@@ -44,7 +117,8 @@ export default function SettingsPage() {
             <p className="text-[12px] text-subtext">{session?.email}</p>
           </div>
         </div>
-        <p className="text-[11.5px] text-subtext">Role: <span className="text-fg font-semibold capitalize">{session?.role}</span></p>
+        <p className="text-[11.5px] text-subtext mb-4">Role: <span className="text-fg font-semibold capitalize">{session?.role}</span></p>
+        <ChangePasswordForm />
       </div>
 
       {isAdmin && (

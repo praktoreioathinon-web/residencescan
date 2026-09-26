@@ -17,6 +17,7 @@ type Store = {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   getAccessToken: () => string | null;
+  changePassword: (newPassword: string) => Promise<{ ok: boolean; error?: string }>;
 
   properties: Property[];
   clients: ClientRecord[];
@@ -271,6 +272,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try { localStorage.removeItem("rs_session_user"); } catch {}
   }
 
+  async function changePassword(newPassword: string): Promise<{ ok: boolean; error?: string }> {
+    const res = await authedFetch("/api/auth/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: newPassword }),
+    });
+    if (res.ok) return { ok: true };
+    const body = await res.json().catch(() => null);
+    return { ok: false, error: body?.error ?? `Failed (${res.status})` };
+  }
+
   function addProperty(p: { name: string; area: string; location: string }) {
     const property: Property = {
       id: randomId(p.name), name: p.name, area: p.area, location: p.location, clientEmail: null,
@@ -438,7 +450,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   return (
     <StoreContext.Provider
       value={{
-        ready, session, login, logout, getAccessToken,
+        ready, session, login, logout, getAccessToken, changePassword,
         properties, clients, suppliers,
         saveErrors, retrySave, retryAllSaves,
         addProperty, addRoom, addEquipment, addMaintenanceLogEntry, assignProperty, setPropertyArchived, setPropertyPhoto, setRoomPhoto, setEquipmentPhoto,

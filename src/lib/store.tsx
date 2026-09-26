@@ -29,7 +29,10 @@ type Store = {
 
   addProperty: (p: { name: string; area: string; location: string }) => void;
   addRoom: (propertyId: string, r: { name: string; category: Room["category"]; photoUrl?: string }) => void;
+  editRoom: (propertyId: string, roomId: string, updates: { name: string; category: Room["category"] }) => void;
   addEquipment: (propertyId: string, roomId: string, e: { name: string; model: string; photoUrl?: string }) => void;
+  editEquipment: (propertyId: string, roomId: string, equipmentName: string, updates: { name: string; model: string }) => void;
+  addRoomPhoto: (propertyId: string, roomId: string, photoUrl: string) => void;
   addMaintenanceLogEntry: (propertyId: string, e: { title: string; room: string; supplier: string; notes: string }) => void;
   assignProperty: (propertyId: string, clientEmail: string) => void;
   setPropertyArchived: (propertyId: string, archived: boolean) => void;
@@ -312,6 +315,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     patchProperty({ ...p, rooms: [...p.rooms, newRoom] }, `${p.name} — add room "${r.name}"`);
   }
 
+  function editRoom(propertyId: string, roomId: string, updates: { name: string; category: Room["category"] }) {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    patchProperty(
+      { ...p, rooms: p.rooms.map((r) => (r.id === roomId ? { ...r, ...updates } : r)) },
+      `${p.name} — edit room "${updates.name}"`
+    );
+  }
+
   function addEquipment(propertyId: string, roomId: string, e: { name: string; model: string; photoUrl?: string }) {
     const p = properties.find((p) => p.id === propertyId);
     if (!p) return;
@@ -322,6 +334,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return { ...r, equipment, equipmentCount: equipment.length };
     });
     patchProperty({ ...p, rooms }, `${p.name} — add equipment "${e.name}"${room ? ` (${room.name})` : ""}`);
+  }
+
+  function editEquipment(propertyId: string, roomId: string, equipmentName: string, updates: { name: string; model: string }) {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    const rooms = p.rooms.map((r) =>
+      r.id !== roomId ? r : { ...r, equipment: r.equipment.map((e) => (e.name === equipmentName ? { ...e, ...updates } : e)) }
+    );
+    patchProperty({ ...p, rooms }, `${p.name} — edit equipment "${updates.name}"`);
   }
 
   function addMaintenanceLogEntry(propertyId: string, e: { title: string; room: string; supplier: string; notes: string }) {
@@ -357,6 +378,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     patchProperty(
       { ...p, rooms: p.rooms.map((r) => (r.id === roomId ? { ...r, photoUrl } : r)) },
       `${p.name} — ${room?.name ?? "room"} photo`
+    );
+  }
+
+  function addRoomPhoto(propertyId: string, roomId: string, photoUrl: string) {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    const room = p.rooms.find((r) => r.id === roomId);
+    patchProperty(
+      { ...p, rooms: p.rooms.map((r) => (r.id === roomId ? { ...r, photos: [...(r.photos ?? []), photoUrl] } : r)) },
+      `${p.name} — ${room?.name ?? "room"} add photo`
     );
   }
 
@@ -453,7 +484,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         ready, session, login, logout, getAccessToken, changePassword,
         properties, clients, suppliers,
         saveErrors, retrySave, retryAllSaves,
-        addProperty, addRoom, addEquipment, addMaintenanceLogEntry, assignProperty, setPropertyArchived, setPropertyPhoto, setRoomPhoto, setEquipmentPhoto,
+        addProperty, addRoom, editRoom, addEquipment, editEquipment, addMaintenanceLogEntry, assignProperty, setPropertyArchived, setPropertyPhoto, setRoomPhoto, addRoomPhoto, setEquipmentPhoto,
         reportEquipmentIssue, clearEquipmentIssue,
         addClient, updateClient,
         addSupplier, updateSupplier,

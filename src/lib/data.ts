@@ -27,6 +27,7 @@ export type Room = {
   equipmentCount: number;
   equipment: EquipmentItem[];
   photoUrl?: string;
+  photos?: string[];
 };
 
 // Real per-room "needs attention" count — equipment that's due soon or has a
@@ -39,7 +40,7 @@ export function roomAttentionCount(room: Room): number {
 // equipment that has one — there is no separate "photos" data model, this
 // counts the photos that actually exist.
 export function roomPhotoCount(room: Room): number {
-  return (room.photoUrl ? 1 : 0) + room.equipment.filter((e) => e.photoUrl).length;
+  return (room.photoUrl ? 1 : 0) + (room.photos?.length ?? 0) + room.equipment.filter((e) => e.photoUrl).length;
 }
 
 // Completed maintenance history for one room, pulled from the property's real

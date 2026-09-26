@@ -3,17 +3,18 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { notFound, useSearchParams } from "next/navigation";
-import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon, Camera, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon, Camera, AlertTriangle, CheckCircle2, Pencil } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { EquipmentItem, genericEquipmentTerm, roomMaintenanceEntries } from "@/lib/data";
+import { EquipmentItem, Room, genericEquipmentTerm, roomMaintenanceEntries } from "@/lib/data";
 import { uploadPhoto } from "@/lib/image";
 
 const EQUIP_ICONS = [Sparkles, Fan, Sun];
 const TAB_KEYS = ["Equipment", "Documents", "Maintenance", "Photos"] as const;
+const CATEGORIES: Room["category"][] = ["Indoor", "Outdoor", "Technical"];
 
 export default function RoomDetailPage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams();
-  const { session, properties, selectedPropertyId, setEquipmentPhoto, setRoomPhoto, reportEquipmentIssue, clearEquipmentIssue, addEquipment, getAccessToken } = useStore();
+  const { session, properties, selectedPropertyId, setEquipmentPhoto, setRoomPhoto, addRoomPhoto, reportEquipmentIssue, clearEquipmentIssue, addEquipment, editRoom, editEquipment, getAccessToken } = useStore();
   const property = properties.find((p) => p.id === selectedPropertyId);
   const room = property?.rooms.find((r) => r.id === params.id);
   const [tab, setTab] = useState<(typeof TAB_KEYS)[number]>("Equipment");
@@ -24,6 +25,12 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   const [newEquipName, setNewEquipName] = useState("");
   const [newEquipModel, setNewEquipModel] = useState("");
   const [newEquipPhoto, setNewEquipPhoto] = useState<string | undefined>(undefined);
+  const [showEditRoom, setShowEditRoom] = useState(false);
+  const [editRoomName, setEditRoomName] = useState("");
+  const [editRoomCategory, setEditRoomCategory] = useState<Room["category"]>("Indoor");
+  const [editingEquipment, setEditingEquipment] = useState(false);
+  const [editEquipName, setEditEquipName] = useState("");
+  const [editEquipModel, setEditEquipModel] = useState("");
   const canEdit = session?.role !== "client";
 
   // Suggest generic equipment types (TV, Pump, A/C, ...) seen anywhere across every
@@ -49,6 +56,26 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
     const file = e.target.files?.[0];
     if (!file || !property || !room) return;
     uploadPhoto(file, getAccessToken()).then((dataUrl) => setRoomPhoto(property.id, room.id, dataUrl)).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
+  }
+
+  function handleAddRoomPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !property || !room) return;
+    uploadPhoto(file, getAccessToken()).then((dataUrl) => addRoomPhoto(property.id, room.id, dataUrl)).catch((err) => alert(`Couldn't process that photo: ${err.message}`));
+  }
+
+  function openEditRoom() {
+    if (!room) return;
+    setEditRoomName(room.name);
+    setEditRoomCategory(room.category);
+    setShowEditRoom(true);
+  }
+
+  function submitEditRoom(e: React.FormEvent) {
+    e.preventDefault();
+    if (!property || !room || !editRoomName.trim()) return;
+    editRoom(property.id, room.id, { name: editRoomName.trim(), category: editRoomCategory });
+    setShowEditRoom(false);
   }
 
   function handleEquipmentPhoto(e: React.ChangeEvent<HTMLInputElement>, equipmentName: string) {
@@ -78,6 +105,22 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
     setSelectedEquipment(eq);
     setReportOpen(false);
     setReportText("");
+    setEditingEquipment(false);
+  }
+
+  function openEditEquipment() {
+    if (!selectedEquipment) return;
+    setEditEquipName(selectedEquipment.name);
+    setEditEquipModel(selectedEquipment.model);
+    setEditingEquipment(true);
+  }
+
+  function submitEditEquipment(e: React.FormEvent) {
+    e.preventDefault();
+    if (!property || !room || !selectedEquipment || !editEquipName.trim()) return;
+    editEquipment(property.id, room.id, selectedEquipment.name, { name: editEquipName.trim(), model: editEquipModel.trim() });
+    setSelectedEquipment({ ...selectedEquipment, name: editEquipName.trim(), model: editEquipModel.trim() });
+    setEditingEquipment(false);
   }
 
   function submitAddEquipment(e: React.FormEvent) {
@@ -104,6 +147,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   const maintenanceEntries = property ? roomMaintenanceEntries(property, room) : [];
   const photoItems = [
     ...(room.photoUrl ? [{ label: room.name, photoUrl: room.photoUrl }] : []),
+    ...(room.photos ?? []).map((url, i) => ({ label: `${room.name} photo ${i + 1}`, photoUrl: url })),
     ...room.equipment.filter((e) => e.photoUrl).map((e) => ({ label: e.name, photoUrl: e.photoUrl as string })),
   ];
 
@@ -121,7 +165,14 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
           <Link href="/rooms" className="w-9 h-9 rounded-full border border-line flex items-center justify-center"><ArrowLeft size={15} /></Link>
           <div>
             <p className="text-[10px] tracking-widest text-subtext font-semibold">ROOM {room.number}</p>
-            <h1 className="text-2xl font-bold text-fg">{room.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-fg">{room.name}</h1>
+              {canEdit && (
+                <button onClick={openEditRoom} title="Edit room" className="w-6 h-6 rounded-full border border-line flex items-center justify-center flex-shrink-0">
+                  <Pencil size={11} className="text-subtext" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
         {canEdit && (
@@ -199,15 +250,29 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
           </div>
         )
       ) : tab === "Photos" ? (
-        photoItems.length === 0 ? (
-          <p className="text-[12.5px] text-subtext py-8 text-center">No photos uploaded yet.</p>
-        ) : (
-          <div className="grid grid-cols-3 gap-2.5">
-            {photoItems.map((p, i) => (
-              <div key={i} title={p.label} className="rounded-xl overflow-hidden bg-cover bg-center" style={{ aspectRatio: "1 / 1", backgroundImage: `url(${p.photoUrl})` }} />
-            ))}
-          </div>
-        )
+        <div>
+          {canEdit && (
+            <div className="flex items-center gap-2 mb-3.5">
+              <label className="flex items-center gap-1.5 text-[11.5px] font-semibold px-3 py-1.5 rounded-full border border-line text-fg cursor-pointer hover:border-primary/40">
+                <ImageIcon size={13} /> Add photo
+                <input type="file" accept="image/*" className="hidden" onChange={handleAddRoomPhoto} />
+              </label>
+              <label className="flex items-center gap-1.5 text-[11.5px] font-semibold px-3 py-1.5 rounded-full border border-line text-fg cursor-pointer hover:border-primary/40">
+                <Camera size={13} /> Take photo
+                <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleAddRoomPhoto} />
+              </label>
+            </div>
+          )}
+          {photoItems.length === 0 ? (
+            <p className="text-[12.5px] text-subtext py-8 text-center">No photos uploaded yet.</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-2.5">
+              {photoItems.map((p, i) => (
+                <div key={i} title={p.label} className="rounded-xl overflow-hidden bg-cover bg-center" style={{ aspectRatio: "1 / 1", backgroundImage: `url(${p.photoUrl})` }} />
+              ))}
+            </div>
+          )}
+        </div>
       ) : (
         <p className="text-[12.5px] text-subtext py-8 text-center">No documents uploaded yet.</p>
       )}
@@ -237,13 +302,39 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
               </div>
             </div>
             <div className="p-5">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-[15px] font-bold text-fg">{selectedEquipment.name}</p>
-                <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full ${selectedEquipment.issueNote ? "bg-[var(--attention-wash)] text-[var(--attention-fg)]" : selectedEquipment.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>
-                  {selectedEquipment.issueNote ? "Issue reported" : selectedEquipment.status}
-                </span>
-              </div>
-              <p className="text-[12.5px] text-subtext mb-4">{selectedEquipment.model}</p>
+              {editingEquipment ? (
+                <form onSubmit={submitEditEquipment} className="mb-4">
+                  <div className="flex flex-col gap-2 mb-2">
+                    <input required autoFocus value={editEquipName} onChange={(e) => setEditEquipName(e.target.value)}
+                      placeholder="Equipment name"
+                      className="rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-primary/50" />
+                    <input value={editEquipModel} onChange={(e) => setEditEquipModel(e.target.value)}
+                      placeholder="Model / notes"
+                      className="rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-primary/50" />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button type="submit" className="text-[12.5px] font-semibold text-primary">Save</button>
+                    <button type="button" onClick={() => setEditingEquipment(false)} className="text-[12.5px] text-subtext">Cancel</button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-[15px] font-bold text-fg">{selectedEquipment.name}</p>
+                      {canEdit && (
+                        <button onClick={openEditEquipment} title="Edit equipment" className="w-[22px] h-[22px] rounded-full border border-line flex items-center justify-center flex-shrink-0">
+                          <Pencil size={10} className="text-subtext" />
+                        </button>
+                      )}
+                    </div>
+                    <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full ${selectedEquipment.issueNote ? "bg-[var(--attention-wash)] text-[var(--attention-fg)]" : selectedEquipment.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>
+                      {selectedEquipment.issueNote ? "Issue reported" : selectedEquipment.status}
+                    </span>
+                  </div>
+                  <p className="text-[12.5px] text-subtext mb-4">{selectedEquipment.model}</p>
+                </>
+              )}
               <div className="rounded-xl border border-line divide-y divide-line text-[12.5px] mb-4">
                 <div className="flex items-center justify-between p-3"><span className="text-subtext">Room</span><span className="text-fg font-semibold">{room.name}</span></div>
                 <div className="flex items-center justify-between p-3"><span className="text-subtext">Property</span><span className="text-fg font-semibold">{property?.name}</span></div>
@@ -281,6 +372,26 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {showEditRoom && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setShowEditRoom(false)}>
+          <form onSubmit={submitEditRoom} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-bold text-fg text-[15px]">Edit room</p>
+              <button type="button" onClick={() => setShowEditRoom(false)}><X size={16} className="text-subtext" /></button>
+            </div>
+            <div className="flex flex-col gap-2.5">
+              <input required autoFocus placeholder="Room name" value={editRoomName} onChange={(e) => setEditRoomName(e.target.value)}
+                className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
+              <select value={editRoomCategory} onChange={(e) => setEditRoomCategory(e.target.value as Room["category"])}
+                className="rounded-lg border border-line px-3.5 py-2.5 text-[13px]">
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <button type="submit" className="mt-1 bg-primary text-primary-fg text-[13px] font-semibold rounded-full py-2.5">Save changes</button>
+            </div>
+          </form>
         </div>
       )}
 

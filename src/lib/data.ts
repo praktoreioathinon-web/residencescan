@@ -7,7 +7,24 @@ export type Role = "admin" | "client" | "support";
 export type EquipmentItem = {
   name: string; model: string; status: "Good" | "Due soon"; photoUrl?: string;
   issueNote?: string; issueReportedAt?: string;
+  // Both ISO ("YYYY-MM-DD") dates. nextMaintenanceDate is left unset for
+  // equipment that doesn't need scheduled maintenance (e.g. gym weights,
+  // furniture) — its absence is what "doesn't need maintenance" means.
+  installedDate?: string;
+  nextMaintenanceDate?: string;
 };
+
+// Formats an ISO ("YYYY-MM-DD") date the same way the rest of the app displays
+// dates, without the UTC/local-timezone-boundary off-by-one a plain `new
+// Date(iso)` risks (a date-only ISO string parses as UTC midnight).
+export function formatDate(iso: string): string {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+export function todayISO(): string {
+  return new Date().toLocaleDateString("en-CA");
+}
 
 // Reduces a specific equipment name (e.g. "Samsung Frame TV", "Daikin A/C") down to
 // its generic kind ("TV", "A/C") for suggesting equipment types elsewhere without
@@ -478,6 +495,20 @@ export type MaintenanceLogEntry = {
   notes: string;
 };
 
+// A planned future visit, distinct from MaintenanceLogEntry (which is
+// something already done). `date` is ISO ("YYYY-MM-DD") so entries sort
+// correctly; `equipment` is optional since a scheduled visit might cover a
+// whole room rather than one specific item.
+export type ScheduledMaintenanceEntry = {
+  id: string;
+  date: string;
+  title: string;
+  room: string;
+  equipment?: string;
+  supplier: string;
+  notes: string;
+};
+
 export type Property = {
   id: string;
   name: string;
@@ -488,6 +519,7 @@ export type Property = {
   rooms: Room[];
   photoUrl?: string;
   maintenanceLog: MaintenanceLogEntry[];
+  scheduledMaintenance?: ScheduledMaintenanceEntry[];
   archived?: boolean;
 };
 

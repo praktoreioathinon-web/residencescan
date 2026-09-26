@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
-import { Property, ClientRecord, Supplier, Plan, Role, Room } from "./data";
+import { Property, ClientRecord, Supplier, Plan, Role, Room, ScheduledMaintenanceEntry } from "./data";
 
 export type Session = { email: string; role: Role; name: string };
 
@@ -31,13 +31,16 @@ type Store = {
   addRoom: (propertyId: string, r: { name: string; category: Room["category"]; photoUrl?: string }) => void;
   editRoom: (propertyId: string, roomId: string, updates: { name: string; category: Room["category"] }) => void;
   removeRoom: (propertyId: string, roomId: string) => void;
-  addEquipment: (propertyId: string, roomId: string, e: { name: string; model: string; photoUrl?: string }) => void;
-  editEquipment: (propertyId: string, roomId: string, equipmentName: string, updates: { name: string; model: string }) => void;
+  addEquipment: (propertyId: string, roomId: string, e: { name: string; model: string; photoUrl?: string; installedDate?: string; nextMaintenanceDate?: string }) => void;
+  editEquipment: (propertyId: string, roomId: string, equipmentName: string, updates: { name: string; model: string; installedDate?: string; nextMaintenanceDate?: string }) => void;
   removeEquipment: (propertyId: string, roomId: string, equipmentName: string) => void;
   addRoomPhoto: (propertyId: string, roomId: string, photoUrl: string) => void;
   removeRoomPhoto: (propertyId: string, roomId: string, photoUrl: string) => void;
   removeEquipmentPhoto: (propertyId: string, roomId: string, equipmentName: string) => void;
   addMaintenanceLogEntry: (propertyId: string, e: { title: string; room: string; supplier: string; notes: string }) => void;
+  addScheduledMaintenance: (propertyId: string, e: { title: string; date: string; room: string; equipment?: string; supplier: string; notes: string }) => void;
+  completeScheduledMaintenance: (propertyId: string, id: string) => void;
+  removeScheduledMaintenance: (propertyId: string, id: string) => void;
   assignProperty: (propertyId: string, clientEmail: string) => void;
   setPropertyArchived: (propertyId: string, archived: boolean) => void;
   setPropertyPhoto: (propertyId: string, photoUrl: string) => void;
@@ -334,19 +337,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     patchProperty({ ...p, rooms: p.rooms.filter((r) => r.id !== roomId) }, `${p.name} — remove room`);
   }
 
-  function addEquipment(propertyId: string, roomId: string, e: { name: string; model: string; photoUrl?: string }) {
+  function addEquipment(propertyId: string, roomId: string, e: { name: string; model: string; photoUrl?: string; installedDate?: string; nextMaintenanceDate?: string }) {
     const p = properties.find((p) => p.id === propertyId);
     if (!p) return;
     const room = p.rooms.find((r) => r.id === roomId);
     const rooms = p.rooms.map((r) => {
       if (r.id !== roomId) return r;
-      const equipment = [...r.equipment, { name: e.name, model: e.model || "Installed just now", status: "Good" as const, photoUrl: e.photoUrl }];
+      const equipment = [...r.equipment, {
+        name: e.name, model: e.model || "Installed just now", status: "Good" as const, photoUrl: e.photoUrl,
+        installedDate: e.installedDate, nextMaintenanceDate: e.nextMaintenanceDate,
+      }];
       return { ...r, equipment, equipmentCount: equipment.length };
     });
     patchProperty({ ...p, rooms }, `${p.name} — add equipment "${e.name}"${room ? ` (${room.name})` : ""}`);
   }
 
-  function editEquipment(propertyId: string, roomId: string, equipmentName: string, updates: { name: string; model: string }) {
+  function editEquipment(propertyId: string, roomId: string, equipmentName: string, updates: { name: string; model: string; installedDate?: string; nextMaintenanceDate?: string }) {
     const p = properties.find((p) => p.id === propertyId);
     if (!p) return;
     const rooms = p.rooms.map((r) =>
@@ -372,6 +378,41 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const date = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
     const entry = { id: `${propertyId}-log-${Math.random().toString(36).slice(2, 8)}`, date, ...e };
     patchProperty({ ...p, maintenanceLog: [entry, ...p.maintenanceLog] }, `${p.name} — log "${e.title}"`);
+  }
+
+  function addScheduledMaintenance(propertyId: string, e: { title: string; date: string; room: string; equipment?: string; supplier: string; notes: string }) {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    const entry: ScheduledMaintenanceEntry = { id: `${propertyId}-sched-${Math.random().toString(36).slice(2, 8)}`, ...e };
+    patchProperty({ ...p, scheduledMaintenance: [...(p.scheduledMaintenance ?? []), entry] }, `${p.name} — schedule "${e.title}"`);
+  }
+
+  // Completing a scheduled visit turns it into a completed log entry (dated
+  // today, whenever it actually happened) and removes it from the schedule —
+  // it isn't both upcoming and done at once.
+  function completeScheduledMaintenance(propertyId: string, id: string) {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    const entry = (p.scheduledMaintenance ?? []).find((s) => s.id === id);
+    if (!entry) return;
+    const date = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    const logEntry = {
+      id: `${propertyId}-log-${Math.random().toString(36).slice(2, 8)}`, date,
+      title: entry.title, room: entry.room, supplier: entry.supplier, notes: entry.notes,
+    };
+    patchProperty(
+      { ...p, maintenanceLog: [logEntry, ...p.maintenanceLog], scheduledMaintenance: (p.scheduledMaintenance ?? []).filter((s) => s.id !== id) },
+      `${p.name} — completed "${entry.title}"`
+    );
+  }
+
+  function removeScheduledMaintenance(propertyId: string, id: string) {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    patchProperty(
+      { ...p, scheduledMaintenance: (p.scheduledMaintenance ?? []).filter((s) => s.id !== id) },
+      `${p.name} — cancel scheduled maintenance`
+    );
   }
 
   function assignProperty(propertyId: string, clientEmail: string) {
@@ -536,7 +577,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         ready, session, login, logout, getAccessToken, changePassword,
         properties, clients, suppliers,
         saveErrors, retrySave, retryAllSaves,
-        addProperty, addRoom, editRoom, removeRoom, addEquipment, editEquipment, removeEquipment, addMaintenanceLogEntry, assignProperty, setPropertyArchived, setPropertyPhoto, setRoomPhoto, addRoomPhoto, removeRoomPhoto, setEquipmentPhoto, removeEquipmentPhoto,
+        addProperty, addRoom, editRoom, removeRoom, addEquipment, editEquipment, removeEquipment, addMaintenanceLogEntry, addScheduledMaintenance, completeScheduledMaintenance, removeScheduledMaintenance, assignProperty, setPropertyArchived, setPropertyPhoto, setRoomPhoto, addRoomPhoto, removeRoomPhoto, setEquipmentPhoto, removeEquipmentPhoto,
         reportEquipmentIssue, clearEquipmentIssue,
         addClient, updateClient,
         addSupplier, updateSupplier,

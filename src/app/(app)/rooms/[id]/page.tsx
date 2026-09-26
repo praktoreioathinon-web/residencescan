@@ -5,7 +5,7 @@ import Link from "next/link";
 import { notFound, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon, Camera, AlertTriangle, CheckCircle2, Pencil, Trash2 } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { EquipmentItem, Room, genericEquipmentTerm, roomMaintenanceEntries } from "@/lib/data";
+import { EquipmentItem, Room, genericEquipmentTerm, roomMaintenanceEntries, formatDate, todayISO } from "@/lib/data";
 import { uploadPhoto } from "@/lib/image";
 
 const EQUIP_ICONS = [Sparkles, Fan, Sun];
@@ -29,12 +29,16 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   const [newEquipName, setNewEquipName] = useState("");
   const [newEquipModel, setNewEquipModel] = useState("");
   const [newEquipPhoto, setNewEquipPhoto] = useState<string | undefined>(undefined);
+  const [newEquipInstalledDate, setNewEquipInstalledDate] = useState(todayISO());
+  const [newEquipNextMaintenance, setNewEquipNextMaintenance] = useState("");
   const [showEditRoom, setShowEditRoom] = useState(false);
   const [editRoomName, setEditRoomName] = useState("");
   const [editRoomCategory, setEditRoomCategory] = useState<Room["category"]>("Indoor");
   const [editingEquipment, setEditingEquipment] = useState(false);
   const [editEquipName, setEditEquipName] = useState("");
   const [editEquipModel, setEditEquipModel] = useState("");
+  const [editEquipInstalledDate, setEditEquipInstalledDate] = useState("");
+  const [editEquipNextMaintenance, setEditEquipNextMaintenance] = useState("");
   const canEdit = session?.role !== "client";
   const deletingRef = useRef(false);
 
@@ -135,14 +139,20 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
     if (!selectedEquipment) return;
     setEditEquipName(selectedEquipment.name);
     setEditEquipModel(selectedEquipment.model);
+    setEditEquipInstalledDate(selectedEquipment.installedDate ?? "");
+    setEditEquipNextMaintenance(selectedEquipment.nextMaintenanceDate ?? "");
     setEditingEquipment(true);
   }
 
   function submitEditEquipment(e: React.FormEvent) {
     e.preventDefault();
     if (!property || !room || !selectedEquipment || !editEquipName.trim()) return;
-    editEquipment(property.id, room.id, selectedEquipment.name, { name: editEquipName.trim(), model: editEquipModel.trim() });
-    setSelectedEquipment({ ...selectedEquipment, name: editEquipName.trim(), model: editEquipModel.trim() });
+    const updates = {
+      name: editEquipName.trim(), model: editEquipModel.trim(),
+      installedDate: editEquipInstalledDate || undefined, nextMaintenanceDate: editEquipNextMaintenance || undefined,
+    };
+    editEquipment(property.id, room.id, selectedEquipment.name, updates);
+    setSelectedEquipment({ ...selectedEquipment, ...updates });
     setEditingEquipment(false);
   }
 
@@ -156,11 +166,16 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   function submitAddEquipment(e: React.FormEvent) {
     e.preventDefault();
     if (!property || !room || !newEquipName.trim()) return;
-    addEquipment(property.id, room.id, { name: newEquipName.trim(), model: newEquipModel.trim(), photoUrl: newEquipPhoto });
+    addEquipment(property.id, room.id, {
+      name: newEquipName.trim(), model: newEquipModel.trim(), photoUrl: newEquipPhoto,
+      installedDate: newEquipInstalledDate || undefined, nextMaintenanceDate: newEquipNextMaintenance || undefined,
+    });
     setShowAddEquipment(false);
     setNewEquipName("");
     setNewEquipModel("");
     setNewEquipPhoto(undefined);
+    setNewEquipInstalledDate(todayISO());
+    setNewEquipNextMaintenance("");
   }
 
   function handleNewEquipPhoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -353,6 +368,16 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
                     <input value={editEquipModel} onChange={(e) => setEditEquipModel(e.target.value)}
                       placeholder="Model / notes"
                       className="rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-primary/50" />
+                    <div>
+                      <label className="text-[10.5px] text-subtext mb-1 block">Installed date</label>
+                      <input type="date" value={editEquipInstalledDate} onChange={(e) => setEditEquipInstalledDate(e.target.value)}
+                        className="w-full rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-primary/50" />
+                    </div>
+                    <div>
+                      <label className="text-[10.5px] text-subtext mb-1 block">Next maintenance date (leave blank if not needed)</label>
+                      <input type="date" value={editEquipNextMaintenance} onChange={(e) => setEditEquipNextMaintenance(e.target.value)}
+                        className="w-full rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-primary/50" />
+                    </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <button type="submit" className="text-[12.5px] font-semibold text-primary">Save</button>
@@ -385,6 +410,13 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
               <div className="rounded-xl border border-line divide-y divide-line text-[12.5px] mb-4">
                 <div className="flex items-center justify-between p-3"><span className="text-subtext">Room</span><span className="text-fg font-semibold">{room.name}</span></div>
                 <div className="flex items-center justify-between p-3"><span className="text-subtext">Property</span><span className="text-fg font-semibold">{property?.name}</span></div>
+                {selectedEquipment.installedDate && (
+                  <div className="flex items-center justify-between p-3"><span className="text-subtext">Installed</span><span className="text-fg font-semibold">{formatDate(selectedEquipment.installedDate)}</span></div>
+                )}
+                <div className="flex items-center justify-between p-3">
+                  <span className="text-subtext">Next maintenance</span>
+                  <span className="text-fg font-semibold">{selectedEquipment.nextMaintenanceDate ? formatDate(selectedEquipment.nextMaintenanceDate) : "Not needed"}</span>
+                </div>
               </div>
 
               {selectedEquipment.issueNote ? (
@@ -454,6 +486,17 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
                 className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
               <input placeholder="Model / notes (optional)" value={newEquipModel} onChange={(e) => setNewEquipModel(e.target.value)}
                 className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
+
+              <div>
+                <label className="text-[10.5px] text-subtext mb-1 block">Installed date</label>
+                <input type="date" value={newEquipInstalledDate} onChange={(e) => setNewEquipInstalledDate(e.target.value)}
+                  className="w-full rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
+              </div>
+              <div>
+                <label className="text-[10.5px] text-subtext mb-1 block">Next maintenance date (leave blank if this doesn't need maintenance, e.g. weights, furniture)</label>
+                <input type="date" value={newEquipNextMaintenance} onChange={(e) => setNewEquipNextMaintenance(e.target.value)}
+                  className="w-full rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
+              </div>
 
               {newEquipPhoto && (
                 <div className="relative h-28 rounded-lg overflow-hidden">

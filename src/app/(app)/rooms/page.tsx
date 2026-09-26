@@ -220,12 +220,12 @@ export default function RoomsPage() {
 
       {showAddRoom && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => { setShowAddRoom(false); setNewRoomPhoto(undefined); }}>
-          <form onSubmit={submitAddRoom} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
+          <form onSubmit={submitAddRoom} className="bg-card border border-line rounded-2xl w-96 max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 pb-4 flex-shrink-0">
               <p className="font-bold text-fg text-[15px]">Add room</p>
               <button type="button" onClick={() => { setShowAddRoom(false); setNewRoomPhoto(undefined); }}><X size={16} className="text-subtext" /></button>
             </div>
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2.5 px-5 pb-5 overflow-y-auto">
               <input required autoFocus placeholder="Room name (e.g. Bedroom 3)" value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)}
                 className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
               <select value={newRoomCategory} onChange={(e) => setNewRoomCategory(e.target.value as Room["category"])}

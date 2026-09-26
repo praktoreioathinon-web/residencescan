@@ -5,7 +5,7 @@ import Link from "next/link";
 import { notFound, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon, Camera, AlertTriangle, CheckCircle2, Pencil, Trash2 } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { EquipmentItem, Room, roomMaintenanceEntries, formatDate, todayISO } from "@/lib/data";
+import { EquipmentItem, Room, roomMaintenanceEntries, formatDate, todayISO, genericEquipmentTerm } from "@/lib/data";
 import { uploadPhoto } from "@/lib/image";
 
 const EQUIP_ICONS = [Sparkles, Fan, Sun];
@@ -42,12 +42,13 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   const canEdit = session?.role !== "client";
   const deletingRef = useRef(false);
 
-  // Suggest full equipment names already used anywhere across every property
-  // (e.g. "Wall mounted basin mixer", not just "mixer") — and not ones this
-  // room already has.
+  // Suggest generic equipment categories (A/C, Oven, Lighting, ...) seen
+  // anywhere across every property — brand stripped out, since that varies
+  // property to property and gets typed in by hand — excluding categories
+  // this room already has.
   const equipmentSuggestions = Array.from(new Set(
-    properties.flatMap((p) => p.rooms.flatMap((r) => r.equipment.map((e) => e.name)))
-  )).filter((name) => !room?.equipment?.some((e) => e.name === name)).sort();
+    properties.flatMap((p) => p.rooms.flatMap((r) => r.equipment.map((e) => genericEquipmentTerm(e.name))))
+  )).filter((term) => !room?.equipment?.some((e) => genericEquipmentTerm(e.name) === term)).sort();
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -477,12 +478,12 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
 
       {showAddEquipment && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={closeAddEquipment}>
-          <form onSubmit={submitAddEquipment} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
+          <form onSubmit={submitAddEquipment} className="bg-card border border-line rounded-2xl w-96 max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 pb-4 flex-shrink-0">
               <p className="font-bold text-fg text-[15px]">Add equipment</p>
               <button type="button" onClick={closeAddEquipment}><X size={16} className="text-subtext" /></button>
             </div>
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2.5 px-5 pb-5 overflow-y-auto">
               <input required autoFocus placeholder="Equipment name (e.g. Living Room TV)" value={newEquipName} onChange={(e) => setNewEquipName(e.target.value)}
                 className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
               <input placeholder="Model / notes (optional)" value={newEquipModel} onChange={(e) => setNewEquipModel(e.target.value)}

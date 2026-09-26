@@ -26,6 +26,24 @@ export function todayISO(): string {
   return new Date().toLocaleDateString("en-CA");
 }
 
+// Reduces a specific equipment name (e.g. "Bosch Oven", "Daikin Split A/C
+// Unit") down to a reusable generic category ("Oven", "Split A/C") for
+// suggesting equipment types elsewhere without dragging along the brand —
+// most names in this app follow "[Brand] [Type]", so the brand is whatever
+// comes before the last word (or before a trailing filler word like "Unit"
+// that isn't a type on its own). A trailing " - <context>" (e.g. "Lighting -
+// Sofa") is dropped first since that part is room-specific, not the type.
+const FILLER_SUFFIXES = new Set(["Unit", "System", "Board"]);
+
+export function genericEquipmentTerm(name: string): string {
+  const base = name.split(" - ")[0].trim();
+  const words = base.split(/\s+/);
+  if (words.length <= 1) return base;
+  const last = words[words.length - 1];
+  if (FILLER_SUFFIXES.has(last) && words.length >= 3) return words.slice(-2).join(" ");
+  return last;
+}
+
 export type Room = {
   id: string;
   number: string;

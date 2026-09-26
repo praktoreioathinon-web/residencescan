@@ -30,9 +30,13 @@ type Store = {
   addProperty: (p: { name: string; area: string; location: string }) => void;
   addRoom: (propertyId: string, r: { name: string; category: Room["category"]; photoUrl?: string }) => void;
   editRoom: (propertyId: string, roomId: string, updates: { name: string; category: Room["category"] }) => void;
+  removeRoom: (propertyId: string, roomId: string) => void;
   addEquipment: (propertyId: string, roomId: string, e: { name: string; model: string; photoUrl?: string }) => void;
   editEquipment: (propertyId: string, roomId: string, equipmentName: string, updates: { name: string; model: string }) => void;
+  removeEquipment: (propertyId: string, roomId: string, equipmentName: string) => void;
   addRoomPhoto: (propertyId: string, roomId: string, photoUrl: string) => void;
+  removeRoomPhoto: (propertyId: string, roomId: string, photoUrl: string) => void;
+  removeEquipmentPhoto: (propertyId: string, roomId: string, equipmentName: string) => void;
   addMaintenanceLogEntry: (propertyId: string, e: { title: string; room: string; supplier: string; notes: string }) => void;
   assignProperty: (propertyId: string, clientEmail: string) => void;
   setPropertyArchived: (propertyId: string, archived: boolean) => void;
@@ -324,6 +328,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
+  function removeRoom(propertyId: string, roomId: string) {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    patchProperty({ ...p, rooms: p.rooms.filter((r) => r.id !== roomId) }, `${p.name} — remove room`);
+  }
+
   function addEquipment(propertyId: string, roomId: string, e: { name: string; model: string; photoUrl?: string }) {
     const p = properties.find((p) => p.id === propertyId);
     if (!p) return;
@@ -343,6 +353,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       r.id !== roomId ? r : { ...r, equipment: r.equipment.map((e) => (e.name === equipmentName ? { ...e, ...updates } : e)) }
     );
     patchProperty({ ...p, rooms }, `${p.name} — edit equipment "${updates.name}"`);
+  }
+
+  function removeEquipment(propertyId: string, roomId: string, equipmentName: string) {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    const rooms = p.rooms.map((r) => {
+      if (r.id !== roomId) return r;
+      const equipment = r.equipment.filter((e) => e.name !== equipmentName);
+      return { ...r, equipment, equipmentCount: equipment.length };
+    });
+    patchProperty({ ...p, rooms }, `${p.name} — remove equipment "${equipmentName}"`);
   }
 
   function addMaintenanceLogEntry(propertyId: string, e: { title: string; room: string; supplier: string; notes: string }) {
@@ -391,6 +412,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // A removed photo might be the room's own cover photo or one from its extra
+  // gallery — whichever one matches the URL clicked is the one that goes.
+  function removeRoomPhoto(propertyId: string, roomId: string, photoUrl: string) {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    const room = p.rooms.find((r) => r.id === roomId);
+    patchProperty(
+      {
+        ...p,
+        rooms: p.rooms.map((r) => {
+          if (r.id !== roomId) return r;
+          if (r.photoUrl === photoUrl) return { ...r, photoUrl: undefined };
+          return { ...r, photos: (r.photos ?? []).filter((u) => u !== photoUrl) };
+        }),
+      },
+      `${p.name} — ${room?.name ?? "room"} remove photo`
+    );
+  }
+
   function setEquipmentPhoto(propertyId: string, roomId: string, equipmentName: string, photoUrl: string) {
     const p = properties.find((p) => p.id === propertyId);
     if (!p) return;
@@ -400,6 +440,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         rooms: p.rooms.map((r) => (r.id !== roomId ? r : { ...r, equipment: r.equipment.map((e) => (e.name === equipmentName ? { ...e, photoUrl } : e)) })),
       },
       `${p.name} — ${equipmentName} photo`
+    );
+  }
+
+  function removeEquipmentPhoto(propertyId: string, roomId: string, equipmentName: string) {
+    const p = properties.find((p) => p.id === propertyId);
+    if (!p) return;
+    patchProperty(
+      {
+        ...p,
+        rooms: p.rooms.map((r) => (r.id !== roomId ? r : { ...r, equipment: r.equipment.map((e) => (e.name === equipmentName ? { ...e, photoUrl: undefined } : e)) })),
+      },
+      `${p.name} — remove ${equipmentName} photo`
     );
   }
 
@@ -484,7 +536,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         ready, session, login, logout, getAccessToken, changePassword,
         properties, clients, suppliers,
         saveErrors, retrySave, retryAllSaves,
-        addProperty, addRoom, editRoom, addEquipment, editEquipment, addMaintenanceLogEntry, assignProperty, setPropertyArchived, setPropertyPhoto, setRoomPhoto, addRoomPhoto, setEquipmentPhoto,
+        addProperty, addRoom, editRoom, removeRoom, addEquipment, editEquipment, removeEquipment, addMaintenanceLogEntry, assignProperty, setPropertyArchived, setPropertyPhoto, setRoomPhoto, addRoomPhoto, removeRoomPhoto, setEquipmentPhoto, removeEquipmentPhoto,
         reportEquipmentIssue, clearEquipmentIssue,
         addClient, updateClient,
         addSupplier, updateSupplier,

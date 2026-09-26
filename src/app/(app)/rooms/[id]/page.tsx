@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { notFound, useSearchParams } from "next/navigation";
-import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon, Camera, AlertTriangle, CheckCircle2, Pencil } from "lucide-react";
+import { notFound, useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon, Camera, AlertTriangle, CheckCircle2, Pencil, Trash2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { EquipmentItem, Room, genericEquipmentTerm, roomMaintenanceEntries } from "@/lib/data";
 import { uploadPhoto } from "@/lib/image";
@@ -13,8 +13,12 @@ const TAB_KEYS = ["Equipment", "Documents", "Maintenance", "Photos"] as const;
 const CATEGORIES: Room["category"][] = ["Indoor", "Outdoor", "Technical"];
 
 export default function RoomDetailPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const { session, properties, selectedPropertyId, setEquipmentPhoto, setRoomPhoto, addRoomPhoto, reportEquipmentIssue, clearEquipmentIssue, addEquipment, editRoom, editEquipment, getAccessToken } = useStore();
+  const {
+    session, properties, selectedPropertyId, setEquipmentPhoto, setRoomPhoto, addRoomPhoto, removeRoomPhoto, removeEquipmentPhoto,
+    reportEquipmentIssue, clearEquipmentIssue, addEquipment, editRoom, removeRoom, editEquipment, removeEquipment, getAccessToken,
+  } = useStore();
   const property = properties.find((p) => p.id === selectedPropertyId);
   const room = property?.rooms.find((r) => r.id === params.id);
   const [tab, setTab] = useState<(typeof TAB_KEYS)[number]>("Equipment");
@@ -32,6 +36,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   const [editEquipName, setEditEquipName] = useState("");
   const [editEquipModel, setEditEquipModel] = useState("");
   const canEdit = session?.role !== "client";
+  const deletingRef = useRef(false);
 
   // Suggest generic equipment types (TV, Pump, A/C, ...) seen anywhere across every
   // property, not specific brands/models — and not ones this room already has.
@@ -50,7 +55,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, room?.id]);
 
-  if (!room) return notFound();
+  if (!room) return deletingRef.current ? null : notFound();
 
   function handleRoomPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -76,6 +81,24 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
     if (!property || !room || !editRoomName.trim()) return;
     editRoom(property.id, room.id, { name: editRoomName.trim(), category: editRoomCategory });
     setShowEditRoom(false);
+  }
+
+  function deleteRoom() {
+    if (!property || !room) return;
+    if (!confirm(`Delete "${room.name}" and all ${room.equipment.length} equipment records in it? This can't be undone.`)) return;
+    deletingRef.current = true;
+    removeRoom(property.id, room.id);
+    router.push("/rooms");
+  }
+
+  function removePhoto(photoUrl: string, fromEquipment?: string) {
+    if (!property || !room) return;
+    if (fromEquipment) {
+      removeEquipmentPhoto(property.id, room.id, fromEquipment);
+      setSelectedEquipment((prev) => (prev && prev.name === fromEquipment ? { ...prev, photoUrl: undefined } : prev));
+    } else {
+      removeRoomPhoto(property.id, room.id, photoUrl);
+    }
   }
 
   function handleEquipmentPhoto(e: React.ChangeEvent<HTMLInputElement>, equipmentName: string) {
@@ -123,6 +146,13 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
     setEditingEquipment(false);
   }
 
+  function deleteEquipment() {
+    if (!property || !room || !selectedEquipment) return;
+    if (!confirm(`Delete "${selectedEquipment.name}"? This can't be undone.`)) return;
+    removeEquipment(property.id, room.id, selectedEquipment.name);
+    setSelectedEquipment(null);
+  }
+
   function submitAddEquipment(e: React.FormEvent) {
     e.preventDefault();
     if (!property || !room || !newEquipName.trim()) return;
@@ -145,10 +175,10 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
   }
 
   const maintenanceEntries = property ? roomMaintenanceEntries(property, room) : [];
-  const photoItems = [
+  const photoItems: { label: string; photoUrl: string; fromEquipment?: string }[] = [
     ...(room.photoUrl ? [{ label: room.name, photoUrl: room.photoUrl }] : []),
     ...(room.photos ?? []).map((url, i) => ({ label: `${room.name} photo ${i + 1}`, photoUrl: url })),
-    ...room.equipment.filter((e) => e.photoUrl).map((e) => ({ label: e.name, photoUrl: e.photoUrl as string })),
+    ...room.equipment.filter((e) => e.photoUrl).map((e) => ({ label: e.name, photoUrl: e.photoUrl as string, fromEquipment: e.name })),
   ];
 
   const tabs = [
@@ -168,9 +198,14 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-fg">{room.name}</h1>
               {canEdit && (
-                <button onClick={openEditRoom} title="Edit room" className="w-6 h-6 rounded-full border border-line flex items-center justify-center flex-shrink-0">
-                  <Pencil size={11} className="text-subtext" />
-                </button>
+                <>
+                  <button onClick={openEditRoom} title="Edit room" className="w-6 h-6 rounded-full border border-line flex items-center justify-center flex-shrink-0">
+                    <Pencil size={11} className="text-subtext" />
+                  </button>
+                  <button onClick={deleteRoom} title="Delete room" className="w-6 h-6 rounded-full border border-line flex items-center justify-center flex-shrink-0">
+                    <Trash2 size={11} className="text-[var(--attention-fg)]" />
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -268,7 +303,14 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
           ) : (
             <div className="grid grid-cols-3 gap-2.5">
               {photoItems.map((p, i) => (
-                <div key={i} title={p.label} className="rounded-xl overflow-hidden bg-cover bg-center" style={{ aspectRatio: "1 / 1", backgroundImage: `url(${p.photoUrl})` }} />
+                <div key={i} title={p.label} className="relative rounded-xl overflow-hidden bg-cover bg-center" style={{ aspectRatio: "1 / 1", backgroundImage: `url(${p.photoUrl})` }}>
+                  {canEdit && (
+                    <button onClick={() => removePhoto(p.photoUrl, p.fromEquipment)} title="Remove photo"
+                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center">
+                      <X size={12} className="text-white" />
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           )}
@@ -323,9 +365,14 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
                     <div className="flex items-center gap-1.5">
                       <p className="text-[15px] font-bold text-fg">{selectedEquipment.name}</p>
                       {canEdit && (
-                        <button onClick={openEditEquipment} title="Edit equipment" className="w-[22px] h-[22px] rounded-full border border-line flex items-center justify-center flex-shrink-0">
-                          <Pencil size={10} className="text-subtext" />
-                        </button>
+                        <>
+                          <button onClick={openEditEquipment} title="Edit equipment" className="w-[22px] h-[22px] rounded-full border border-line flex items-center justify-center flex-shrink-0">
+                            <Pencil size={10} className="text-subtext" />
+                          </button>
+                          <button onClick={deleteEquipment} title="Delete equipment" className="w-[22px] h-[22px] rounded-full border border-line flex items-center justify-center flex-shrink-0">
+                            <Trash2 size={10} className="text-[var(--attention-fg)]" />
+                          </button>
+                        </>
                       )}
                     </div>
                     <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full ${selectedEquipment.issueNote ? "bg-[var(--attention-wash)] text-[var(--attention-fg)]" : selectedEquipment.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>

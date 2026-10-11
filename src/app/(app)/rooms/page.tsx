@@ -153,23 +153,30 @@ export default function RoomsPage() {
       <div className="grid grid-cols-3 gap-3">
         {filtered.map((r, i) => {
           const Icon = roomIcon(r.name);
+          const hasPhoto = !!r.photoUrl;
+          const badgeStyle = (fallbackBg: string, fallbackFg: string) => (hasPhoto ? "bg-black/55 text-white" : `${fallbackBg} ${fallbackFg}`);
           return (
-            <Link key={r.id} href={`/rooms/${r.id}`} className="rounded-2xl border border-line p-4 block"
-              style={{ background: `linear-gradient(160deg, ${TINT_BY_INDEX[i % TINT_BY_INDEX.length]}, transparent)` }}>
+            <Link key={r.id} href={`/rooms/${r.id}`} className="rounded-2xl border border-line p-4 flex flex-col justify-between overflow-hidden"
+              style={{
+                minHeight: 150,
+                background: hasPhoto
+                  ? `linear-gradient(180deg, rgba(7,16,23,0.15), rgba(7,16,23,0.75)), url(${r.photoUrl}) center / cover`
+                  : `linear-gradient(160deg, ${TINT_BY_INDEX[i % TINT_BY_INDEX.length]}, transparent)`,
+              }}>
               <div className="flex items-start justify-between mb-6">
-                {r.photoUrl ? (
-                  <div className="w-9 h-9 rounded-lg bg-cover bg-center flex-shrink-0" style={{ backgroundImage: `url(${r.photoUrl})` }} />
-                ) : (
+                {hasPhoto ? <span /> : (
                   <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center"><Icon size={16} className="text-fg" /></div>
                 )}
                 {roomAttentionCount(r) === 0 ? (
-                  <span className="flex items-center gap-1 text-[10px] font-semibold bg-[var(--ok-bg)] text-[var(--ok-fg)] px-2 py-0.5 rounded-full"><CheckCircle2 size={10} /> Current</span>
+                  <span className={`flex items-center gap-1 text-[10px] font-semibold ${badgeStyle("bg-[var(--ok-bg)]", "text-[var(--ok-fg)]")} px-2 py-0.5 rounded-full`}><CheckCircle2 size={10} /> Current</span>
                 ) : (
-                  <span className="flex items-center gap-1 text-[10px] font-semibold bg-[var(--warn-bg)] text-[var(--warn-fg)] px-2 py-0.5 rounded-full"><AlertTriangle size={10} /> {roomAttentionCount(r)} attention</span>
+                  <span className={`flex items-center gap-1 text-[10px] font-semibold ${badgeStyle("bg-[var(--warn-bg)]", "text-[var(--warn-fg)]")} px-2 py-0.5 rounded-full`}><AlertTriangle size={10} /> {roomAttentionCount(r)} attention</span>
                 )}
               </div>
-              <p className="text-[14px] font-bold text-fg">{r.name}</p>
-              <p className="text-[11px] text-subtext mt-0.5">{r.equipmentCount} equipment records</p>
+              <div>
+                <p className={`text-[14px] font-bold ${hasPhoto ? "text-white" : "text-fg"}`}>{r.name}</p>
+                <p className={`text-[11px] mt-0.5 ${hasPhoto ? "text-white/75" : "text-subtext"}`}>{r.equipmentCount} equipment records</p>
+              </div>
             </Link>
           );
         })}

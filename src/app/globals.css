@@ -64,6 +64,14 @@ input::placeholder {
   opacity: 1;
 }
 
+/* iOS Safari zooms the whole page in when a field under 16px is focused.
+   !important is needed to beat the per-field Tailwind text-[13px] classes. */
+@media (pointer: coarse) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -96,4 +104,20 @@ input::placeholder {
   .no-print {
     display: none !important;
   }
+}
+
+/* iOS renders date fields at their own intrinsic width, which pushes them past
+   the edge of narrow forms; this makes them fill their container like text fields. */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  text-align: left;
+  min-height: 2.75rem;
+}
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
 }

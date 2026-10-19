@@ -1,10 +1,17 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { StoreProvider } from "@/lib/store";
 
 export const metadata: Metadata = {
   title: "ResidenceScan — Your Property. Fully Known.",
   description: "Digital property record.",
+  appleWebApp: { capable: true, title: "ResidenceScan", statusBarStyle: "black" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#071017",
+  width: "device-width",
+  initialScale: 1,
 };
 
 const themeInitScript = `

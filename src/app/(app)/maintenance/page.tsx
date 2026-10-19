@@ -95,10 +95,10 @@ export default function MaintenancePage() {
       </div>
 
       <div className="grid grid-cols-4 rounded-2xl border border-line divide-x divide-line mb-6">
-        <div className="p-4 flex items-center gap-3"><Wrench size={16} className="text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{upcoming.length}</p><p className="text-[11px] text-subtext mt-1">Upcoming</p></div></div>
-        <div className="p-4 flex items-center gap-3"><Activity size={16} className="text-[var(--warn-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{upcoming.filter((u) => u.equipment.issueNote).length}</p><p className="text-[11px] text-subtext mt-1">Reported issues</p></div></div>
-        <div className="p-4 flex items-center gap-3"><CalendarClock size={16} className="text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{scheduled.length}</p><p className="text-[11px] text-subtext mt-1">Scheduled</p></div></div>
-        <div className="p-4 flex items-center gap-3"><CheckCircle2 size={16} className="text-[var(--ok-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{property.maintenanceLog.length}</p><p className="text-[11px] text-subtext mt-1">Completed</p></div></div>
+        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><Wrench size={16} className="flex-shrink-0 text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{upcoming.length}</p><p className="text-[11px] text-subtext mt-1">Upcoming</p></div></div>
+        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><Activity size={16} className="flex-shrink-0 text-[var(--warn-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{upcoming.filter((u) => u.equipment.issueNote).length}</p><p className="text-[11px] text-subtext mt-1">Reported issues</p></div></div>
+        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><CalendarClock size={16} className="flex-shrink-0 text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{scheduled.length}</p><p className="text-[11px] text-subtext mt-1">Scheduled</p></div></div>
+        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><CheckCircle2 size={16} className="flex-shrink-0 text-[var(--ok-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{property.maintenanceLog.length}</p><p className="text-[11px] text-subtext mt-1">Completed</p></div></div>
       </div>
 
       <p className="text-[10px] tracking-widest text-subtext font-semibold mb-2">UPCOMING</p>
@@ -112,7 +112,7 @@ export default function MaintenancePage() {
             <button key={`${room.id}-${equipment.name}`}
               onClick={() => router.push(`/rooms/${room.id}?eq=${encodeURIComponent(equipment.name)}`)}
               className="flex items-center gap-3 rounded-2xl border border-line p-3.5 text-left hover:border-primary/40">
-              <div className="w-9 h-9 rounded-lg bg-[var(--warn-bg)] flex items-center justify-center flex-shrink-0"><Wrench size={16} className="text-[var(--warn-fg)]" /></div>
+              <div className="w-9 h-9 rounded-lg bg-[var(--warn-bg)] flex items-center justify-center flex-shrink-0"><Wrench size={16} className="flex-shrink-0 text-[var(--warn-fg)]" /></div>
               <div className="flex-1 min-w-0"><p className="text-[13.5px] font-semibold text-fg truncate">{equipment.name}</p><p className="text-[11.5px] text-subtext truncate">{room.name} · {equipment.model}</p></div>
               <span className="text-[10.5px] font-semibold px-2.5 py-1 rounded-full bg-[var(--warn-bg)] text-[var(--warn-fg)] flex-shrink-0">
                 {equipment.issueNote ? "Issue reported" : "Due soon"}

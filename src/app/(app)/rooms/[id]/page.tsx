@@ -207,7 +207,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="px-8 py-6 max-w-4xl">
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-3">
           <Link href="/rooms" className="w-9 h-9 rounded-full border border-line flex items-center justify-center"><ArrowLeft size={15} /></Link>
           <div>
@@ -228,7 +228,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
           </div>
         </div>
         {canEdit && (
-          <button onClick={() => setShowAddEquipment(true)} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
+          <button onClick={() => setShowAddEquipment(true)} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full whitespace-nowrap">
             <Plus size={14} /> Add equipment
           </button>
         )}
@@ -257,10 +257,10 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
         )}
       </div>
 
-      <div className="flex items-center gap-5 border-b border-line mb-4">
+      <div className="flex items-center gap-5 border-b border-line mb-4 overflow-x-auto">
         {tabs.map(({ key, count }) => (
           <button key={key} onClick={() => setTab(key)}
-            className={`pb-2.5 text-[13px] ${tab === key ? "text-fg font-semibold border-b-2 border-primary" : "text-subtext"}`}>
+            className={`pb-2.5 text-[13px] whitespace-nowrap ${tab === key ? "text-fg font-semibold border-b-2 border-primary" : "text-subtext"}`}>
             {key} ({count})
           </button>
         ))}

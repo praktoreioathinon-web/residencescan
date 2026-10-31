@@ -5,7 +5,15 @@ import { supabaseServer } from "@/lib/supabase-server";
 // refresh token when a request comes back 401, instead of forcing a
 // re-login every hour.
 export async function POST(req: Request) {
-  const { refreshToken } = await req.json() as { refreshToken: string };
+  let refreshToken: unknown;
+  try {
+    ({ refreshToken } = await req.json());
+  } catch {
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  }
+  if (typeof refreshToken !== "string" || !refreshToken) {
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  }
   const db = supabaseServer();
   const { data, error } = await db.auth.refreshSession({ refresh_token: refreshToken });
   if (error || !data.session || !data.user) {

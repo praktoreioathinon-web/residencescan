@@ -15,7 +15,7 @@ export type SaveError = { id: string; description: string };
 type Store = {
   ready: boolean;
   session: Session | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ ok: true } | { ok: false; error: string }>;
   logout: () => void;
   getAccessToken: () => string | null;
   changePassword: (newPassword: string) => Promise<{ ok: boolean; error?: string }>;
@@ -327,13 +327,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     );
   }
 
-  async function login(email: string, password: string): Promise<boolean> {
+  async function login(email: string, password: string): Promise<{ ok: true } | { ok: false; error: string }> {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-    if (!res.ok) return false;
+    if (!res.ok) {
+      const body = await res.json().catch(() => null) as { error?: string } | null;
+      return { ok: false, error: res.status < 500 && body?.error ? body.error : "Something went wrong — please try again." };
+    }
     const data = await res.json() as { accessToken: string; refreshToken: string; user: Session };
 
     persistTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken });
@@ -353,7 +356,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setClients(stateData.clients);
       setSuppliers(stateData.suppliers);
     }
-    return true;
+    return { ok: true };
   }
 
   function logout() {

@@ -22,9 +22,9 @@ export default function LoginPage() {
     setError("");
     setSubmitting(true);
     try {
-      const ok = await login(email, password);
-      if (!ok) {
-        setError("Invalid email or password.");
+      const result = await login(email, password);
+      if (!result.ok) {
+        setError(result.error);
         return;
       }
       router.replace("/");

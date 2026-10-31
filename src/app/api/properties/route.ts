@@ -3,10 +3,11 @@ import { supabaseServer } from "@/lib/supabase-server";
 import { requireUser, unauthorized, forbidden } from "@/lib/auth-server";
 import { Property } from "@/lib/data";
 
-// The client generates the id and sends the full property, and this upserts
-// rather than plain-inserts: a retry after a lost response (the write
-// actually landed, only the confirmation didn't) re-sends the identical row
-// and is a harmless no-op instead of a duplicate-key error.
+// The client generates the id and sends the full property. A retry after a
+// lost response (the write actually landed, only the confirmation didn't)
+// re-sends the identical row; ignoring duplicates makes that a no-op instead
+// of an error — and, unlike a plain upsert, it can't overwrite edits made to
+// the property in the meantime.
 export async function POST(req: Request) {
   const user = await requireUser(req);
   if (!user) return unauthorized();
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
   const db = supabaseServer();
   const { error } = await db
     .from("properties")
-    .upsert({ id: property.id, client_email: property.clientEmail, data: property }, { onConflict: "id" });
+    .upsert({ id: property.id, client_email: property.clientEmail, data: property }, { onConflict: "id", ignoreDuplicates: true });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

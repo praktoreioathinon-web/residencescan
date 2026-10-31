@@ -1,22 +1,7 @@
 import type { Property } from "@/lib/data";
+import { stable } from "@/lib/merge";
 
 const MAX_ISSUE_NOTE = 1000;
-
-// JSON.stringify with keys sorted, so two objects with the same content
-// compare equal no matter what order Postgres (jsonb) or the client put the
-// keys in. undefined values are dropped, matching what a JSON round-trip does.
-function stable(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`;
-  if (value && typeof value === "object") {
-    const obj = value as Record<string, unknown>;
-    return `{${Object.keys(obj)
-      .filter((k) => obj[k] !== undefined)
-      .sort()
-      .map((k) => `${JSON.stringify(k)}:${stable(obj[k])}`)
-      .join(",")}}`;
-  }
-  return JSON.stringify(value) ?? "null";
-}
 
 // Drops the only two fields a client account is allowed to change.
 function withoutIssueFields(p: Property) {

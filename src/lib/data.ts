@@ -530,6 +530,10 @@ export type Property = {
   maintenanceLog: MaintenanceLogEntry[];
   scheduledMaintenance?: ScheduledMaintenanceEntry[];
   archived?: boolean;
+  // Bumped by the server on every save. A save that was based on an older rev
+  // than the server now holds is merged with the newer changes instead of
+  // overwriting them (see src/lib/merge.ts).
+  rev?: number;
 };
 
 // Excludes archived properties from a list — used everywhere a client, or an

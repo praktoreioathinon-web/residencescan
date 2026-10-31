@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { Property, ClientRecord, Supplier, Plan, Role, Room, ScheduledMaintenanceEntry } from "./data";
+import { merge3, stable } from "./merge";
 
 export type Session = { email: string; role: Role; name: string };
 
@@ -91,6 +92,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
   const retryFns = useRef(new Map<string, () => Promise<void>>());
   const tokens = useRef<{ accessToken: string; refreshToken: string } | null>(null);
+  // The last version of each property the server confirmed. Every save sends
+  // it along as the version the edit started from, so the server can merge
+  // with anything other people saved since instead of overwriting it.
+  const serverCopies = useRef(new Map<string, Property>());
+  const refreshing = useRef(false);
 
   const getAccessToken = useCallback(() => tokens.current?.accessToken ?? null, []);
 
@@ -105,6 +111,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   function clearSession() {
     setSession(null);
     persistTokens(null);
+    serverCopies.current = new Map();
     setSelectedClientEmailState(null);
     setSelectedPropertyIdState(null);
     try { localStorage.removeItem(LS_SELECTED); } catch {}
@@ -202,6 +209,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const data = await res.json() as { properties: Property[]; clients: ClientRecord[]; suppliers: Supplier[] };
         if (cancelled) return;
         setProperties(data.properties);
+        serverCopies.current = new Map(data.properties.map((p) => [p.id, p]));
         setClients(data.clients);
         setSuppliers(data.suppliers);
         // Tokens were valid (or got refreshed) — we're signed in. The actual
@@ -228,12 +236,82 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try { localStorage.setItem(LS_SELECTED, JSON.stringify({ clientEmail, propertyId })); } catch {}
   }, []);
 
+  // Takes the server's merged copy of a property (our edit plus anything other
+  // people saved meanwhile) and folds it into what's on screen — keeping any
+  // edits made after the one that was just saved.
+  function applyServerCopy(merged: Property, sent: Property) {
+    const known = serverCopies.current.get(merged.id);
+    if (!known || (merged.rev ?? 0) >= (known.rev ?? 0)) serverCopies.current.set(merged.id, merged);
+    setProperties((prev) => prev.map((p) => (p.id === merged.id ? (merge3(sent, p, merged) as Property) : p)));
+  }
+
   function patchProperty(next: Property, description: string) {
     setProperties((prev) => prev.map((p) => (p.id === next.id ? next : p)));
-    runSave(`property-${next.id}`, description, () =>
-      authedFetch(`/api/properties/${next.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(next) })
-    );
+    runSave(`property-${next.id}`, description, async () => {
+      // Read at send time, so a retry uses the newest confirmed version.
+      const base = serverCopies.current.get(next.id);
+      const res = await authedFetch(`/api/properties/${next.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ base, next }),
+      });
+      if (res.ok) {
+        const out = await res.clone().json().catch(() => null) as { property?: Property } | null;
+        if (out?.property) applyServerCopy(out.property, next);
+      }
+      return res;
+    });
   }
+
+  // Pulls in what other people saved, so this phone isn't working from an old
+  // copy for hours. Anything edited here and not yet saved is kept (merged on
+  // top), so refreshing never throws away in-progress work.
+  const refreshProperties = useCallback(async () => {
+    if (refreshing.current || !tokens.current) return;
+    refreshing.current = true;
+    try {
+      const res = await authedFetch("/api/state");
+      if (!res.ok) return;
+      const data = await res.json() as { properties: Property[] };
+      const before = serverCopies.current;
+      const fetched = data.properties;
+      const unchanged = fetched.length === before.size && fetched.every((fp) => {
+        const b = before.get(fp.id);
+        return !!b && stable(b) === stable(fp);
+      });
+      if (unchanged) return;
+
+      serverCopies.current = new Map([...Array.from(before), ...fetched.map((p): [string, Property] => [p.id, p])]);
+      setProperties((prev) => {
+        const incoming = new Map(fetched.map((p) => [p.id, p]));
+        const out = prev.map((p) => {
+          const fp = incoming.get(p.id);
+          incoming.delete(p.id);
+          const b = before.get(p.id);
+          return fp ? (b ? (merge3(b, p, fp) as Property) : fp) : p;
+        });
+        incoming.forEach((fp) => out.push(fp)); // created by someone else
+        return out;
+      });
+    } catch {
+      // offline or a blip — the next tick tries again
+    } finally {
+      refreshing.current = false;
+    }
+  }, [authedFetch]);
+
+  useEffect(() => {
+    if (!session) return;
+    const tick = () => { if (document.visibilityState === "visible") refreshProperties(); };
+    const timer = setInterval(tick, 30000);
+    document.addEventListener("visibilitychange", tick);
+    window.addEventListener("focus", tick);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", tick);
+      window.removeEventListener("focus", tick);
+    };
+  }, [session, refreshProperties]);
 
   function patchClient(email: string, updates: Partial<Omit<ClientRecord, "email">>) {
     setClients((prev) => prev.map((c) => (c.email === email ? { ...c, ...updates } : c)));
@@ -271,6 +349,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (stateRes.ok) {
       const stateData = await stateRes.json() as { properties: Property[]; clients: ClientRecord[]; suppliers: Supplier[] };
       setProperties(stateData.properties);
+      serverCopies.current = new Map(stateData.properties.map((p) => [p.id, p]));
       setClients(stateData.clients);
       setSuppliers(stateData.suppliers);
     }
@@ -301,6 +380,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       maintenanceLog: [],
     };
     setProperties((prev) => [...prev, property]);
+    serverCopies.current.set(property.id, property);
     // The id is generated here (not by the server) so a retry after a lost
     // response — the write actually succeeded, only the confirmation didn't
     // arrive — re-sends the exact same row instead of creating a duplicate.

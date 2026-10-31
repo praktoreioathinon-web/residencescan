@@ -69,7 +69,7 @@ export default function SuppliersPage() {
 
       {open && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setOpenId(null)}>
-          <div className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-card border border-line rounded-2xl p-5 w-full max-w-sm max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/15 text-primary text-[13px] font-bold flex items-center justify-center">{open.initials}</div>
@@ -93,7 +93,7 @@ export default function SuppliersPage() {
 
       {showForm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => { setEditing(null); setAdding(false); }}>
-          <form onSubmit={submit} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
+          <form onSubmit={submit} className="bg-card border border-line rounded-2xl p-5 w-full max-w-sm max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-fg text-[15px]">{editing ? "Edit supplier" : "Add supplier"}</p>
               <button type="button" onClick={() => { setEditing(null); setAdding(false); }}><X size={16} className="text-subtext" /></button>

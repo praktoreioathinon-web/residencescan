@@ -233,7 +233,7 @@ export default function ClientsPage() {
 
       {showAddProperty && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setShowAddProperty(false)}>
-          <form onSubmit={submitAddProperty} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
+          <form onSubmit={submitAddProperty} className="bg-card border border-line rounded-2xl p-5 w-full max-w-sm max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-fg text-[15px]">Add property</p>
               <button type="button" onClick={() => setShowAddProperty(false)}><X size={16} className="text-subtext" /></button>
@@ -275,7 +275,7 @@ function ClientFormModal({
 }) {
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={onClose}>
-      <form onSubmit={onSubmit} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
+      <form onSubmit={onSubmit} className="bg-card border border-line rounded-2xl p-5 w-full max-w-sm max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <p className="font-bold text-fg text-[15px]">{title}</p>
           <button type="button" onClick={onClose}><X size={16} className="text-subtext" /></button>

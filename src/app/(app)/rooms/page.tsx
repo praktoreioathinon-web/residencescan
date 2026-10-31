@@ -227,7 +227,7 @@ export default function RoomsPage() {
 
       {showAddRoom && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => { setShowAddRoom(false); setNewRoomPhoto(undefined); }}>
-          <form onSubmit={submitAddRoom} className="bg-card border border-line rounded-2xl w-96 max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <form onSubmit={submitAddRoom} className="bg-card border border-line rounded-2xl w-full max-w-sm max-h-[85dvh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 pb-4 flex-shrink-0">
               <p className="font-bold text-fg text-[15px]">Add room</p>
               <button type="button" onClick={() => { setShowAddRoom(false); setNewRoomPhoto(undefined); }}><X size={16} className="text-subtext" /></button>

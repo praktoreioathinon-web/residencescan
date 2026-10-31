@@ -283,7 +283,7 @@ export default function OverviewPage() {
 
       {showChangeClient && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setShowChangeClient(false)}>
-          <form onSubmit={(e) => submitChangeClient(e, property.id)} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
+          <form onSubmit={(e) => submitChangeClient(e, property.id)} className="bg-card border border-line rounded-2xl p-5 w-full max-w-sm max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-fg text-[15px]">Change client</p>
               <button type="button" onClick={() => setShowChangeClient(false)}><X size={16} className="text-subtext" /></button>

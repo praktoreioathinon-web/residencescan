@@ -338,7 +338,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
 
       {selectedEquipment && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setSelectedEquipment(null)}>
-          <div className="bg-card border border-line rounded-2xl w-full max-w-sm overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-card border border-line rounded-2xl w-full max-w-sm max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="h-40 relative flex items-center justify-center"
               style={selectedEquipment.photoUrl
                 ? { backgroundImage: `url(${selectedEquipment.photoUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
@@ -458,7 +458,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
 
       {showEditRoom && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setShowEditRoom(false)}>
-          <form onSubmit={submitEditRoom} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
+          <form onSubmit={submitEditRoom} className="bg-card border border-line rounded-2xl p-5 w-full max-w-sm max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-fg text-[15px]">Edit room</p>
               <button type="button" onClick={() => setShowEditRoom(false)}><X size={16} className="text-subtext" /></button>
@@ -478,7 +478,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
 
       {showAddEquipment && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={closeAddEquipment}>
-          <form onSubmit={submitAddEquipment} className="bg-card border border-line rounded-2xl w-96 max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <form onSubmit={submitAddEquipment} className="bg-card border border-line rounded-2xl w-full max-w-sm max-h-[85dvh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 pb-4 flex-shrink-0">
               <p className="font-bold text-fg text-[15px]">Add equipment</p>
               <button type="button" onClick={closeAddEquipment}><X size={16} className="text-subtext" /></button>

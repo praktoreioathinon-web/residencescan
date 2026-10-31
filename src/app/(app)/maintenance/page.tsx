@@ -77,13 +77,13 @@ export default function MaintenancePage() {
 
   return (
     <div className="px-8 py-6 max-w-4xl">
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
           <p className="text-[10px] tracking-widest text-subtext font-semibold">{property.name.toUpperCase()}</p>
           <h1 className="text-2xl font-bold text-fg">Maintenance</h1>
         </div>
         {canEdit && (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button onClick={() => setShowSchedule(true)} className="flex items-center gap-1.5 border border-line text-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
               <CalendarClock size={14} /> Schedule maintenance
             </button>
@@ -180,7 +180,7 @@ export default function MaintenancePage() {
 
       {showAdd && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={() => setShowAdd(false)}>
-          <form onSubmit={submitAdd} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
+          <form onSubmit={submitAdd} className="bg-card border border-line rounded-2xl p-5 w-full max-w-sm max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-fg text-[15px]">Add maintenance</p>
               <button type="button" onClick={() => setShowAdd(false)}><X size={16} className="text-subtext" /></button>
@@ -206,7 +206,7 @@ export default function MaintenancePage() {
 
       {showSchedule && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4" onClick={closeSchedule}>
-          <form onSubmit={submitSchedule} className="bg-card border border-line rounded-2xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
+          <form onSubmit={submitSchedule} className="bg-card border border-line rounded-2xl p-5 w-full max-w-sm max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-fg text-[15px]">Schedule maintenance</p>
               <button type="button" onClick={closeSchedule}><X size={16} className="text-subtext" /></button>

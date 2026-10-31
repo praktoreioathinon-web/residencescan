@@ -38,7 +38,7 @@ export default function ThemeToggle() {
     <button
       type="button" onClick={toggle}
       title={light ? "Night mode" : "Day mode"}
-      className="w-8 h-8 rounded-full border border-line flex items-center justify-center flex-shrink-0 text-subtext hover:text-fg"
+      className="w-8 h-8 rounded-full border border-line flex items-center justify-center flex-shrink-0 text-subtext hover:text-fg touch:w-11 touch:h-11"
     >
       {light ? <Moon size={14} /> : <Sun size={14} />}
     </button>

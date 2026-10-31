@@ -34,7 +34,7 @@ function ChangePasswordForm() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="text-[12.5px] font-semibold text-primary"
+        className="text-[12.5px] font-semibold text-primary touch:min-h-11"
       >
         Change password
       </button>
@@ -57,8 +57,8 @@ function ChangePasswordForm() {
         onChange={(e) => setConfirm(e.target.value)}
         className="rounded-lg border border-line px-2.5 py-1.5 text-[12.5px]"
       />
-      {error && <p className="text-[11.5px] text-[var(--attention-fg)]">{error}</p>}
-      {success && <p className="text-[11.5px] text-primary">Password changed.</p>}
+      {error && <p className="text-[12px] text-[var(--attention-fg)]">{error}</p>}
+      {success && <p className="text-[12px] text-primary">Password changed.</p>}
       <div className="flex items-center gap-3">
         <button
           onClick={submit}
@@ -107,7 +107,7 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-bold text-fg mb-5">Settings</h1>
 
       <div className="rounded-2xl border border-line p-5 mb-4">
-        <p className="text-[10px] tracking-widest text-subtext font-semibold mb-3">ACCOUNT</p>
+        <p className="text-[11px] tracking-widest text-subtext font-semibold mb-3">ACCOUNT</p>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-11 h-11 rounded-full bg-primary/20 text-primary text-[13px] font-bold flex items-center justify-center">
             {session?.name.slice(0, 2).toUpperCase()}
@@ -117,14 +117,14 @@ export default function SettingsPage() {
             <p className="text-[12px] text-subtext">{session?.email}</p>
           </div>
         </div>
-        <p className="text-[11.5px] text-subtext mb-4">Role: <span className="text-fg font-semibold capitalize">{session?.role}</span></p>
+        <p className="text-[12px] text-subtext mb-4">Role: <span className="text-fg font-semibold capitalize">{session?.role}</span></p>
         <ChangePasswordForm />
       </div>
 
       {isAdmin && (
         <>
           <div className="rounded-2xl border border-line p-5 mb-4">
-            <p className="text-[10px] tracking-widest text-subtext font-semibold mb-3">STAFF ACCOUNTS & PERMISSIONS</p>
+            <p className="text-[11px] tracking-widest text-subtext font-semibold mb-3">STAFF ACCOUNTS & PERMISSIONS</p>
             <div className="flex flex-col gap-3">
               {staff.map((s) => {
                 const info = ROLE_INFO[s.role];
@@ -134,10 +134,10 @@ export default function SettingsPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <p className="text-[13px] font-semibold text-fg">{s.name}</p>
-                        <span className="text-[9.5px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary uppercase">{s.role}</span>
+                        <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary uppercase">{s.role}</span>
                       </div>
-                      <p className="text-[11px] text-subtext">{s.email}</p>
-                      <p className="text-[11.5px] text-subtext mt-1">{info.permissions}</p>
+                      <p className="text-[12px] text-subtext">{s.email}</p>
+                      <p className="text-[12px] text-subtext mt-1">{info.permissions}</p>
                     </div>
                   </div>
                 );
@@ -148,7 +148,7 @@ export default function SettingsPage() {
           <div className="rounded-2xl border border-line p-5 mb-4">
             <div className="flex items-center gap-2 mb-3">
               <Users size={13} className="text-primary" />
-              <p className="text-[10px] tracking-widest text-subtext font-semibold">CLIENT ACCOUNTS & SUBSCRIPTIONS</p>
+              <p className="text-[11px] tracking-widest text-subtext font-semibold">CLIENT ACCOUNTS & SUBSCRIPTIONS</p>
             </div>
             <div className="flex flex-col gap-3">
               {clients.map((c) => {
@@ -157,7 +157,7 @@ export default function SettingsPage() {
                   <div key={c.email} className="flex items-center gap-3 border-t border-line pt-3 first:border-t-0 first:pt-0">
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-semibold text-fg truncate">{c.name}</p>
-                      <p className="text-[11px] text-subtext truncate">{c.email} · {count} {count === 1 ? "property" : "properties"} · Permissions: own properties only</p>
+                      <p className="text-[12px] text-subtext truncate">{c.email} · {count} {count === 1 ? "property" : "properties"} · Permissions: own properties only</p>
                     </div>
                     <select
                       value={c.plan}
@@ -177,20 +177,20 @@ export default function SettingsPage() {
       <div className="rounded-2xl border border-line p-5 mb-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-[10px] tracking-widest text-subtext font-semibold mb-2">NOTIFICATIONS</p>
+            <p className="text-[11px] tracking-widest text-subtext font-semibold mb-2">NOTIFICATIONS</p>
             <p className="text-[12.5px] text-subtext">Show attention alerts in the notification bell.</p>
           </div>
           <button
             onClick={() => setNotificationsEnabled(!notificationsEnabled)}
             aria-pressed={notificationsEnabled}
-            className={`relative w-10 h-6 rounded-full flex-shrink-0 transition-colors ${notificationsEnabled ? "bg-primary" : "bg-line"}`}
+            className={`relative w-10 h-6 touch:w-[51px] touch:h-[31px] touch:box-content touch:border-y-[6.5px] touch:border-transparent touch:bg-clip-padding rounded-full flex-shrink-0 transition-colors ${notificationsEnabled ? "bg-primary" : "bg-line"}`}
           >
-            <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${notificationsEnabled ? "translate-x-[18px]" : "translate-x-0.5"}`} />
+            <span className={`absolute top-0.5 w-5 h-5 touch:w-[27px] touch:h-[27px] rounded-full bg-white transition-transform ${notificationsEnabled ? "translate-x-[18px] touch:translate-x-[22px]" : "translate-x-0.5"}`} />
           </button>
         </div>
       </div>
 
-      <button onClick={logout} className="text-[12.5px] text-[var(--attention-fg)] font-semibold">Sign out</button>
+      <button onClick={logout} className="text-[12.5px] text-[var(--attention-fg)] font-semibold touch:min-h-11">Sign out</button>
     </div>
   );
 }

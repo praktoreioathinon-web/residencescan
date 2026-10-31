@@ -48,20 +48,20 @@ export default function SuppliersPage() {
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-2xl font-bold text-fg">Suppliers & Technicians</h1>
         {canEdit && (
-          <button onClick={startAdd} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
+          <button onClick={startAdd} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full touch:min-h-11">
             <Plus size={14} /> Add supplier
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {suppliers.map((s) => (
           <div key={s.id} className="flex items-center gap-3 rounded-2xl border border-line p-4">
-            <button onClick={() => setOpenId(s.id)} className="flex items-center gap-3 flex-1 text-left min-w-0">
+            <button onClick={() => setOpenId(s.id)} className="flex items-center gap-3 flex-1 text-left min-w-0 touch:min-h-11">
               <div className="w-9 h-9 rounded-full bg-primary/15 text-primary text-[12px] font-bold flex items-center justify-center flex-shrink-0">{s.initials}</div>
-              <div className="flex-1 min-w-0"><p className="text-[13.5px] font-semibold text-fg truncate">{s.name}</p><p className="text-[11.5px] text-subtext truncate">{s.category}</p></div>
+              <div className="flex-1 min-w-0"><p className="text-[13.5px] font-semibold text-fg truncate">{s.name}</p><p className="text-[12px] text-subtext truncate">{s.category}</p></div>
             </button>
-            {canEdit && <button onClick={() => startEdit(s)} className="text-subtext hover:text-fg flex-shrink-0" title="Edit"><Pencil size={13} /></button>}
+            {canEdit && <button onClick={() => startEdit(s)} className="text-subtext hover:text-fg flex-shrink-0 flex items-center justify-center touch:w-11 touch:h-11 touch:-m-3.5" title="Edit" aria-label="Edit supplier"><Pencil size={13} /></button>}
             <ChevronRight size={14} className="text-subtext flex-shrink-0" />
           </div>
         ))}
@@ -73,9 +73,9 @@ export default function SuppliersPage() {
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary/15 text-primary text-[13px] font-bold flex items-center justify-center">{open.initials}</div>
-                <div><p className="font-bold text-fg text-[15px]">{open.name}</p><p className="text-[11.5px] text-subtext">{open.category}</p></div>
+                <div><p className="font-bold text-fg text-[15px]">{open.name}</p><p className="text-[12px] text-subtext">{open.category}</p></div>
               </div>
-              <button onClick={() => setOpenId(null)}><X size={16} className="text-subtext" /></button>
+              <button onClick={() => setOpenId(null)} className="touch:p-3.5 touch:-m-3.5"><X size={16} className="text-subtext" /></button>
             </div>
             <div className="flex flex-col gap-2 text-[13px] text-fg mt-4">
               <p className="flex items-center gap-2"><Phone size={13} className="text-subtext" /> {open.phone}</p>
@@ -84,8 +84,8 @@ export default function SuppliersPage() {
             </div>
             <p className="text-[12px] text-subtext mt-3 leading-relaxed">{open.notes}</p>
             <div className="flex items-center justify-between mt-3 pt-3 border-t border-line">
-              <p className="text-[11px] text-subtext">{supplierRecordCount(open, properties)} linked equipment records</p>
-              {canEdit && <button onClick={() => startEdit(open)} className="text-[12px] text-primary font-semibold flex items-center gap-1"><Pencil size={12} /> Edit</button>}
+              <p className="text-[12px] text-subtext">{supplierRecordCount(open, properties)} linked equipment records</p>
+              {canEdit && <button onClick={() => startEdit(open)} className="text-[12px] text-primary font-semibold flex items-center justify-center gap-1 touch:min-h-11 touch:min-w-11"><Pencil size={12} /> Edit</button>}
             </div>
           </div>
         </div>
@@ -96,7 +96,7 @@ export default function SuppliersPage() {
           <form onSubmit={submit} className="bg-card border border-line rounded-2xl p-5 w-full max-w-sm max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-fg text-[15px]">{editing ? "Edit supplier" : "Add supplier"}</p>
-              <button type="button" onClick={() => { setEditing(null); setAdding(false); }}><X size={16} className="text-subtext" /></button>
+              <button type="button" onClick={() => { setEditing(null); setAdding(false); }} className="touch:p-3.5 touch:-m-3.5"><X size={16} className="text-subtext" /></button>
             </div>
             <div className="flex flex-col gap-2.5">
               <input required placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
@@ -105,7 +105,7 @@ export default function SuppliersPage() {
               <input placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
               <input placeholder="Address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
               <textarea placeholder="Notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" style={{ height: 60 }} />
-              <button type="submit" className="mt-1 bg-primary text-primary-fg text-[13px] font-semibold rounded-full py-2.5">{editing ? "Save changes" : "Create supplier"}</button>
+              <button type="submit" className="mt-1 bg-primary text-primary-fg touch:min-h-11 text-[13px] font-semibold rounded-full py-2.5">{editing ? "Save changes" : "Create supplier"}</button>
             </div>
           </form>
         </div>

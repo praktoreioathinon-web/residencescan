@@ -42,7 +42,7 @@ export default function LoginPage() {
           <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center"><Zap size={18} className="text-primary" /></div>
           <div>
             <p className="font-bold text-fg text-[15px] leading-none">ResidenceScan</p>
-            <p className="text-[9px] tracking-wider text-subtext mt-1">YOUR PROPERTY. FULLY KNOWN.</p>
+            <p className="text-[11px] tracking-wider text-subtext mt-1">YOUR PROPERTY. FULLY KNOWN.</p>
           </div>
         </div>
 

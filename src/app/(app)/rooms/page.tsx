@@ -54,7 +54,7 @@ export default function RoomsPage() {
       <div className="px-8 py-6 max-w-4xl">
         <h1 className="text-2xl font-bold text-fg mb-1">Rooms & Areas</h1>
         <p className="text-[12.5px] text-subtext mb-5">Choose a client first to browse their properties.</p>
-        <Link href="/clients" className="inline-block bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">Go to Clients</Link>
+        <Link href="/clients" className="inline-block bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full touch:min-h-11">Go to Clients</Link>
       </div>
     );
   }
@@ -111,17 +111,17 @@ export default function RoomsPage() {
     <div className="px-8 py-6 max-w-4xl">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <p className="text-[10px] tracking-widest text-subtext font-semibold">{property.area.toUpperCase()}</p>
+          <p className="text-[11px] tracking-widest text-subtext font-semibold">{property.area.toUpperCase()}</p>
           <h1 className="text-2xl font-bold text-fg">{property.name} — Rooms & Areas</h1>
         </div>
         <div className="flex items-center gap-2">
           {myProperties.length > 1 && (
-            <button onClick={() => setSelectedPropertyId(null)} className="flex items-center gap-1.5 border border-line text-[12.5px] font-semibold px-4 py-2 rounded-full text-fg">
+            <button onClick={() => setSelectedPropertyId(null)} className="flex items-center gap-1.5 border border-line text-[12.5px] font-semibold px-4 py-2 rounded-full touch:min-h-11 text-fg">
               <ArrowLeftRight size={13} /> Switch property
             </button>
           )}
           {canEdit && (
-            <button onClick={() => setShowAddRoom(true)} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
+            <button onClick={() => setShowAddRoom(true)} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full touch:min-h-11">
               <Plus size={14} /> Add room
             </button>
           )}
@@ -129,22 +129,22 @@ export default function RoomsPage() {
       </div>
 
       <div className="grid grid-cols-4 rounded-2xl border border-line divide-x divide-line mb-5">
-        <div className="p-4"><p className="text-xl font-bold text-fg">{rooms.length}</p><p className="text-[11px] text-subtext">Rooms</p></div>
+        <div className="p-4"><p className="text-xl font-bold text-fg">{rooms.length}</p><p className="text-[12px] text-subtext">Rooms</p></div>
         <button onClick={() => setStatModal("equipment")} className="p-4 text-left hover:bg-white/5">
-          <p className="text-xl font-bold text-fg">{totalEquipment}</p><p className="text-[11px] text-subtext">Equipment</p>
+          <p className="text-xl font-bold text-fg">{totalEquipment}</p><p className="text-[12px] text-subtext">Equipment</p>
         </button>
         <button onClick={() => setStatModal("attention")} className="p-4 text-left hover:bg-white/5">
-          <p className="text-xl font-bold text-fg">{attentionRooms.length}</p><p className="text-[11px] text-subtext">Need attention</p>
+          <p className="text-xl font-bold text-fg">{attentionRooms.length}</p><p className="text-[12px] text-subtext">Need attention</p>
         </button>
         <button onClick={() => setStatModal("photos")} className="p-4 text-left hover:bg-white/5">
-          <p className="text-xl font-bold text-fg">{totalPhotos}</p><p className="text-[11px] text-subtext">Photos</p>
+          <p className="text-xl font-bold text-fg">{totalPhotos}</p><p className="text-[12px] text-subtext">Photos</p>
         </button>
       </div>
 
-      <div className="flex items-center gap-5 border-b border-line mb-4">
+      <div className="flex items-center gap-5 border-b border-line mb-4 overflow-x-auto">
         {TABS.map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`pb-2.5 text-[13px] ${tab === t ? "text-fg font-semibold border-b-2 border-primary" : "text-subtext"}`}>
+            className={`pb-2.5 touch:pt-3 touch:pb-3 touch:min-w-11 text-[13px] whitespace-nowrap flex-shrink-0 ${tab === t ? "text-fg font-semibold border-b-2 border-primary" : "text-subtext"}`}>
             {t}
           </button>
         ))}
@@ -168,14 +168,14 @@ export default function RoomsPage() {
                   <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center"><Icon size={16} className="text-fg" /></div>
                 )}
                 {roomAttentionCount(r) === 0 ? (
-                  <span className={`flex items-center gap-1 text-[10px] font-semibold ${badgeStyle("bg-[var(--ok-bg)]", "text-[var(--ok-fg)]")} px-2 py-0.5 rounded-full`}><CheckCircle2 size={10} /> Current</span>
+                  <span className={`flex items-center gap-1 text-[11px] font-semibold ${badgeStyle("bg-[var(--ok-bg)]", "text-[var(--ok-fg)]")} px-2 py-0.5 rounded-full`}><CheckCircle2 size={10} /> Current</span>
                 ) : (
-                  <span className={`flex items-center gap-1 text-[10px] font-semibold ${badgeStyle("bg-[var(--warn-bg)]", "text-[var(--warn-fg)]")} px-2 py-0.5 rounded-full`}><AlertTriangle size={10} /> {roomAttentionCount(r)} attention</span>
+                  <span className={`flex items-center gap-1 text-[11px] font-semibold ${badgeStyle("bg-[var(--warn-bg)]", "text-[var(--warn-fg)]")} px-2 py-0.5 rounded-full`}><AlertTriangle size={10} /> {roomAttentionCount(r)} attention</span>
                 )}
               </div>
               <div>
                 <p className={`text-[14px] font-bold ${hasPhoto ? "text-white" : "text-fg"}`}>{r.name}</p>
-                <p className={`text-[11px] mt-0.5 ${hasPhoto ? "text-white/75" : "text-subtext"}`}>{r.equipmentCount} equipment records</p>
+                <p className={`text-[12px] mt-0.5 ${hasPhoto ? "text-white/75" : "text-subtext"}`}>{r.equipmentCount} equipment records</p>
               </div>
             </Link>
           );
@@ -189,15 +189,15 @@ export default function RoomsPage() {
               <p className="font-bold text-fg text-[15px]">
                 {statModal === "equipment" ? `All equipment (${allEquipment.length})` : statModal === "attention" ? `Needs attention (${attentionRooms.length})` : `Photos (${totalPhotos})`}
               </p>
-              <button onClick={() => setStatModal(null)}><X size={16} className="text-subtext" /></button>
+              <button onClick={() => setStatModal(null)} className="touch:p-3.5 touch:-m-3.5"><X size={16} className="text-subtext" /></button>
             </div>
             <div className="overflow-y-auto py-2">
               {statModal === "equipment" && allEquipment.map((eq) => (
                 <button key={`${eq.room.id}-${eq.name}`} onClick={() => goToRoom(eq.room, `?eq=${encodeURIComponent(eq.name)}`)}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-white/5">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Wrench size={14} className="text-primary" /></div>
-                  <div className="flex-1 min-w-0"><p className="text-[12.5px] font-semibold text-fg truncate">{eq.name}</p><p className="text-[11px] text-subtext truncate">{eq.room.name}</p></div>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${eq.issueNote ? "bg-[var(--attention-wash)] text-[var(--attention-fg)]" : eq.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>
+                  <div className="flex-1 min-w-0"><p className="text-[12.5px] font-semibold text-fg truncate">{eq.name}</p><p className="text-[12px] text-subtext truncate">{eq.room.name}</p></div>
+                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${eq.issueNote ? "bg-[var(--attention-wash)] text-[var(--attention-fg)]" : eq.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>
                     {eq.issueNote ? "Issue reported" : eq.status}
                   </span>
                 </button>
@@ -207,8 +207,8 @@ export default function RoomsPage() {
               ) : attentionRooms.map((r) => (
                 <button key={r.id} onClick={() => goToRoom(r)} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-white/5">
                   <div className="w-8 h-8 rounded-lg bg-[var(--warn-bg)] flex items-center justify-center flex-shrink-0"><AlertTriangle size={14} className="text-[var(--warn-fg)]" /></div>
-                  <div className="flex-1 min-w-0"><p className="text-[12.5px] font-semibold text-fg truncate">{r.name}</p><p className="text-[11px] text-subtext truncate">{r.category}</p></div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--warn-bg)] text-[var(--warn-fg)] flex-shrink-0">{roomAttentionCount(r)} item{roomAttentionCount(r) > 1 ? "s" : ""}</span>
+                  <div className="flex-1 min-w-0"><p className="text-[12.5px] font-semibold text-fg truncate">{r.name}</p><p className="text-[12px] text-subtext truncate">{r.category}</p></div>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[var(--warn-bg)] text-[var(--warn-fg)] flex-shrink-0">{roomAttentionCount(r)} item{roomAttentionCount(r) > 1 ? "s" : ""}</span>
                 </button>
               )))}
               {statModal === "photos" && (photoRooms.length === 0 ? (
@@ -216,8 +216,8 @@ export default function RoomsPage() {
               ) : photoRooms.map((r) => (
                 <button key={r.id} onClick={() => goToRoom(r, "?tab=Photos")} className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-white/5">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><ImageIcon size={14} className="text-primary" /></div>
-                  <div className="flex-1 min-w-0"><p className="text-[12.5px] font-semibold text-fg truncate">{r.name}</p><p className="text-[11px] text-subtext truncate">{r.category}</p></div>
-                  <span className="text-[11px] text-subtext flex-shrink-0">{roomPhotoCount(r)} photo{roomPhotoCount(r) > 1 ? "s" : ""}</span>
+                  <div className="flex-1 min-w-0"><p className="text-[12.5px] font-semibold text-fg truncate">{r.name}</p><p className="text-[12px] text-subtext truncate">{r.category}</p></div>
+                  <span className="text-[12px] text-subtext flex-shrink-0">{roomPhotoCount(r)} photo{roomPhotoCount(r) > 1 ? "s" : ""}</span>
                 </button>
               )))}
             </div>
@@ -230,7 +230,7 @@ export default function RoomsPage() {
           <form onSubmit={submitAddRoom} className="bg-card border border-line rounded-2xl w-full max-w-sm max-h-[85dvh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 pb-4 flex-shrink-0">
               <p className="font-bold text-fg text-[15px]">Add room</p>
-              <button type="button" onClick={() => { setShowAddRoom(false); setNewRoomPhoto(undefined); }}><X size={16} className="text-subtext" /></button>
+              <button type="button" onClick={() => { setShowAddRoom(false); setNewRoomPhoto(undefined); }} className="touch:p-3.5 touch:-m-3.5"><X size={16} className="text-subtext" /></button>
             </div>
             <div className="flex flex-col gap-2.5 px-5 pb-5 overflow-y-auto">
               <input required autoFocus placeholder="Room name (e.g. Bedroom 3)" value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)}
@@ -243,7 +243,7 @@ export default function RoomsPage() {
               {newRoomPhoto && (
                 <div className="relative h-28 rounded-lg overflow-hidden">
                   <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${newRoomPhoto})` }} />
-                  <button type="button" onClick={() => setNewRoomPhoto(undefined)} className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center">
+                  <button type="button" onClick={() => setNewRoomPhoto(undefined)} className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center touch:top-0 touch:right-0 touch:w-11 touch:h-11">
                     <X size={12} className="text-white" />
                   </button>
                 </div>
@@ -261,18 +261,18 @@ export default function RoomsPage() {
 
               {roomSuggestions.length > 0 && (
                 <div>
-                  <p className="text-[10.5px] text-subtext mb-1.5">Used on other properties:</p>
+                  <p className="text-[11px] text-subtext mb-1.5">Used on other properties:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {roomSuggestions.map(([name, category]) => (
                       <button key={name} type="button" onClick={() => { setNewRoomName(name); setNewRoomCategory(category); }}
-                        className="text-[11.5px] font-medium px-2.5 py-1 rounded-full border border-line text-subtext hover:border-primary/40 hover:text-fg">
+                        className="text-[12px] font-medium px-2.5 py-1 rounded-full border border-line text-subtext hover:border-primary/40 hover:text-fg touch:min-h-11">
                         {name}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
-              <button type="submit" className="mt-1 bg-primary text-primary-fg text-[13px] font-semibold rounded-full py-2.5">Create room</button>
+              <button type="submit" className="mt-1 bg-primary text-primary-fg touch:min-h-11 text-[13px] font-semibold rounded-full py-2.5">Create room</button>
             </div>
           </form>
         </div>

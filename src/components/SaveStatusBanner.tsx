@@ -47,15 +47,15 @@ export default function SaveStatusBanner() {
           <div className="border-t border-line divide-y divide-line max-h-48 overflow-y-auto">
             {saveErrors.map((e) => (
               <div key={e.id} className="flex items-center gap-2.5 px-4 py-2">
-                <p className="flex-1 min-w-0 text-[11.5px] text-subtext truncate">{e.description}</p>
-                <button onClick={() => handleRetryOne(e.id)} disabled={retryingId === e.id} className="text-[11px] font-semibold text-primary flex-shrink-0 disabled:opacity-50">
+                <p className="flex-1 min-w-0 text-[12px] text-subtext truncate">{e.description}</p>
+                <button onClick={() => handleRetryOne(e.id)} disabled={retryingId === e.id} className="text-[12px] font-semibold text-primary flex-shrink-0 disabled:opacity-50">
                   {retryingId === e.id ? "Retrying…" : "Retry"}
                 </button>
               </div>
             ))}
           </div>
         )}
-        <p className="px-4 pb-3 text-[11px] text-subtext">Check your connection — these are still safe on this screen and will save once retried.</p>
+        <p className="px-4 pb-3 text-[12px] text-subtext">Check your connection — these are still safe on this screen and will save once retried.</p>
       </div>
     </div>
   );

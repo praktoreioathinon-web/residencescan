@@ -209,17 +209,17 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
     <div className="px-8 py-6 max-w-4xl">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-3">
-          <Link href="/rooms" className="w-9 h-9 rounded-full border border-line flex items-center justify-center"><ArrowLeft size={15} /></Link>
+          <Link href="/rooms" className="w-9 h-9 rounded-full border border-line flex items-center justify-center touch:w-11 touch:h-11"><ArrowLeft size={15} /></Link>
           <div>
-            <p className="text-[10px] tracking-widest text-subtext font-semibold">ROOM {room.number}</p>
+            <p className="text-[11px] tracking-widest text-subtext font-semibold">ROOM {room.number}</p>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-fg">{room.name}</h1>
               {canEdit && (
                 <>
-                  <button onClick={openEditRoom} title="Edit room" className="w-6 h-6 rounded-full border border-line flex items-center justify-center flex-shrink-0">
+                  <button onClick={openEditRoom} title="Edit room" className="w-6 h-6 rounded-full border border-line flex items-center justify-center flex-shrink-0 touch:w-11 touch:h-11">
                     <Pencil size={11} className="text-subtext" />
                   </button>
-                  <button onClick={deleteRoom} title="Delete room" className="w-6 h-6 rounded-full border border-line flex items-center justify-center flex-shrink-0">
+                  <button onClick={deleteRoom} title="Delete room" className="w-6 h-6 rounded-full border border-line flex items-center justify-center flex-shrink-0 touch:w-11 touch:h-11">
                     <Trash2 size={11} className="text-[var(--attention-fg)]" />
                   </button>
                 </>
@@ -228,7 +228,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
           </div>
         </div>
         {canEdit && (
-          <button onClick={() => setShowAddEquipment(true)} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full whitespace-nowrap">
+          <button onClick={() => setShowAddEquipment(true)} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full touch:min-h-11 whitespace-nowrap">
             <Plus size={14} /> Add equipment
           </button>
         )}
@@ -238,18 +238,18 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
         style={room.photoUrl
           ? { backgroundImage: `linear-gradient(160deg, rgba(7,16,23,0.75), rgba(7,16,23,0.35)), url(${room.photoUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
           : { background: "linear-gradient(160deg, var(--primary-wash), transparent)" }}>
-        <p className={`flex items-center gap-1.5 text-[11.5px] font-semibold mb-8 ${room.photoUrl ? "text-white" : "text-primary"}`}>
+        <p className={`flex items-center gap-1.5 text-[12px] font-semibold mb-8 ${room.photoUrl ? "text-white" : "text-primary"}`}>
           <Sparkles size={13} /> {room.equipmentCount} equipment records
         </p>
         <p className={`text-xl font-bold ${room.photoUrl ? "text-white" : "text-fg"}`}>{room.name}</p>
         <p className={`text-[12px] mt-0.5 ${room.photoUrl ? "text-white/70" : "text-subtext"}`}>{room.subtitle}</p>
         {canEdit && (
           <div className="flex items-center gap-2 mt-3">
-            <label className={`flex items-center gap-1.5 text-[11.5px] font-semibold px-3 py-1.5 rounded-full w-fit cursor-pointer ${room.photoUrl ? "text-white bg-white/10" : "text-fg border border-line"}`}>
+            <label className={`flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full w-fit cursor-pointer ${room.photoUrl ? "text-white bg-white/10" : "text-fg border border-line"}`}>
               <ImageIcon size={13} /> {room.photoUrl ? "Change photo" : "Upload photo"}
               <input type="file" accept="image/*" className="hidden" onChange={handleRoomPhoto} />
             </label>
-            <label className={`flex items-center gap-1.5 text-[11.5px] font-semibold px-3 py-1.5 rounded-full w-fit cursor-pointer ${room.photoUrl ? "text-white bg-white/10" : "text-fg border border-line"}`}>
+            <label className={`flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full w-fit cursor-pointer ${room.photoUrl ? "text-white bg-white/10" : "text-fg border border-line"}`}>
               <Camera size={13} /> Take photo
               <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleRoomPhoto} />
             </label>
@@ -260,7 +260,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
       <div className="flex items-center gap-5 border-b border-line mb-4 overflow-x-auto">
         {tabs.map(({ key, count }) => (
           <button key={key} onClick={() => setTab(key)}
-            className={`pb-2.5 text-[13px] whitespace-nowrap ${tab === key ? "text-fg font-semibold border-b-2 border-primary" : "text-subtext"}`}>
+            className={`pb-2.5 touch:pt-3 touch:pb-3 touch:min-w-11 text-[13px] whitespace-nowrap ${tab === key ? "text-fg font-semibold border-b-2 border-primary" : "text-subtext"}`}>
             {key} ({count})
           </button>
         ))}
@@ -278,8 +278,8 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
                 ) : (
                   <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-primary" /></div>
                 )}
-                <div className="flex-1"><p className="text-[13.5px] font-semibold text-fg">{eq.name}</p><p className="text-[11.5px] text-subtext">{eq.model}</p></div>
-                <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full ${eq.issueNote ? "bg-[var(--attention-wash)] text-[var(--attention-fg)]" : eq.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>
+                <div className="flex-1"><p className="text-[13.5px] font-semibold text-fg">{eq.name}</p><p className="text-[12px] text-subtext">{eq.model}</p></div>
+                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${eq.issueNote ? "bg-[var(--attention-wash)] text-[var(--attention-fg)]" : eq.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>
                   {eq.issueNote ? "Issue reported" : eq.status}
                 </span>
                 <ChevronRight size={14} className="text-subtext" />
@@ -294,9 +294,9 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
           <div className="flex flex-col gap-2.5">
             {maintenanceEntries.map((m) => (
               <div key={m.id} className="rounded-2xl border border-line p-3.5">
-                <p className="text-[11px] text-subtext mb-1">{m.date} · {m.supplier}</p>
+                <p className="text-[12px] text-subtext mb-1">{m.date} · {m.supplier}</p>
                 <p className="text-[13.5px] font-semibold text-fg">{m.title}</p>
-                <p className="text-[11.5px] text-subtext mt-1">{m.notes}</p>
+                <p className="text-[12px] text-subtext mt-1">{m.notes}</p>
               </div>
             ))}
           </div>
@@ -305,11 +305,11 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
         <div>
           {canEdit && (
             <div className="flex items-center gap-2 mb-3.5">
-              <label className="flex items-center gap-1.5 text-[11.5px] font-semibold px-3 py-1.5 rounded-full border border-line text-fg cursor-pointer hover:border-primary/40">
+              <label className="flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full border border-line text-fg cursor-pointer hover:border-primary/40">
                 <ImageIcon size={13} /> Add photo
                 <input type="file" accept="image/*" className="hidden" onChange={handleAddRoomPhoto} />
               </label>
-              <label className="flex items-center gap-1.5 text-[11.5px] font-semibold px-3 py-1.5 rounded-full border border-line text-fg cursor-pointer hover:border-primary/40">
+              <label className="flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full border border-line text-fg cursor-pointer hover:border-primary/40">
                 <Camera size={13} /> Take photo
                 <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleAddRoomPhoto} />
               </label>
@@ -323,7 +323,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
                 <div key={i} title={p.label} className="relative rounded-xl overflow-hidden bg-cover bg-center" style={{ aspectRatio: "1 / 1", backgroundImage: `url(${p.photoUrl})` }}>
                   {canEdit && (
                     <button onClick={() => removePhoto(p.photoUrl, p.fromEquipment)} title="Remove photo"
-                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center">
+                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center touch:top-0 touch:right-0 touch:w-11 touch:h-11">
                       <X size={12} className="text-white" />
                     </button>
                   )}
@@ -344,17 +344,17 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
                 ? { backgroundImage: `url(${selectedEquipment.photoUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
                 : { background: "linear-gradient(135deg, var(--surface), var(--card))" }}>
               {!selectedEquipment.photoUrl && <Sparkles size={28} className="text-primary/40" />}
-              <button onClick={() => setSelectedEquipment(null)} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center">
+              <button onClick={() => setSelectedEquipment(null)} className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center touch:w-11 touch:h-11">
                 <X size={14} className="text-white" />
               </button>
               <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
                 <label title={selectedEquipment.photoUrl ? "Change photo" : "Upload photo"}
-                  className="flex items-center gap-1.5 text-[11px] font-semibold text-white bg-black/50 px-2.5 py-1.5 rounded-full cursor-pointer">
+                  className="flex items-center gap-1.5 text-[12px] font-semibold text-white bg-black/50 px-2.5 py-1.5 rounded-full cursor-pointer">
                   <ImageIcon size={12} />
                   <input type="file" accept="image/*" className="hidden" onChange={(e) => handleEquipmentPhoto(e, selectedEquipment.name)} />
                 </label>
                 <label title="Take photo"
-                  className="flex items-center gap-1.5 text-[11px] font-semibold text-white bg-black/50 px-2.5 py-1.5 rounded-full cursor-pointer">
+                  className="flex items-center gap-1.5 text-[12px] font-semibold text-white bg-black/50 px-2.5 py-1.5 rounded-full cursor-pointer">
                   <Camera size={12} />
                   <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handleEquipmentPhoto(e, selectedEquipment.name)} />
                 </label>
@@ -371,12 +371,12 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
                       placeholder="Model / notes"
                       className="rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-primary/50" />
                     <div>
-                      <label className="text-[10.5px] text-subtext mb-1 block">Installed date</label>
+                      <label className="text-[11px] text-subtext mb-1 block">Installed date</label>
                       <input type="date" value={editEquipInstalledDate} onChange={(e) => setEditEquipInstalledDate(e.target.value)}
                         className="w-full rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-primary/50" />
                     </div>
                     <div>
-                      <label className="text-[10.5px] text-subtext mb-1 block">Next maintenance date (leave blank if not needed)</label>
+                      <label className="text-[11px] text-subtext mb-1 block">Next maintenance date (leave blank if not needed)</label>
                       <input type="date" value={editEquipNextMaintenance} onChange={(e) => setEditEquipNextMaintenance(e.target.value)}
                         className="w-full rounded-lg border border-line px-3 py-2 text-[13px] outline-none focus:border-primary/50" />
                     </div>
@@ -402,7 +402,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
                         </>
                       )}
                     </div>
-                    <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full ${selectedEquipment.issueNote ? "bg-[var(--attention-wash)] text-[var(--attention-fg)]" : selectedEquipment.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>
+                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${selectedEquipment.issueNote ? "bg-[var(--attention-wash)] text-[var(--attention-fg)]" : selectedEquipment.status === "Good" ? "bg-[var(--ok-bg)] text-[var(--ok-fg)]" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>
                       {selectedEquipment.issueNote ? "Issue reported" : selectedEquipment.status}
                     </span>
                   </div>
@@ -423,7 +423,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
 
               {selectedEquipment.issueNote ? (
                 <div className="rounded-xl p-3.5" style={{ background: "var(--attention-wash)" }}>
-                  <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--attention-fg)]"><AlertTriangle size={12} /> Reported {selectedEquipment.issueReportedAt}</p>
+                  <p className="flex items-center gap-1.5 text-[12px] font-semibold text-[var(--attention-fg)]"><AlertTriangle size={12} /> Reported {selectedEquipment.issueReportedAt}</p>
                   <p className="text-[12.5px] text-fg mt-1.5">{selectedEquipment.issueNote}</p>
                   {canEdit && (
                     <button onClick={() => resolveIssue(selectedEquipment.name)}
@@ -461,7 +461,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
           <form onSubmit={submitEditRoom} className="bg-card border border-line rounded-2xl p-5 w-full max-w-sm max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-fg text-[15px]">Edit room</p>
-              <button type="button" onClick={() => setShowEditRoom(false)}><X size={16} className="text-subtext" /></button>
+              <button type="button" onClick={() => setShowEditRoom(false)} className="touch:p-3.5 touch:-m-3.5"><X size={16} className="text-subtext" /></button>
             </div>
             <div className="flex flex-col gap-2.5">
               <input required autoFocus placeholder="Room name" value={editRoomName} onChange={(e) => setEditRoomName(e.target.value)}
@@ -470,7 +470,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
                 className="rounded-lg border border-line px-3.5 py-2.5 text-[13px]">
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
-              <button type="submit" className="mt-1 bg-primary text-primary-fg text-[13px] font-semibold rounded-full py-2.5">Save changes</button>
+              <button type="submit" className="mt-1 bg-primary text-primary-fg touch:min-h-11 text-[13px] font-semibold rounded-full py-2.5">Save changes</button>
             </div>
           </form>
         </div>
@@ -481,7 +481,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
           <form onSubmit={submitAddEquipment} className="bg-card border border-line rounded-2xl w-full max-w-sm max-h-[85dvh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 pb-4 flex-shrink-0">
               <p className="font-bold text-fg text-[15px]">Add equipment</p>
-              <button type="button" onClick={closeAddEquipment}><X size={16} className="text-subtext" /></button>
+              <button type="button" onClick={closeAddEquipment} className="touch:p-3.5 touch:-m-3.5"><X size={16} className="text-subtext" /></button>
             </div>
             <div className="flex flex-col gap-2.5 px-5 pb-5 overflow-y-auto">
               <input required autoFocus placeholder="Equipment name (e.g. Living Room TV)" value={newEquipName} onChange={(e) => setNewEquipName(e.target.value)}
@@ -490,12 +490,12 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
                 className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
 
               <div>
-                <label className="text-[10.5px] text-subtext mb-1 block">Installed date</label>
+                <label className="text-[11px] text-subtext mb-1 block">Installed date</label>
                 <input type="date" value={newEquipInstalledDate} onChange={(e) => setNewEquipInstalledDate(e.target.value)}
                   className="w-full rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
               </div>
               <div>
-                <label className="text-[10.5px] text-subtext mb-1 block">Next maintenance date (leave blank if this doesn't need maintenance, e.g. weights, furniture)</label>
+                <label className="text-[11px] text-subtext mb-1 block">Next maintenance date (leave blank if this doesn't need maintenance, e.g. weights, furniture)</label>
                 <input type="date" value={newEquipNextMaintenance} onChange={(e) => setNewEquipNextMaintenance(e.target.value)}
                   className="w-full rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
               </div>
@@ -503,7 +503,7 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
               {newEquipPhoto && (
                 <div className="relative h-28 rounded-lg overflow-hidden">
                   <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${newEquipPhoto})` }} />
-                  <button type="button" onClick={() => setNewEquipPhoto(undefined)} className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center">
+                  <button type="button" onClick={() => setNewEquipPhoto(undefined)} className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 flex items-center justify-center touch:top-0 touch:right-0 touch:w-11 touch:h-11">
                     <X size={12} className="text-white" />
                   </button>
                 </div>
@@ -521,18 +521,18 @@ export default function RoomDetailPage({ params }: { params: { id: string } }) {
 
               {equipmentSuggestions.length > 0 && (
                 <div>
-                  <p className="text-[10.5px] text-subtext mb-1.5">Common equipment in other rooms:</p>
+                  <p className="text-[11px] text-subtext mb-1.5">Common equipment in other rooms:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {equipmentSuggestions.map((term) => (
                       <button key={term} type="button" onClick={() => setNewEquipName(term)}
-                        className="text-[11.5px] font-medium px-2.5 py-1 rounded-full border border-line text-subtext hover:border-primary/40 hover:text-fg">
+                        className="text-[12px] font-medium px-2.5 py-1 rounded-full border border-line text-subtext hover:border-primary/40 hover:text-fg touch:min-h-11">
                         {term}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
-              <button type="submit" className="mt-1 bg-primary text-primary-fg text-[13px] font-semibold rounded-full py-2.5">Create equipment</button>
+              <button type="submit" className="mt-1 bg-primary text-primary-fg touch:min-h-11 text-[13px] font-semibold rounded-full py-2.5">Create equipment</button>
             </div>
           </form>
         </div>

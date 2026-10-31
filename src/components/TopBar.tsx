@@ -115,9 +115,9 @@ export default function TopBar() {
       <div className="hidden md:flex w-8 h-8 rounded-lg bg-primary/10 items-center justify-center flex-shrink-0">
         <Zap size={16} className="text-primary" />
       </div>
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <p className="text-[14px] font-bold text-fg leading-none">ResidenceScan</p>
-        <p className="text-[9px] tracking-wider text-subtext mt-1">YOUR PROPERTY. FULLY KNOWN.</p>
+        <p className="text-[11px] tracking-wider text-subtext mt-1">YOUR PROPERTY. FULLY KNOWN.</p>
       </div>
 
       <div className="flex-1 flex justify-center">
@@ -128,11 +128,11 @@ export default function TopBar() {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setOpenPanel("search")}
             placeholder="Search rooms, equipment, documents..."
-            className="w-full bg-card border border-line rounded-lg pl-9 pr-3 lg:pr-14 py-2 text-[12.5px] outline-none placeholder:text-subtext focus:border-primary/50"
+            className="w-full bg-card border border-line rounded-lg pl-9 pr-3 lg:pr-14 py-2 touch:py-3 text-[12.5px] outline-none placeholder:text-subtext focus:border-primary/50"
           />
-          {!query && <span className="hidden lg:block absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-subtext border border-line rounded px-1.5 py-0.5">⌘K</span>}
+          {!query && <span className="hidden lg:block absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-subtext border border-line rounded px-1.5 py-0.5">⌘K</span>}
           {query && (
-            <button onClick={() => setQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-subtext hover:text-fg">
+            <button onClick={() => setQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-subtext hover:text-fg touch:p-3.5 touch:-mr-3.5">
               <X size={13} />
             </button>
           )}
@@ -176,7 +176,7 @@ export default function TopBar() {
             </div>
           )}
         </div>
-        <button onClick={() => setMobileSearchOpen(true)} className="sm:hidden w-8 h-8 rounded-full border border-line flex items-center justify-center flex-shrink-0" aria-label="Search">
+        <button onClick={() => setMobileSearchOpen(true)} className="sm:hidden w-8 h-8 rounded-full border border-line flex items-center justify-center flex-shrink-0 touch:w-11 touch:h-11" aria-label="Search">
           <Search size={14} className="text-subtext" />
         </button>
       </div>
@@ -184,7 +184,7 @@ export default function TopBar() {
       <div ref={menuRef} className="flex items-center gap-4">
         <div className="relative">
           <button onClick={() => setOpenPanel(openPanel === "notif" ? null : "notif")}
-            className="relative w-8 h-8 rounded-full border border-line flex items-center justify-center flex-shrink-0">
+            className="relative w-8 h-8 rounded-full border border-line flex items-center justify-center flex-shrink-0 touch:w-11 touch:h-11">
             <Bell size={14} className="text-subtext" />
             {notifications.length > 0 && (
               <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[var(--attention-fg)]" />
@@ -192,7 +192,7 @@ export default function TopBar() {
           </button>
           {openPanel === "notif" && (
             <div className="absolute top-full right-0 mt-2 w-72 bg-card border border-line rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto">
-              <p className="text-[11px] tracking-widest text-subtext font-semibold px-4 pt-3.5 pb-2">NEEDS ATTENTION ({notifications.length})</p>
+              <p className="text-[12px] tracking-widest text-subtext font-semibold px-4 pt-3.5 pb-2">NEEDS ATTENTION ({notifications.length})</p>
               {!notificationsEnabled ? (
                 <p className="text-[12.5px] text-subtext p-4 pt-0 pb-4 text-center">Notifications are turned off in Settings.</p>
               ) : notifications.length === 0 ? (
@@ -207,7 +207,7 @@ export default function TopBar() {
                         <div className="w-8 h-8 rounded-lg bg-[var(--warn-bg)] flex items-center justify-center flex-shrink-0"><AlertTriangle size={14} className="text-[var(--warn-fg)]" /></div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[12.5px] font-semibold text-fg truncate">{room.name}</p>
-                          <p className="text-[11px] text-subtext truncate">{property.name} · {count} item{count > 1 ? "s" : ""}</p>
+                          <p className="text-[12px] text-subtext truncate">{property.name} · {count} item{count > 1 ? "s" : ""}</p>
                         </div>
                       </button>
                     );
@@ -220,15 +220,15 @@ export default function TopBar() {
 
         <div className="relative">
           <button onClick={() => setOpenPanel(openPanel === "account" ? null : "account")}
-            className="w-8 h-8 rounded-full bg-primary/20 text-primary text-[11px] font-bold flex items-center justify-center flex-shrink-0">
+            className="w-8 h-8 rounded-full bg-primary/20 text-primary text-[12px] font-bold flex items-center justify-center flex-shrink-0 touch:w-11 touch:h-11">
             {initials || "?"}
           </button>
           {openPanel === "account" && (
             <div className="absolute top-full right-0 mt-2 w-56 bg-card border border-line rounded-xl shadow-lg z-50 py-2">
               <div className="px-4 py-2 border-b border-line mb-1">
                 <p className="text-[12.5px] font-semibold text-fg truncate">{session?.name}</p>
-                <p className="text-[11px] text-subtext truncate">{session?.email}</p>
-                <p className="text-[10px] text-primary capitalize mt-0.5">{session?.role}</p>
+                <p className="text-[12px] text-subtext truncate">{session?.email}</p>
+                <p className="text-[11px] text-primary capitalize mt-0.5">{session?.role}</p>
               </div>
               <button onClick={() => { router.push("/settings"); setOpenPanel(null); }}
                 className="w-full flex items-center gap-2.5 px-4 py-2 text-[12.5px] text-fg hover:bg-white/5">
@@ -258,7 +258,7 @@ export default function TopBar() {
                 placeholder="Search rooms, equipment, documents..."
                 className="w-full bg-bg border border-line rounded-lg pl-9 pr-8 py-2.5 text-[13px] outline-none placeholder:text-subtext"
               />
-              <button onClick={closeSearch} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-subtext hover:text-fg">
+              <button onClick={closeSearch} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-subtext hover:text-fg touch:p-3.5 touch:-mr-3.5">
                 <X size={14} />
               </button>
             </div>
@@ -310,7 +310,7 @@ export default function TopBar() {
 function SearchGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-1 last:mb-0">
-      <p className="text-[10px] tracking-widest text-subtext font-semibold px-4 pt-2 pb-1">{label.toUpperCase()}</p>
+      <p className="text-[11px] tracking-widest text-subtext font-semibold px-4 pt-2 pb-1">{label.toUpperCase()}</p>
       {children}
     </div>
   );
@@ -322,7 +322,7 @@ function SearchRow({ icon: Icon, title, subtitle, onClick }: { icon: typeof Sear
       <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Icon size={14} className="text-primary" /></div>
       <div className="flex-1 min-w-0">
         <p className="text-[12.5px] font-semibold text-fg truncate">{title}</p>
-        <p className="text-[11px] text-subtext truncate">{subtitle}</p>
+        <p className="text-[12px] text-subtext truncate">{subtitle}</p>
       </div>
     </button>
   );

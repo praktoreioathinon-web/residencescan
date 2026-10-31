@@ -37,7 +37,7 @@ function Bar({ label, value, max, pctLabel }: { label: string; value?: number; m
   const pct = pctLabel ? parseInt(pctLabel) : Math.round(((value ?? 0) / (max ?? 1)) * 100);
   return (
     <div className="mb-3 last:mb-0" style={{ width: 180 }}>
-      <div className="flex items-center justify-between text-[11.5px] mb-1">
+      <div className="flex items-center justify-between text-[12px] mb-1">
         <span className="text-subtext">{label}</span>
         <span className="text-fg font-semibold">{pctLabel ?? `${value} / ${max}`}</span>
       </div>
@@ -98,7 +98,7 @@ export default function OverviewPage() {
       <div className="px-8 py-6 max-w-4xl">
         <h1 className="text-2xl font-bold text-fg mb-1">Overview</h1>
         <p className="text-[12.5px] text-subtext mb-5">Choose a client to see their property overview.</p>
-        <Link href="/clients" className="inline-block bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">Go to Clients</Link>
+        <Link href="/clients" className="inline-block bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full touch:min-h-11">Go to Clients</Link>
       </div>
     );
   }
@@ -120,20 +120,20 @@ export default function OverviewPage() {
   return (
     <div className="px-8 py-6 max-w-4xl">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-[10px] tracking-widest text-subtext font-semibold">{myProperties.length > 1 ? `${myProperties.length} PROPERTIES` : "MY RESIDENCE"}</p>
-        {myProperties.length > 1 && <span className="text-[11px] text-subtext">{index + 1} / {myProperties.length}</span>}
+        <p className="text-[11px] tracking-widest text-subtext font-semibold">{myProperties.length > 1 ? `${myProperties.length} PROPERTIES` : "MY RESIDENCE"}</p>
+        {myProperties.length > 1 && <span className="text-[12px] text-subtext">{index + 1} / {myProperties.length}</span>}
       </div>
-      <div className="flex items-center justify-between mb-4 gap-3">
+      <div className="flex flex-wrap items-center justify-between mb-4 gap-3">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-fg">{property.name}</h1>
           {property.archived && (
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--warn-bg)] text-[var(--warn-fg)] flex-shrink-0">Archived</span>
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[var(--warn-bg)] text-[var(--warn-fg)] flex-shrink-0">Archived</span>
           )}
         </div>
         {(session?.role === "admin" || session?.role === "support") && (
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex flex-wrap items-center gap-2">
             <button onClick={() => { setChangeClientTo(""); setShowChangeClient(true); }}
-              className="flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3.5 py-1.5 rounded-full text-fg hover:border-primary/40">
+              className="flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3.5 py-1.5 rounded-full touch:min-h-11 text-fg hover:border-primary/40">
               <Users size={13} /> Change client
             </button>
             <button
@@ -142,11 +142,11 @@ export default function OverviewPage() {
                 setPropertyArchived(property.id, archiving);
                 if (archiving) setSelectedClientEmail(null);
               }}
-              className="flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3.5 py-1.5 rounded-full text-fg hover:border-primary/40">
+              className="flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3.5 py-1.5 rounded-full touch:min-h-11 text-fg hover:border-primary/40">
               {property.archived ? <ArchiveRestore size={13} /> : <Archive size={13} />} {property.archived ? "Unarchive" : "Archive"}
             </button>
             <button onClick={() => setSelectedClientEmail(null)}
-              className="flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3.5 py-1.5 rounded-full text-fg hover:border-primary/40">
+              className="flex items-center gap-1.5 border border-line text-[12px] font-semibold px-3.5 py-1.5 rounded-full touch:min-h-11 text-fg hover:border-primary/40">
               <Building2 size={13} /> All properties
             </button>
           </div>
@@ -158,21 +158,21 @@ export default function OverviewPage() {
           ? { backgroundImage: `linear-gradient(to top, rgba(7,16,23,0.85), rgba(7,16,23,0.15)), url(${property.photoUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
           : { background: "linear-gradient(135deg, #14242E, #0C1821)" }}>
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-1.5 text-[11px] text-white bg-black/40 backdrop-blur px-2.5 py-1 rounded-full">
+          <span className="flex items-center gap-1.5 text-[12px] text-white bg-black/40 backdrop-blur px-2.5 py-1 rounded-full">
             <ShieldCheck size={12} className="text-primary" /> Professionally recorded
           </span>
-          <span className="text-[11px] text-white bg-black/40 px-2.5 py-1 rounded-full">Updated {property.updated}</span>
+          <span className="text-[12px] text-white bg-black/40 px-2.5 py-1 rounded-full">Updated {property.updated}</span>
         </div>
         <div>
           <p className="text-[12px] text-white/60">{property.location}</p>
           <p className="text-xl font-bold text-white mt-0.5">{property.name}</p>
           {session?.role !== "client" && (
             <div className="flex items-center gap-2 mt-2">
-              <label className="flex items-center gap-1.5 text-[11.5px] text-white bg-white/10 px-3 py-1.5 rounded-full w-fit cursor-pointer">
+              <label className="flex items-center gap-1.5 text-[12px] text-white bg-white/10 px-3 py-1.5 rounded-full w-fit cursor-pointer">
                 <ImageIcon size={13} /> {property.photoUrl ? "Change photo" : "Upload photo"}
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoChange(e, property.id)} />
               </label>
-              <label className="flex items-center gap-1.5 text-[11.5px] text-white bg-white/10 px-3 py-1.5 rounded-full w-fit cursor-pointer">
+              <label className="flex items-center gap-1.5 text-[12px] text-white bg-white/10 px-3 py-1.5 rounded-full w-fit cursor-pointer">
                 <Camera size={13} /> Take photo
                 <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handlePhotoChange(e, property.id)} />
               </label>
@@ -182,7 +182,7 @@ export default function OverviewPage() {
       </div>
       {myProperties.length > 1 && (
         <button onClick={() => { setSelectedPropertyId(null); router.push("/rooms"); }}
-          className="w-full text-[11.5px] text-primary font-semibold flex items-center justify-center gap-1 mt-2.5">
+          className="w-full text-[12px] text-primary font-semibold flex items-center justify-center gap-1 mt-2.5">
           Switch property <ChevronRight size={11} />
         </button>
       )}
@@ -191,9 +191,9 @@ export default function OverviewPage() {
         <div className="flex items-center gap-4">
           <HealthRing pct={healthScore(property)} />
           <div>
-            <p className="text-[10px] tracking-widest text-subtext font-semibold">RESIDENCE HEALTH</p>
+            <p className="text-[11px] tracking-widest text-subtext font-semibold">RESIDENCE HEALTH</p>
             <p className="text-[15px] font-bold text-fg mt-0.5">{upcoming.length} item{upcoming.length === 1 ? "" : "s"} need attention</p>
-            <p className="text-[11.5px] text-subtext mt-0.5 max-w-xs">Based on {property.rooms.reduce((s, r) => s + r.equipmentCount, 0)} equipment records across {totalRooms} rooms.</p>
+            <p className="text-[12px] text-subtext mt-0.5 max-w-xs">Based on {property.rooms.reduce((s, r) => s + r.equipmentCount, 0)} equipment records across {totalRooms} rooms.</p>
           </div>
         </div>
         <div className="border-l border-line pl-6">
@@ -203,13 +203,13 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      <p className="text-[10px] tracking-widest text-subtext font-semibold mt-7 mb-1">EXPLORE</p>
+      <p className="text-[11px] tracking-widest text-subtext font-semibold mt-7 mb-1">EXPLORE</p>
       <h2 className="text-lg font-bold text-fg mb-3">Quick access</h2>
       <div className="grid grid-cols-2 gap-3">
         {QUICK_ACCESS.map(({ href, label, sub, icon: Icon }) => (
           <Link key={label} href={href} className="flex items-center gap-3 rounded-2xl border border-line p-3.5 hover:border-primary/40">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-primary" /></div>
-            <div className="flex-1 min-w-0"><p className="text-[13px] font-semibold text-fg">{label}</p><p className="text-[11px] text-subtext">{sub}</p></div>
+            <div className="flex-1 min-w-0"><p className="text-[13px] font-semibold text-fg">{label}</p><p className="text-[12px] text-subtext">{sub}</p></div>
             <ChevronRight size={14} className="text-subtext flex-shrink-0" />
           </Link>
         ))}
@@ -217,10 +217,10 @@ export default function OverviewPage() {
 
       <div className="flex items-center justify-between mt-7 mb-3">
         <div>
-          <p className="text-[10px] tracking-widest text-subtext font-semibold">NEXT ACTIONS</p>
+          <p className="text-[11px] tracking-widest text-subtext font-semibold">NEXT ACTIONS</p>
           <h2 className="text-lg font-bold text-fg">Upcoming maintenance</h2>
         </div>
-        <Link href="/maintenance" className="text-[12px] text-primary font-semibold flex items-center gap-1">View all <ChevronRight size={12} /></Link>
+        <Link href="/maintenance" className="text-[12px] text-primary font-semibold flex items-center gap-1 touch:min-h-11">View all <ChevronRight size={12} /></Link>
       </div>
       {property.rooms.length === 0 ? (
         <div className="rounded-2xl border border-line p-6 text-center">
@@ -238,8 +238,8 @@ export default function OverviewPage() {
               onClick={() => router.push(`/rooms/${room.id}?eq=${encodeURIComponent(equipment.name)}`)}
               className="w-full flex items-center gap-3 p-3.5 text-left hover:bg-white/5">
               <div className="w-8 h-8 rounded-lg bg-[var(--warn-bg)] flex items-center justify-center flex-shrink-0"><Wrench size={14} className="text-[var(--warn-fg)]" /></div>
-              <div className="flex-1 min-w-0"><p className="text-[13px] font-semibold text-fg truncate">{equipment.name}</p><p className="text-[11px] text-subtext truncate">{room.name} · {equipment.model}</p></div>
-              <span className="text-[10.5px] font-semibold px-2 py-1 rounded-full bg-[var(--warn-bg)] text-[var(--warn-fg)] flex-shrink-0">
+              <div className="flex-1 min-w-0"><p className="text-[13px] font-semibold text-fg truncate">{equipment.name}</p><p className="text-[12px] text-subtext truncate">{room.name} · {equipment.model}</p></div>
+              <span className="text-[11px] font-semibold px-2 py-1 rounded-full bg-[var(--warn-bg)] text-[var(--warn-fg)] flex-shrink-0">
                 {equipment.issueNote ? "Issue reported" : "Due soon"}
               </span>
               <ChevronRight size={14} className="text-subtext flex-shrink-0" />
@@ -250,12 +250,12 @@ export default function OverviewPage() {
 
       <div className="grid grid-cols-3 gap-3 mt-5 mb-8">
         <div className="rounded-2xl border border-line p-4" style={{ background: "linear-gradient(160deg, var(--attention-wash), transparent)" }}>
-          <div className="flex items-center gap-1.5 text-[10px] tracking-widest text-[var(--attention-fg)] font-semibold"><AlertTriangle size={11} /> ATTENTION</div>
+          <div className="flex items-center gap-1.5 text-[11px] tracking-widest text-[var(--attention-fg)] font-semibold"><AlertTriangle size={11} /> ATTENTION</div>
           {upcoming.length > 0 ? (
             <>
               <p className="text-[14px] font-bold text-fg mt-2">{upcoming.length} item{upcoming.length > 1 ? "s" : ""} need review</p>
-              <p className="text-[11px] text-subtext mt-1 truncate">{upcoming.slice(0, 2).map((u) => u.equipment.name).join(", ")}{upcoming.length > 2 ? `, +${upcoming.length - 2} more` : ""}</p>
-              <Link href="/rooms" className="text-[12px] text-[var(--attention-fg)] font-semibold flex items-center gap-1 mt-2.5">Review now <ChevronRight size={12} /></Link>
+              <p className="text-[12px] text-subtext mt-1 truncate">{upcoming.slice(0, 2).map((u) => u.equipment.name).join(", ")}{upcoming.length > 2 ? `, +${upcoming.length - 2} more` : ""}</p>
+              <Link href="/rooms" className="text-[12px] text-[var(--attention-fg)] font-semibold flex items-center gap-1 mt-2.5 touch:min-h-11 touch:mt-0">Review now <ChevronRight size={12} /></Link>
             </>
           ) : (
             <p className="text-[13px] text-subtext mt-2">Nothing needs attention right now.</p>
@@ -263,17 +263,17 @@ export default function OverviewPage() {
         </div>
         <div className="rounded-2xl border border-line p-4" style={{ background: "linear-gradient(160deg, var(--primary-wash), transparent)" }}>
           <div className="w-9 h-9 rounded-lg border border-line flex items-center justify-center mb-2"><Scan size={16} className="text-primary" /></div>
-          <p className="text-[10px] tracking-widest text-primary font-semibold">PROPERTY X-RAY</p>
+          <p className="text-[11px] tracking-widest text-primary font-semibold">PROPERTY X-RAY</p>
           <p className="text-[14px] font-bold text-fg mt-1">See beyond the surface.</p>
-          <p className="text-[11px] text-subtext mt-1">Every hidden system, connection, document and service record in one place.</p>
-          <Link href="/xray" className="text-[12px] text-primary font-semibold flex items-center gap-1 mt-2.5">Open X-Ray <ChevronRight size={12} /></Link>
+          <p className="text-[12px] text-subtext mt-1">Every hidden system, connection, document and service record in one place.</p>
+          <Link href="/xray" className="text-[12px] text-primary font-semibold flex items-center gap-1 mt-2.5 touch:min-h-11 touch:min-w-11 touch:mt-0">Open X-Ray <ChevronRight size={12} /></Link>
         </div>
         <div className="rounded-2xl border border-line p-4">
-          <div className="flex items-center gap-1.5 text-[10px] tracking-widest text-subtext font-semibold"><CheckCircle2 size={11} className="text-primary" /> RECENT UPDATE</div>
+          <div className="flex items-center gap-1.5 text-[11px] tracking-widest text-subtext font-semibold"><CheckCircle2 size={11} className="text-primary" /> RECENT UPDATE</div>
           {latestCompleted ? (
             <>
               <p className="text-[13.5px] font-bold text-fg mt-2">{latestCompleted.title}</p>
-              <p className="text-[11px] text-subtext mt-1">{latestCompleted.date} · {latestCompleted.room} · {latestCompleted.supplier}</p>
+              <p className="text-[12px] text-subtext mt-1">{latestCompleted.date} · {latestCompleted.room} · {latestCompleted.supplier}</p>
             </>
           ) : (
             <p className="text-[13px] text-subtext mt-2">No activity yet.</p>
@@ -286,7 +286,7 @@ export default function OverviewPage() {
           <form onSubmit={(e) => submitChangeClient(e, property.id)} className="bg-card border border-line rounded-2xl p-5 w-full max-w-sm max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-fg text-[15px]">Change client</p>
-              <button type="button" onClick={() => setShowChangeClient(false)}><X size={16} className="text-subtext" /></button>
+              <button type="button" onClick={() => setShowChangeClient(false)} className="touch:p-3.5 touch:-m-3.5"><X size={16} className="text-subtext" /></button>
             </div>
             <div className="flex flex-col gap-2.5">
               <p className="text-[12px] text-subtext">Move <span className="text-fg font-semibold">{property.name}</span> to a different client. Its rooms, equipment and history stay with it.</p>
@@ -299,7 +299,7 @@ export default function OverviewPage() {
                     <option value="">Choose a client…</option>
                     {otherClients.map((c) => <option key={c.email} value={c.email}>{c.name}</option>)}
                   </select>
-                  <button type="submit" className="mt-1 bg-primary text-primary-fg text-[13px] font-semibold rounded-full py-2.5">Move property</button>
+                  <button type="submit" className="mt-1 bg-primary text-primary-fg touch:min-h-11 text-[13px] font-semibold rounded-full py-2.5">Move property</button>
                 </>
               )}
             </div>
@@ -323,10 +323,10 @@ function AllPropertiesOverview({
       <p className="text-[12.5px] text-subtext mb-5">All properties across every client.</p>
 
       <div className="grid grid-cols-4 rounded-2xl border border-line divide-x divide-line mb-6">
-        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><Building2 size={16} className="flex-shrink-0 text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{properties.length}</p><p className="text-[11px] text-subtext mt-1">Properties</p></div></div>
-        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><Users size={16} className="flex-shrink-0 text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{clients.length}</p><p className="text-[11px] text-subtext mt-1">Clients</p></div></div>
-        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><AlertTriangle size={16} className="flex-shrink-0 text-[var(--warn-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{totalAttention}</p><p className="text-[11px] text-subtext mt-1">Need attention</p></div></div>
-        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><CheckCircle2 size={16} className="flex-shrink-0 text-[var(--ok-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{avgHealth}%</p><p className="text-[11px] text-subtext mt-1">Avg. health</p></div></div>
+        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><Building2 size={16} className="flex-shrink-0 text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{properties.length}</p><p className="text-[12px] text-subtext mt-1">Properties</p></div></div>
+        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><Users size={16} className="flex-shrink-0 text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{clients.length}</p><p className="text-[12px] text-subtext mt-1">Clients</p></div></div>
+        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><AlertTriangle size={16} className="flex-shrink-0 text-[var(--warn-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{totalAttention}</p><p className="text-[12px] text-subtext mt-1">Need attention</p></div></div>
+        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><CheckCircle2 size={16} className="flex-shrink-0 text-[var(--ok-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{avgHealth}%</p><p className="text-[12px] text-subtext mt-1">Avg. health</p></div></div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -341,15 +341,15 @@ function AllPropertiesOverview({
             <div className="flex items-center justify-between">
               <div className="w-9 h-9 rounded-lg bg-black/40 backdrop-blur flex items-center justify-center flex-shrink-0"><MapPin size={16} className="text-primary" /></div>
               {pAttention > 0 ? (
-                <span className="flex items-center gap-1 text-[10px] font-semibold text-white bg-black/40 backdrop-blur px-2 py-0.5 rounded-full"><AlertTriangle size={10} /> {pAttention} attention</span>
+                <span className="flex items-center gap-1 text-[11px] font-semibold text-white bg-black/40 backdrop-blur px-2 py-0.5 rounded-full"><AlertTriangle size={10} /> {pAttention} attention</span>
               ) : (
-                <span className="flex items-center gap-1 text-[10px] font-semibold text-white bg-black/40 backdrop-blur px-2 py-0.5 rounded-full"><CheckCircle2 size={10} /> Current</span>
+                <span className="flex items-center gap-1 text-[11px] font-semibold text-white bg-black/40 backdrop-blur px-2 py-0.5 rounded-full"><CheckCircle2 size={10} /> Current</span>
               )}
             </div>
             <div>
               <p className="text-[15px] font-bold text-white">{p.name}</p>
-              <p className="text-[11px] text-white/70 mt-0.5">{p.area} · {clientName(p.clientEmail)}</p>
-              <p className="text-[11px] text-primary font-semibold mt-1.5">{healthScore(p)}% health</p>
+              <p className="text-[12px] text-white/70 mt-0.5">{p.area} · {clientName(p.clientEmail)}</p>
+              <p className="text-[12px] text-primary font-semibold mt-1.5">{healthScore(p)}% health</p>
             </div>
           </button>
           );

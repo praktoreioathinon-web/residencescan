@@ -35,7 +35,7 @@ export default function MaintenancePage() {
       <div className="px-8 py-6 max-w-4xl">
         <h1 className="text-2xl font-bold text-fg mb-1">Maintenance</h1>
         <p className="text-[12.5px] text-subtext mb-5">Choose a property first from the Rooms tab.</p>
-        <Link href="/rooms" className="inline-block bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">Go to Rooms</Link>
+        <Link href="/rooms" className="inline-block bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full touch:min-h-11">Go to Rooms</Link>
       </div>
     );
   }
@@ -79,29 +79,29 @@ export default function MaintenancePage() {
     <div className="px-8 py-6 max-w-4xl">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
-          <p className="text-[10px] tracking-widest text-subtext font-semibold">{property.name.toUpperCase()}</p>
+          <p className="text-[11px] tracking-widest text-subtext font-semibold">{property.name.toUpperCase()}</p>
           <h1 className="text-2xl font-bold text-fg">Maintenance</h1>
         </div>
         {canEdit && (
           <div className="flex flex-wrap items-center gap-2">
-            <button onClick={() => setShowSchedule(true)} className="flex items-center gap-1.5 border border-line text-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
+            <button onClick={() => setShowSchedule(true)} className="flex items-center gap-1.5 border border-line text-fg text-[12.5px] font-semibold px-4 py-2 rounded-full touch:min-h-11">
               <CalendarClock size={14} /> Schedule maintenance
             </button>
-            <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full">
+            <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 bg-primary text-primary-fg text-[12.5px] font-semibold px-4 py-2 rounded-full touch:min-h-11">
               <Plus size={14} /> Add maintenance
             </button>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-4 rounded-2xl border border-line divide-x divide-line mb-6">
-        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><Wrench size={16} className="flex-shrink-0 text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{upcoming.length}</p><p className="text-[11px] text-subtext mt-1">Upcoming</p></div></div>
-        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><Activity size={16} className="flex-shrink-0 text-[var(--warn-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{upcoming.filter((u) => u.equipment.issueNote).length}</p><p className="text-[11px] text-subtext mt-1">Reported issues</p></div></div>
-        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><CalendarClock size={16} className="flex-shrink-0 text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{scheduled.length}</p><p className="text-[11px] text-subtext mt-1">Scheduled</p></div></div>
-        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><CheckCircle2 size={16} className="flex-shrink-0 text-[var(--ok-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{property.maintenanceLog.length}</p><p className="text-[11px] text-subtext mt-1">Completed</p></div></div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-line rounded-2xl border border-line overflow-hidden mb-6">
+        <div className="bg-bg p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><Wrench size={16} className="flex-shrink-0 text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{upcoming.length}</p><p className="text-[12px] text-subtext mt-1">Upcoming</p></div></div>
+        <div className="bg-bg p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><Activity size={16} className="flex-shrink-0 text-[var(--warn-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{upcoming.filter((u) => u.equipment.issueNote).length}</p><p className="text-[12px] text-subtext mt-1">Reported issues</p></div></div>
+        <div className="bg-bg p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><CalendarClock size={16} className="flex-shrink-0 text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{scheduled.length}</p><p className="text-[12px] text-subtext mt-1">Scheduled</p></div></div>
+        <div className="bg-bg p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><CheckCircle2 size={16} className="flex-shrink-0 text-[var(--ok-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{property.maintenanceLog.length}</p><p className="text-[12px] text-subtext mt-1">Completed</p></div></div>
       </div>
 
-      <p className="text-[10px] tracking-widest text-subtext font-semibold mb-2">UPCOMING</p>
+      <p className="text-[11px] tracking-widest text-subtext font-semibold mb-2">UPCOMING</p>
       {upcoming.length === 0 ? (
         <div className="rounded-2xl border border-line p-6 text-center mb-6">
           <p className="text-[12.5px] text-subtext">Nothing due — every piece of equipment on record is in good shape.</p>
@@ -113,8 +113,8 @@ export default function MaintenancePage() {
               onClick={() => router.push(`/rooms/${room.id}?eq=${encodeURIComponent(equipment.name)}`)}
               className="flex items-center gap-3 rounded-2xl border border-line p-3.5 text-left hover:border-primary/40">
               <div className="w-9 h-9 rounded-lg bg-[var(--warn-bg)] flex items-center justify-center flex-shrink-0"><Wrench size={16} className="flex-shrink-0 text-[var(--warn-fg)]" /></div>
-              <div className="flex-1 min-w-0"><p className="text-[13.5px] font-semibold text-fg truncate">{equipment.name}</p><p className="text-[11.5px] text-subtext truncate">{room.name} · {equipment.model}</p></div>
-              <span className="text-[10.5px] font-semibold px-2.5 py-1 rounded-full bg-[var(--warn-bg)] text-[var(--warn-fg)] flex-shrink-0">
+              <div className="flex-1 min-w-0"><p className="text-[13.5px] font-semibold text-fg truncate">{equipment.name}</p><p className="text-[12px] text-subtext truncate">{room.name} · {equipment.model}</p></div>
+              <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[var(--warn-bg)] text-[var(--warn-fg)] flex-shrink-0">
                 {equipment.issueNote ? "Issue reported" : "Due soon"}
               </span>
               <ChevronRight size={14} className="text-subtext flex-shrink-0" />
@@ -123,7 +123,7 @@ export default function MaintenancePage() {
         </div>
       )}
 
-      <p className="text-[10px] tracking-widest text-subtext font-semibold mb-2">SCHEDULED</p>
+      <p className="text-[11px] tracking-widest text-subtext font-semibold mb-2">SCHEDULED</p>
       {scheduled.length === 0 ? (
         <div className="rounded-2xl border border-line p-6 text-center mb-6">
           <p className="text-[12.5px] text-subtext">No future maintenance scheduled yet.</p>
@@ -132,27 +132,27 @@ export default function MaintenancePage() {
         <div className="flex flex-col gap-2.5 mb-6">
           {scheduled.map((s) => (
             <div key={s.id} className="rounded-2xl border border-line p-3.5">
-              <p className="text-[11px] text-subtext mb-1">{formatDate(s.date)} · {s.room}{s.equipment ? ` · ${s.equipment}` : ""} · {s.supplier}</p>
+              <p className="text-[12px] text-subtext mb-1">{formatDate(s.date)} · {s.room}{s.equipment ? ` · ${s.equipment}` : ""} · {s.supplier}</p>
               <div className="flex items-center justify-between gap-3">
                 <p className="text-[13.5px] font-semibold text-fg">{s.title}</p>
                 {canEdit && (
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    <button onClick={() => completeScheduledMaintenance(property.id, s.id)} title="Mark done" className="flex items-center gap-1 text-[11.5px] font-semibold text-[var(--ok-fg)]">
+                    <button onClick={() => completeScheduledMaintenance(property.id, s.id)} title="Mark done" className="flex items-center gap-1 text-[12px] font-semibold text-[var(--ok-fg)]">
                       <CalendarCheck size={13} /> Mark done
                     </button>
-                    <button onClick={() => { if (confirm(`Cancel scheduled "${s.title}"?`)) removeScheduledMaintenance(property.id, s.id); }} title="Cancel" className="flex items-center gap-1 text-[11.5px] font-semibold text-[var(--attention-fg)]">
+                    <button onClick={() => { if (confirm(`Cancel scheduled "${s.title}"?`)) removeScheduledMaintenance(property.id, s.id); }} title="Cancel" className="flex items-center gap-1 text-[12px] font-semibold text-[var(--attention-fg)]">
                       <Ban size={13} /> Cancel
                     </button>
                   </div>
                 )}
               </div>
-              {s.notes && <p className="text-[11.5px] text-subtext mt-1">{s.notes}</p>}
+              {s.notes && <p className="text-[12px] text-subtext mt-1">{s.notes}</p>}
             </div>
           ))}
         </div>
       )}
 
-      <p className="text-[10px] tracking-widest text-subtext font-semibold mb-2">COMPLETED HISTORY</p>
+      <p className="text-[11px] tracking-widest text-subtext font-semibold mb-2">COMPLETED HISTORY</p>
       {property.maintenanceLog.length === 0 ? (
         <div className="rounded-2xl border border-line p-6 text-center">
           <p className="text-[12.5px] text-subtext">No completed maintenance recorded yet.</p>
@@ -162,16 +162,16 @@ export default function MaintenancePage() {
           {property.maintenanceLog.map((m, i) => (
             <div key={m.id} className="flex gap-4">
               <div className="flex flex-col items-center">
-                <div className="w-6 h-6 rounded-full bg-[var(--ok-bg)] text-[var(--ok-fg)] text-[11px] font-bold flex items-center justify-center flex-shrink-0">{i + 1}</div>
+                <div className="w-6 h-6 rounded-full bg-[var(--ok-bg)] text-[var(--ok-fg)] text-[12px] font-bold flex items-center justify-center flex-shrink-0">{i + 1}</div>
                 {i < property.maintenanceLog.length - 1 && <div className="w-px flex-1 bg-line my-1" />}
               </div>
               <div className="rounded-2xl border border-line p-4 flex-1 mb-4">
-                <p className="text-[11px] text-subtext mb-1">{m.date} · {m.room} · {m.supplier}</p>
+                <p className="text-[12px] text-subtext mb-1">{m.date} · {m.room} · {m.supplier}</p>
                 <div className="flex items-center justify-between">
                   <p className="text-[14px] font-bold text-fg">{m.title}</p>
-                  <span className="flex items-center gap-1 text-[10.5px] font-semibold bg-[var(--ok-bg)] text-[var(--ok-fg)] px-2 py-1 rounded-full flex-shrink-0"><CheckCircle2 size={10} /> Completed</span>
+                  <span className="flex items-center gap-1 text-[11px] font-semibold bg-[var(--ok-bg)] text-[var(--ok-fg)] px-2 py-1 rounded-full flex-shrink-0"><CheckCircle2 size={10} /> Completed</span>
                 </div>
-                <p className="text-[11.5px] text-subtext mt-1">{m.notes}</p>
+                <p className="text-[12px] text-subtext mt-1">{m.notes}</p>
               </div>
             </div>
           ))}
@@ -183,7 +183,7 @@ export default function MaintenancePage() {
           <form onSubmit={submitAdd} className="bg-card border border-line rounded-2xl p-5 w-full max-w-sm max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-fg text-[15px]">Add maintenance</p>
-              <button type="button" onClick={() => setShowAdd(false)}><X size={16} className="text-subtext" /></button>
+              <button type="button" onClick={() => setShowAdd(false)} className="touch:p-3.5 touch:-m-3.5"><X size={16} className="text-subtext" /></button>
             </div>
             <div className="flex flex-col gap-2.5">
               <input required autoFocus placeholder="What was done (e.g. Pool filter cleaned)" value={title} onChange={(e) => setTitle(e.target.value)}
@@ -198,7 +198,7 @@ export default function MaintenancePage() {
               </select>
               <textarea placeholder="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)}
                 className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" style={{ height: 70 }} />
-              <button type="submit" className="mt-1 bg-primary text-primary-fg text-[13px] font-semibold rounded-full py-2.5">Log maintenance</button>
+              <button type="submit" className="mt-1 bg-primary text-primary-fg touch:min-h-11 text-[13px] font-semibold rounded-full py-2.5">Log maintenance</button>
             </div>
           </form>
         </div>
@@ -209,13 +209,13 @@ export default function MaintenancePage() {
           <form onSubmit={submitSchedule} className="bg-card border border-line rounded-2xl p-5 w-full max-w-sm max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <p className="font-bold text-fg text-[15px]">Schedule maintenance</p>
-              <button type="button" onClick={closeSchedule}><X size={16} className="text-subtext" /></button>
+              <button type="button" onClick={closeSchedule} className="touch:p-3.5 touch:-m-3.5"><X size={16} className="text-subtext" /></button>
             </div>
             <div className="flex flex-col gap-2.5">
               <input required autoFocus placeholder="What's needed (e.g. Pool filter replacement)" value={schedTitle} onChange={(e) => setSchedTitle(e.target.value)}
                 className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
               <div>
-                <label className="text-[10.5px] text-subtext mb-1 block">Date</label>
+                <label className="text-[11px] text-subtext mb-1 block">Date</label>
                 <input required type="date" min={todayISO()} value={schedDate} onChange={(e) => setSchedDate(e.target.value)}
                   className="w-full rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" />
               </div>
@@ -235,7 +235,7 @@ export default function MaintenancePage() {
               </select>
               <textarea placeholder="Notes (optional)" value={schedNotes} onChange={(e) => setSchedNotes(e.target.value)}
                 className="rounded-lg border border-line px-3.5 py-2.5 text-[13px] outline-none focus:border-primary/50" style={{ height: 70 }} />
-              <button type="submit" className="mt-1 bg-primary text-primary-fg text-[13px] font-semibold rounded-full py-2.5">Schedule</button>
+              <button type="submit" className="mt-1 bg-primary text-primary-fg touch:min-h-11 text-[13px] font-semibold rounded-full py-2.5">Schedule</button>
             </div>
           </form>
         </div>

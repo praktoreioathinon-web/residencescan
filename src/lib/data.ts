@@ -670,6 +670,19 @@ export const SEED_SUPPLIERS: Supplier[] = [
   { id: "cyclades-villa-services", initials: "CV", name: "Cyclades Villa Services", category: "General maintenance", phone: "+30 694 333 4455", email: "info@cycladesvillaservices.gr", address: "Naoussa, Paros", notes: "Pool, garden and technical maintenance across Paros and Naxos." },
 ];
 
+// The suppliers a client account may see: only those who appear on the
+// maintenance log or schedule of the client's own properties — not the whole
+// vendor network. Matched on name, the same link supplierRecordCount uses.
+export function suppliersForProperties(suppliers: Supplier[], properties: Property[]): Supplier[] {
+  const names = new Set(
+    properties
+      .flatMap((p) => [...p.maintenanceLog.map((m) => m.supplier), ...(p.scheduledMaintenance ?? []).map((s) => s.supplier)])
+      .map((n) => (n ?? "").trim().toLowerCase())
+      .filter(Boolean)
+  );
+  return suppliers.filter((s) => names.has(s.name.trim().toLowerCase()));
+}
+
 // Real link between a supplier and completed work: every maintenance log entry
 // across every property whose supplier name matches this one.
 export function supplierRecordCount(supplier: Supplier, properties: Property[]): number {

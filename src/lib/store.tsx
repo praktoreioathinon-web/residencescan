@@ -97,6 +97,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   // with anything other people saved since instead of overwriting it.
   const serverCopies = useRef(new Map<string, Property>());
   const refreshing = useRef(false);
+  const roleRef = useRef<Role | null>(null);
 
   const getAccessToken = useCallback(() => tokens.current?.accessToken ?? null, []);
 
@@ -272,7 +273,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await authedFetch("/api/state");
       if (!res.ok) return;
-      const data = await res.json() as { properties: Property[] };
+      const data = await res.json() as { properties: Property[]; suppliers?: Supplier[] };
       const before = serverCopies.current;
       const fetched = data.properties;
       const unchanged = fetched.length === before.size && fetched.every((fp) => {
@@ -281,6 +282,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       });
       if (unchanged) return;
 
+      // A client's suppliers are derived from their properties, so they change
+      // together. (Staff edit suppliers directly, so their list is left alone.)
+      if (roleRef.current === "client" && data.suppliers) setSuppliers(data.suppliers);
       serverCopies.current = new Map([...Array.from(before), ...fetched.map((p): [string, Property] => [p.id, p])]);
       setProperties((prev) => {
         const incoming = new Map(fetched.map((p) => [p.id, p]));
@@ -301,6 +305,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [authedFetch]);
 
   useEffect(() => {
+    roleRef.current = session?.role ?? null;
     if (!session) return;
     const tick = () => { if (document.visibilityState === "visible") refreshProperties(); };
     const timer = setInterval(tick, 30000);

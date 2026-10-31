@@ -54,6 +54,14 @@ export default function SuppliersPage() {
         )}
       </div>
 
+      {suppliers.length === 0 && (
+        <div className="rounded-2xl border border-line p-6 text-center">
+          <p className="text-[12.5px] text-subtext">
+            {canEdit ? "No suppliers yet — add one to get started." : "Technicians and suppliers who work on your property will appear here."}
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {suppliers.map((s) => (
           <div key={s.id} className="flex items-center gap-3 rounded-2xl border border-line p-4">
@@ -82,7 +90,7 @@ export default function SuppliersPage() {
               <p className="flex items-center gap-2"><Mail size={13} className="text-subtext" /> {open.email}</p>
               <p className="flex items-center gap-2"><MapPin size={13} className="text-subtext" /> {open.address}</p>
             </div>
-            <p className="text-[12px] text-subtext mt-3 leading-relaxed">{open.notes}</p>
+            {open.notes && <p className="text-[12px] text-subtext mt-3 leading-relaxed">{open.notes}</p>}
             <div className="flex items-center justify-between mt-3 pt-3 border-t border-line">
               <p className="text-[12px] text-subtext">{supplierRecordCount(open, properties)} linked equipment records</p>
               {canEdit && <button onClick={() => startEdit(open)} className="text-[12px] text-primary font-semibold flex items-center justify-center gap-1 touch:min-h-11 touch:min-w-11"><Pencil size={12} /> Edit</button>}

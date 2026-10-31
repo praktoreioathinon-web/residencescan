@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase-server";
 import { requireUser, unauthorized } from "@/lib/auth-server";
-import { SEED_PROPERTIES, SEED_CLIENTS, SEED_SUPPLIERS, Property, ClientRecord } from "@/lib/data";
+import { SEED_PROPERTIES, SEED_CLIENTS, SEED_SUPPLIERS, Property, ClientRecord, Supplier, suppliersForProperties } from "@/lib/data";
 
 // This reads live data (and needs env vars only present at runtime), so it
 // must never be statically prerendered at build time or cached.
@@ -53,13 +53,15 @@ export async function GET(req: Request) {
   const allProperties = (propertyRows ?? []).map((r) => r.data as Property);
 
   // A client only ever gets their own properties and their own client
-  // record — not everyone else's. Admin/support see everything, matching
-  // what the UI has always shown them.
+  // record — not everyone else's — and only the suppliers who have worked on
+  // (or are scheduled for) those properties, minus the internal notes on each.
+  // Admin/support see everything, matching what the UI has always shown them.
   if (user.role === "client") {
+    const mine = allProperties.filter((p) => p.clientEmail === user.email);
     return NextResponse.json({
       clients: (clients ?? []).filter((c: ClientRecord) => c.email === user.email),
-      suppliers,
-      properties: allProperties.filter((p) => p.clientEmail === user.email),
+      suppliers: suppliersForProperties((suppliers ?? []) as Supplier[], mine).map((s) => ({ ...s, notes: "" })),
+      properties: mine,
     });
   }
 

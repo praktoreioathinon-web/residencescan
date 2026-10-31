@@ -16,9 +16,10 @@ const MAX_ATTEMPTS = 5;
 //     so both people's changes survive.
 // The write itself is compare-and-swap on `rev`, so two saves landing at the
 // same instant can't both win; the loser re-reads and merges again.
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser(req);
   if (!user) return unauthorized();
+  const { id } = await params;
 
   let body: { base?: Property; next?: Property };
   try {
@@ -32,14 +33,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     // with no version to merge from — refuse rather than overwrite.
     return NextResponse.json({ error: "The app was updated — reload this page and try again." }, { status: 409 });
   }
-  if (next.id !== params.id || !Array.isArray(next.rooms)) {
+  if (next.id !== id || !Array.isArray(next.rooms)) {
     return NextResponse.json({ error: "Invalid property." }, { status: 400 });
   }
 
   const db = supabaseServer();
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    const { data: row, error: fetchErr } = await db.from("properties").select("data").eq("id", params.id).single();
+    const { data: row, error: fetchErr } = await db.from("properties").select("data").eq("id", id).single();
     if (fetchErr || !row) return NextResponse.json({ error: "Property not found." }, { status: 404 });
 
     const current = row.data as Property;
@@ -65,7 +66,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     merged.rev = currentRev + 1;
 
-    let query = db.from("properties").update({ client_email: merged.clientEmail, data: merged }).eq("id", params.id);
+    let query = db.from("properties").update({ client_email: merged.clientEmail, data: merged }).eq("id", id);
     query = currentRev === 0
       ? query.or("data->>rev.is.null,data->>rev.eq.0")
       : query.eq("data->>rev", String(currentRev));

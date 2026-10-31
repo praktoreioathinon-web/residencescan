@@ -3,14 +3,15 @@ import { supabaseServer } from "@/lib/supabase-server";
 import { requireUser, unauthorized, forbidden } from "@/lib/auth-server";
 import { ClientRecord } from "@/lib/data";
 
-export async function PATCH(req: Request, { params }: { params: { email: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ email: string }> }) {
   const user = await requireUser(req);
   if (!user) return unauthorized();
+  const { email } = await params;
   if (user.role === "client") return forbidden();
 
   const updates = await req.json() as Partial<Omit<ClientRecord, "email">>;
   const db = supabaseServer();
-  const { error } = await db.from("clients").update(updates).eq("email", decodeURIComponent(params.email));
+  const { error } = await db.from("clients").update(updates).eq("email", decodeURIComponent(email));
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

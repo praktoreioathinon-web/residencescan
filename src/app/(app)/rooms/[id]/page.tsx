@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { notFound, useRouter, useSearchParams } from "next/navigation";
+import { notFound, useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Plus, ChevronRight, Sparkles, Fan, Sun, X, ImageIcon, Camera, AlertTriangle, CheckCircle2, Pencil, Trash2 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { EquipmentItem, Room, roomMaintenanceEntries, formatDate, todayISO, genericEquipmentTerm } from "@/lib/data";
@@ -12,7 +12,8 @@ const EQUIP_ICONS = [Sparkles, Fan, Sun];
 const TAB_KEYS = ["Equipment", "Documents", "Maintenance", "Photos"] as const;
 const CATEGORIES: Room["category"][] = ["Indoor", "Outdoor", "Technical"];
 
-export default function RoomDetailPage({ params }: { params: { id: string } }) {
+export default function RoomDetailPage() {
+  const params = useParams<{ id: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
   const {

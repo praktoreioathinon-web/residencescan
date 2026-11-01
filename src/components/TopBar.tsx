@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Bell, Zap, AlertTriangle, Building2, DoorOpen, Wrench, Store, LogOut, Settings, X } from "lucide-react";
+import { Search, Bell, Zap, AlertTriangle, Building2, DoorOpen, Wrench, Store, LogOut, Settings, X, ChevronRight } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useStore } from "@/lib/store";
-import { Property, Room, EquipmentItem, roomAttentionCount, activeProperties } from "@/lib/data";
+import { Property, Room, EquipmentItem, roomAttentionCount, activeProperties, reportedIssues } from "@/lib/data";
 
 export default function TopBar() {
   const router = useRouter();
@@ -108,6 +108,13 @@ export default function TopBar() {
     return items;
   }, [properties, session, notificationsEnabled]);
 
+  // Staff get a separate count of client-reported issues, so a report doesn't
+  // blend in with routine "due soon" equipment.
+  const issueCount = useMemo(() => {
+    if (!notificationsEnabled || !(session?.role === "admin" || session?.role === "support")) return 0;
+    return reportedIssues(activeProperties(properties)).length;
+  }, [properties, session, notificationsEnabled]);
+
   const initials = (session?.name ?? "?").split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
   return (
@@ -192,6 +199,17 @@ export default function TopBar() {
           </button>
           {openPanel === "notif" && (
             <div className="absolute top-full right-0 mt-2 w-72 bg-card border border-line rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto">
+              {issueCount > 0 && (
+                <button onClick={() => { router.push("/issues"); setOpenPanel(null); }}
+                  className="w-[calc(100%-1.5rem)] mx-3 mt-3 flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left touch:min-h-11" style={{ background: "var(--attention-wash)" }}>
+                  <AlertTriangle size={14} className="text-[var(--attention-fg)] flex-shrink-0" />
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-[12.5px] font-semibold text-fg">{issueCount} reported issue{issueCount > 1 ? "s" : ""}</span>
+                    <span className="block text-[12px] text-subtext">View all on the Issues page</span>
+                  </span>
+                  <ChevronRight size={14} className="text-subtext flex-shrink-0" />
+                </button>
+              )}
               <p className="text-[12px] tracking-widest text-subtext font-semibold px-4 pt-3.5 pb-2">NEEDS ATTENTION ({notifications.length})</p>
               {!notificationsEnabled ? (
                 <p className="text-[12.5px] text-subtext p-4 pt-0 pb-4 text-center">Notifications are turned off in Settings.</p>

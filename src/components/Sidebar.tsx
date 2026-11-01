@@ -3,9 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Grid2x2, Scan, Camera, Store, Users, Settings, Plus, ChevronRight, LogOut, Menu, X, Zap, FileText } from "lucide-react";
+import { Home, Grid2x2, Scan, Camera, Store, Users, Settings, Plus, ChevronRight, LogOut, Menu, X, Zap, FileText, AlertTriangle } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { dueSoonEquipment } from "@/lib/data";
+import { activeProperties, dueSoonEquipment, reportedIssues } from "@/lib/data";
 
 const BASE_NAV = [
   { href: "/", label: "Overview", icon: Home },
@@ -21,8 +21,10 @@ export default function Sidebar() {
   const { session, logout, properties, selectedPropertyId } = useStore();
   const [open, setOpen] = useState(false);
 
+  const isStaff = session?.role === "admin" || session?.role === "support";
   const nav = [
     ...BASE_NAV,
+    ...(isStaff ? [{ href: "/issues", label: "Issues", icon: AlertTriangle }] : []),
     ...(session?.role === "admin" || session?.role === "support" ? [{ href: "/clients", label: "Clients", icon: Users }] : []),
     { href: "/reports", label: "Reports", icon: FileText },
     { href: "/settings", label: "Settings", icon: Settings },
@@ -30,6 +32,7 @@ export default function Sidebar() {
 
   const selectedProperty = properties.find((p) => p.id === selectedPropertyId);
   const maintenanceBadge = selectedProperty ? dueSoonEquipment(selectedProperty).length : 0;
+  const issuesBadge = isStaff ? reportedIssues(activeProperties(properties)).length : 0;
 
   return (
     <>
@@ -60,7 +63,7 @@ export default function Sidebar() {
         <nav className="flex flex-col gap-1">
           {nav.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || (href !== "/" && pathname.startsWith(href));
-            const badge = href === "/maintenance" ? maintenanceBadge : 0;
+            const badge = href === "/maintenance" ? maintenanceBadge : href === "/issues" ? issuesBadge : 0;
             return (
               <Link
                 key={href} href={href} onClick={() => setOpen(false)}

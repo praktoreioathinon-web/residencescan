@@ -546,6 +546,31 @@ export function activeProperties(properties: Property[]): Property[] {
   return properties.filter((p) => !p.archived);
 }
 
+// Reported dates are stored as display text like "12 Sep 2026" (see
+// reportEquipmentIssue); this turns one back into a timestamp for sorting.
+// Anything it can't read sorts last.
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+export function parseReportedDate(text?: string): number {
+  const m = (text ?? "").trim().match(/^(\d{1,2})\s+([A-Za-z]{3})[A-Za-z]*\.?\s+(\d{4})$/);
+  if (!m) return 0;
+  const month = MONTHS.indexOf(m[2].toLowerCase());
+  return month < 0 ? 0 : new Date(Number(m[3]), month, Number(m[1])).getTime();
+}
+
+// Every piece of equipment with a reported issue, newest report first.
+export type ReportedIssue = { property: Property; room: Room; equipment: EquipmentItem; reportedOn: number };
+export function reportedIssues(properties: Property[]): ReportedIssue[] {
+  const out: ReportedIssue[] = [];
+  for (const property of properties) {
+    for (const room of property.rooms) {
+      for (const equipment of room.equipment) {
+        if (equipment.issueNote) out.push({ property, room, equipment, reportedOn: parseReportedDate(equipment.issueReportedAt) });
+      }
+    }
+  }
+  return out.sort((a, b) => b.reportedOn - a.reportedOn);
+}
+
 // Real, property-specific "needs attention" items — equipment flagged Due soon or
 // with a client-reported issue — used instead of generic copy that would otherwise
 // read the same on every property regardless of what's actually going on there.

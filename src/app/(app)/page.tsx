@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Grid2x2, Cog, Waves, Store, Camera, Scan, ChevronRight, ImageIcon, ShieldCheck, AlertTriangle, CheckCircle2, Building2, Users, MapPin, Wrench, X, Archive, ArchiveRestore } from "lucide-react";
+import { Grid2x2, Cog, Waves, Store, Camera, ChevronRight, ImageIcon, ShieldCheck, AlertTriangle, CheckCircle2, Building2, Users, MapPin, Wrench, X, Archive, ArchiveRestore } from "lucide-react";
 import { dueSoonEquipment, healthScore, systemsOnline, maintenanceCurrent, photoCoveragePct, activeProperties, Property, ClientRecord } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import { uploadPhoto } from "@/lib/image";
@@ -14,7 +14,6 @@ const QUICK_ACCESS = [
   { href: "/rooms?tab=Pools", label: "Pools", sub: "systems", icon: Waves },
   { href: "/suppliers", label: "Suppliers", sub: "contacts", icon: Store },
   { href: "/maintenance", label: "Maintenance", sub: "upcoming", icon: Camera },
-  { href: "/xray", label: "X-Ray", sub: "All systems", icon: Scan },
 ];
 
 function HealthRing({ pct }: { pct: number }) {
@@ -182,7 +181,7 @@ export default function OverviewPage() {
       </div>
       {myProperties.length > 1 && (
         <button onClick={() => { setSelectedPropertyId(null); router.push("/rooms"); }}
-          className="w-full text-[12px] text-primary font-semibold flex items-center justify-center gap-1 mt-2.5">
+          className="w-full text-[12px] text-primary font-semibold flex items-center justify-center gap-1 mt-2.5 touch:min-h-11 touch:mt-0">
           Switch property <ChevronRight size={11} />
         </button>
       )}
@@ -205,7 +204,7 @@ export default function OverviewPage() {
 
       <p className="text-[11px] tracking-widest text-subtext font-semibold mt-7 mb-1">EXPLORE</p>
       <h2 className="text-lg font-bold text-fg mb-3">Quick access</h2>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 [&>*:last-child:nth-child(odd)]:col-span-2">
         {QUICK_ACCESS.map(({ href, label, sub, icon: Icon }) => (
           <Link key={label} href={href} className="flex items-center gap-3 rounded-2xl border border-line p-3.5 hover:border-primary/40">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-primary" /></div>
@@ -248,7 +247,7 @@ export default function OverviewPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-3 mt-5 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-5 mb-8">
         <div className="rounded-2xl border border-line p-4" style={{ background: "linear-gradient(160deg, var(--attention-wash), transparent)" }}>
           <div className="flex items-center gap-1.5 text-[11px] tracking-widest text-[var(--attention-fg)] font-semibold"><AlertTriangle size={11} /> ATTENTION</div>
           {upcoming.length > 0 ? (
@@ -260,13 +259,6 @@ export default function OverviewPage() {
           ) : (
             <p className="text-[13px] text-subtext mt-2">Nothing needs attention right now.</p>
           )}
-        </div>
-        <div className="rounded-2xl border border-line p-4" style={{ background: "linear-gradient(160deg, var(--primary-wash), transparent)" }}>
-          <div className="w-9 h-9 rounded-lg border border-line flex items-center justify-center mb-2"><Scan size={16} className="text-primary" /></div>
-          <p className="text-[11px] tracking-widest text-primary font-semibold">PROPERTY X-RAY</p>
-          <p className="text-[14px] font-bold text-fg mt-1">See beyond the surface.</p>
-          <p className="text-[12px] text-subtext mt-1">Every hidden system, connection, document and service record in one place.</p>
-          <Link href="/xray" className="text-[12px] text-primary font-semibold flex items-center gap-1 mt-2.5 touch:min-h-11 touch:min-w-11 touch:mt-0">Open X-Ray <ChevronRight size={12} /></Link>
         </div>
         <div className="rounded-2xl border border-line p-4">
           <div className="flex items-center gap-1.5 text-[11px] tracking-widest text-subtext font-semibold"><CheckCircle2 size={11} className="text-primary" /> RECENT UPDATE</div>

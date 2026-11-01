@@ -109,12 +109,12 @@ export default function RoomsPage() {
 
   return (
     <div className="px-8 py-6 max-w-4xl">
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
           <p className="text-[11px] tracking-widest text-subtext font-semibold">{property.area.toUpperCase()}</p>
           <h1 className="text-2xl font-bold text-fg">{property.name} — Rooms & Areas</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {myProperties.length > 1 && (
             <button onClick={() => setSelectedPropertyId(null)} className="flex items-center gap-1.5 border border-line text-[12.5px] font-semibold px-4 py-2 rounded-full touch:min-h-11 text-fg">
               <ArrowLeftRight size={13} /> Switch property
@@ -163,14 +163,14 @@ export default function RoomsPage() {
                   ? `linear-gradient(180deg, rgba(7,16,23,0.15), rgba(7,16,23,0.75)), url(${r.photoUrl}) center / cover`
                   : `linear-gradient(160deg, ${TINT_BY_INDEX[i % TINT_BY_INDEX.length]}, transparent)`,
               }}>
-              <div className="flex items-start justify-between mb-6">
+              <div className="flex flex-wrap items-start justify-between gap-1.5 mb-6">
                 {hasPhoto ? <span /> : (
                   <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center"><Icon size={16} className="text-fg" /></div>
                 )}
                 {roomAttentionCount(r) === 0 ? (
-                  <span className={`flex items-center gap-1 text-[11px] font-semibold ${badgeStyle("bg-[var(--ok-bg)]", "text-[var(--ok-fg)]")} px-2 py-0.5 rounded-full`}><CheckCircle2 size={10} /> Current</span>
+                  <span className={`flex items-center gap-1 ml-auto whitespace-nowrap text-[11px] font-semibold ${badgeStyle("bg-[var(--ok-bg)]", "text-[var(--ok-fg)]")} px-2 py-0.5 rounded-full`}><CheckCircle2 size={10} /> Current</span>
                 ) : (
-                  <span className={`flex items-center gap-1 text-[11px] font-semibold ${badgeStyle("bg-[var(--warn-bg)]", "text-[var(--warn-fg)]")} px-2 py-0.5 rounded-full`}><AlertTriangle size={10} /> {roomAttentionCount(r)} attention</span>
+                  <span className={`flex items-center gap-1 ml-auto whitespace-nowrap text-[11px] font-semibold ${badgeStyle("bg-[var(--warn-bg)]", "text-[var(--warn-fg)]")} px-2 py-0.5 rounded-full`}><AlertTriangle size={10} /> {roomAttentionCount(r)} attention</span>
                 )}
               </div>
               <div>

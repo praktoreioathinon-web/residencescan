@@ -210,7 +210,7 @@ export default function RoomDetailPage() {
     <div className="px-8 py-6 max-w-4xl">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-3">
-          <Link href="/rooms" className="w-9 h-9 rounded-full border border-line flex items-center justify-center touch:w-11 touch:h-11"><ArrowLeft size={15} /></Link>
+          <Link href="/rooms" className="w-9 h-9 rounded-full border border-line flex items-center justify-center flex-shrink-0 touch:w-11 touch:h-11"><ArrowLeft size={15} /></Link>
           <div>
             <p className="text-[11px] tracking-widest text-subtext font-semibold">ROOM {room.number}</p>
             <div className="flex items-center gap-2">

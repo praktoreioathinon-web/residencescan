@@ -43,12 +43,12 @@ export default function ReportsPage() {
 
   return (
     <div className="px-8 py-6 max-w-4xl">
-      <div className="no-print flex items-center justify-between mb-5 gap-3">
+      <div className="no-print flex flex-wrap items-center justify-between mb-5 gap-3">
         <div>
           <p className="text-[11px] tracking-widest text-subtext font-semibold">{property.area.toUpperCase()}</p>
           <h1 className="text-2xl font-bold text-fg">{property.name} — Report</h1>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex flex-wrap items-center gap-2">
           {myProperties.length > 1 && (
             <button onClick={() => setSelectedPropertyId(null)} className="flex items-center gap-1.5 border border-line text-[12.5px] font-semibold px-4 py-2 rounded-full touch:min-h-11 text-fg">
               <ArrowLeftRight size={13} /> Switch property

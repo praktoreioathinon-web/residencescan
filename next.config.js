@@ -16,5 +16,9 @@ const nextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // The X-Ray page duplicated Rooms and was removed; keep old links working.
+  async redirects() {
+    return [{ source: "/xray", destination: "/rooms", permanent: false }];
+  },
 };
 module.exports = nextConfig;

@@ -3,14 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Grid2x2, Scan, Camera, Store, Users, Settings, Plus, ChevronRight, LogOut, Menu, X, Zap, FileText, AlertTriangle } from "lucide-react";
+import { Home, Grid2x2, Camera, Store, Users, Settings, Plus, ChevronRight, LogOut, Menu, X, Zap, FileText, AlertTriangle } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { activeProperties, dueSoonEquipment, reportedIssues } from "@/lib/data";
 
 const BASE_NAV = [
   { href: "/", label: "Overview", icon: Home },
   { href: "/rooms", label: "Rooms", icon: Grid2x2 },
-  { href: "/xray", label: "X-Ray", icon: Scan },
   { href: "/maintenance", label: "Maintenance", icon: Camera },
   { href: "/suppliers", label: "Suppliers", icon: Store },
 ];
@@ -87,17 +86,6 @@ export default function Sidebar() {
               <p className="text-[12px] text-primary mt-1 flex items-center gap-1">Switch property <ChevronRight size={11} /></p>
             </Link>
           )}
-          <div className="rounded-2xl border border-line p-4">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-              <Scan size={15} className="text-primary" />
-            </div>
-            <p className="text-[13px] font-semibold text-fg">Property Scan</p>
-            <p className="text-[12px] text-subtext mt-2">Last updated</p>
-            <p className="text-[12px] text-subtext">{selectedProperty?.updated ?? "—"}</p>
-            <Link href="/xray" onClick={() => setOpen(false)} className="flex items-center gap-1 text-[12px] text-primary font-semibold mt-2.5 touch:min-h-11 touch:mt-0">
-              View X-Ray <ChevronRight size={12} />
-            </Link>
-          </div>
           {session?.role !== "client" && (
             <Link href="/clients?add=1" onClick={() => setOpen(false)} className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-line py-2.5 touch:min-h-11 text-[12.5px] text-subtext hover:text-fg">
               <Plus size={13} /> Add property

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, CheckCircle2, AlertTriangle, BedDouble, Home, ChefHat, Waves, Cog, Building2, ArrowLeftRight, Martini, Trees, Flame, Zap, X, Wrench, ImageIcon, Camera } from "lucide-react";
+import { Plus, AlertTriangle, BedDouble, Home, ChefHat, Waves, Cog, Building2, ArrowLeftRight, Martini, Trees, Flame, Zap, X, Wrench, ImageIcon, Camera } from "lucide-react";
 import { useStore } from "@/lib/store";
 import PropertyPicker from "@/components/PropertyPicker";
 import { Room, roomAttentionCount, roomPhotoCount, activeProperties } from "@/lib/data";
@@ -128,15 +128,15 @@ export default function RoomsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 rounded-2xl border border-line divide-x divide-line mb-5">
-        <div className="p-4"><p className="text-xl font-bold text-fg">{rooms.length}</p><p className="text-[12px] text-subtext">Rooms</p></div>
-        <button onClick={() => setStatModal("equipment")} className="p-4 text-left hover:bg-white/5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-line rounded-2xl border border-line overflow-hidden mb-5">
+        <div className="bg-bg p-4"><p className="text-xl font-bold text-fg">{rooms.length}</p><p className="text-[12px] text-subtext">Rooms</p></div>
+        <button onClick={() => setStatModal("equipment")} className="bg-bg p-4 text-left hover:bg-surface">
           <p className="text-xl font-bold text-fg">{totalEquipment}</p><p className="text-[12px] text-subtext">Equipment</p>
         </button>
-        <button onClick={() => setStatModal("attention")} className="p-4 text-left hover:bg-white/5">
+        <button onClick={() => setStatModal("attention")} className="bg-bg p-4 text-left hover:bg-surface">
           <p className="text-xl font-bold text-fg">{attentionRooms.length}</p><p className="text-[12px] text-subtext">Need attention</p>
         </button>
-        <button onClick={() => setStatModal("photos")} className="p-4 text-left hover:bg-white/5">
+        <button onClick={() => setStatModal("photos")} className="bg-bg p-4 text-left hover:bg-surface">
           <p className="text-xl font-bold text-fg">{totalPhotos}</p><p className="text-[12px] text-subtext">Photos</p>
         </button>
       </div>
@@ -150,32 +150,31 @@ export default function RoomsPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {filtered.map((r, i) => {
           const Icon = roomIcon(r.name);
           const hasPhoto = !!r.photoUrl;
-          const badgeStyle = (fallbackBg: string, fallbackFg: string) => (hasPhoto ? "bg-black/55 text-white" : `${fallbackBg} ${fallbackFg}`);
+          const attention = roomAttentionCount(r);
           return (
-            <Link key={r.id} href={`/rooms/${r.id}`} className="rounded-2xl border border-line p-4 flex flex-col justify-between overflow-hidden"
+            <Link key={r.id} href={`/rooms/${r.id}`} className="rounded-2xl border border-line p-3 sm:p-4 flex flex-col justify-between overflow-hidden w-full min-w-0 aspect-[4/3] min-h-[130px]"
               style={{
-                minHeight: 150,
                 background: hasPhoto
                   ? `linear-gradient(180deg, rgba(7,16,23,0.15), rgba(7,16,23,0.75)), url(${r.photoUrl}) center / cover`
                   : `linear-gradient(160deg, ${TINT_BY_INDEX[i % TINT_BY_INDEX.length]}, transparent)`,
               }}>
-              <div className="flex flex-wrap items-start justify-between gap-1.5 mb-6">
+              <div className="flex flex-wrap items-start justify-between gap-1.5">
                 {hasPhoto ? <span /> : (
                   <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center"><Icon size={16} className="text-fg" /></div>
                 )}
-                {roomAttentionCount(r) === 0 ? (
-                  <span className={`flex items-center gap-1 ml-auto whitespace-nowrap text-[11px] font-semibold ${badgeStyle("bg-[var(--ok-bg)]", "text-[var(--ok-fg)]")} px-2 py-0.5 rounded-full`}><CheckCircle2 size={10} /> Current</span>
-                ) : (
-                  <span className={`flex items-center gap-1 ml-auto whitespace-nowrap text-[11px] font-semibold ${badgeStyle("bg-[var(--warn-bg)]", "text-[var(--warn-fg)]")} px-2 py-0.5 rounded-full`}><AlertTriangle size={10} /> {roomAttentionCount(r)} attention</span>
+                {attention > 0 && (
+                  <span className={`flex items-center gap-1 ml-auto whitespace-nowrap text-[11px] font-semibold px-2 py-0.5 rounded-full ${hasPhoto ? "bg-black/55 text-white" : "bg-[var(--warn-bg)] text-[var(--warn-fg)]"}`}>
+                    <AlertTriangle size={10} /> {attention} attention
+                  </span>
                 )}
               </div>
               <div>
-                <p className={`text-[14px] font-bold ${hasPhoto ? "text-white" : "text-fg"}`}>{r.name}</p>
-                <p className={`text-[12px] mt-0.5 ${hasPhoto ? "text-white/75" : "text-subtext"}`}>{r.equipmentCount} equipment records</p>
+                <p className={`text-[14px] leading-tight font-bold line-clamp-2 break-words ${hasPhoto ? "text-white" : "text-fg"}`}>{r.name}</p>
+                <p className={`text-[12px] mt-0.5 ${hasPhoto ? "text-white/75" : "text-subtext"}`}>{r.equipmentCount} {r.equipmentCount === 1 ? "item" : "items"}</p>
               </div>
             </Link>
           );

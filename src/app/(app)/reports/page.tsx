@@ -86,10 +86,10 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-4 rounded-xl border border-line divide-x divide-line mt-5">
-          <div className="p-3.5 text-center"><p className="text-lg font-bold text-fg">{healthScore(property)}%</p><p className="text-[11px] text-subtext">Health score</p></div>
-          <div className="p-3.5 text-center"><p className="text-lg font-bold text-fg">{property.rooms.length}</p><p className="text-[11px] text-subtext">Rooms</p></div>
-          <div className="p-3.5 text-center"><p className="text-lg font-bold text-fg">{totalEquipment}</p><p className="text-[11px] text-subtext">Equipment records</p></div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 print:grid-cols-4 rounded-xl border border-line overflow-hidden mt-5">
+          <div className="p-3.5 text-center border-r border-b sm:border-b-0 print:border-b-0 border-line"><p className="text-lg font-bold text-fg">{healthScore(property)}%</p><p className="text-[11px] text-subtext">Health score</p></div>
+          <div className="p-3.5 text-center border-b sm:border-b-0 sm:border-r print:border-b-0 print:border-r border-line"><p className="text-lg font-bold text-fg">{property.rooms.length}</p><p className="text-[11px] text-subtext">Rooms</p></div>
+          <div className="p-3.5 text-center border-r border-line"><p className="text-lg font-bold text-fg">{totalEquipment}</p><p className="text-[11px] text-subtext">Equipment records</p></div>
           <div className="p-3.5 text-center"><p className="text-lg font-bold text-fg">{property.maintenanceLog.length}</p><p className="text-[11px] text-subtext">Completed services</p></div>
         </div>
       </div>

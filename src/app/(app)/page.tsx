@@ -314,11 +314,11 @@ function AllPropertiesOverview({
       <h1 className="text-2xl font-bold text-fg mb-1">Overview</h1>
       <p className="text-[12.5px] text-subtext mb-5">All properties across every client.</p>
 
-      <div className="grid grid-cols-4 rounded-2xl border border-line divide-x divide-line mb-6">
-        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><Building2 size={16} className="flex-shrink-0 text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{properties.length}</p><p className="text-[12px] text-subtext mt-1">Properties</p></div></div>
-        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><Users size={16} className="flex-shrink-0 text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{clients.length}</p><p className="text-[12px] text-subtext mt-1">Clients</p></div></div>
-        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><AlertTriangle size={16} className="flex-shrink-0 text-[var(--warn-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{totalAttention}</p><p className="text-[12px] text-subtext mt-1">Need attention</p></div></div>
-        <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><CheckCircle2 size={16} className="flex-shrink-0 text-[var(--ok-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{avgHealth}%</p><p className="text-[12px] text-subtext mt-1">Avg. health</p></div></div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-line rounded-2xl border border-line overflow-hidden mb-6">
+        <div className="bg-bg p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><Building2 size={16} className="flex-shrink-0 text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{properties.length}</p><p className="text-[12px] text-subtext mt-1">Properties</p></div></div>
+        <div className="bg-bg p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><Users size={16} className="flex-shrink-0 text-primary" /><div><p className="text-xl font-bold text-fg leading-none">{clients.length}</p><p className="text-[12px] text-subtext mt-1">Clients</p></div></div>
+        <div className="bg-bg p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><AlertTriangle size={16} className="flex-shrink-0 text-[var(--warn-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{totalAttention}</p><p className="text-[12px] text-subtext mt-1">Need attention</p></div></div>
+        <div className="bg-bg p-3 sm:p-4 flex items-center gap-2 sm:gap-3"><CheckCircle2 size={16} className="flex-shrink-0 text-[var(--ok-fg)]" /><div><p className="text-xl font-bold text-fg leading-none">{avgHealth}%</p><p className="text-[12px] text-subtext mt-1">Avg. health</p></div></div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
